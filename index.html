@@ -486,7 +486,7 @@ var RED="#E11236";
 /* === НАСТРОЙКИ МАГАЗИНА — поменяй на свои === */
 var SHOP={
   wa:"77774961358",                 // WhatsApp магазина: код страны + номер, без + и пробелов. Пример: 77011234567
-  email:"hello@redflag.kz",         // почта магазина
+  email:"raimzhan1907@gmail.com",   // почта магазина (заказы также приходят сюда автоматически)
   ig:"redflagseverywear",           // инстаграм
   city:"Астана", country:"Казахстан"
 };
@@ -710,6 +710,7 @@ rfc.placeOrder=function(){
  var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t};}),total:subtotal(),status:"Новый"};
  state.crm.unshift(order);saveCrm();
  if(CLOUD){ try{ sb.from("orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
+ try{ fetch("https://formsubmit.co/ajax/"+SHOP.email,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({_subject:"Новый заказ "+order.id+" — RFC",_template:"box","Имя":order.name,"Телефон":order.phone,"Email клиента":order.email||"—","Доставка":order.delivery,"Адрес":order.country+", "+order.city+(order.address?", "+order.address:""),"Комментарий":order.comment||"—","Товары":order.items.map(function(i){return i.name+" "+i.size+" ×"+i.qty;}).join("; "),"Итого":fmt(order.total),"Полное сообщение":shopMessage(order)})}).catch(function(){}); }catch(e){}
  state.cart.forEach(function(i){state.orders.unshift({t:i.t,name:i.name,status:"Оформлен"});});
  window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
  state.cart=[];renderCart();rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
