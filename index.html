@@ -34,7 +34,7 @@ input{font-family:inherit}
 @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* ---------- header ---------- */
-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+header{position:sticky;top:0;z-index:50;background:#fff;padding-top:env(safe-area-inset-top);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid var(--line)}
 .hd{display:flex;align-items:center;justify-content:space-between;height:clamp(60px,9vw,80px);gap:18px}
 .logo{font-family:var(--serif);font-weight:800;font-size:clamp(26px,4vw,34px);letter-spacing:.5px;color:var(--red);line-height:1}
 nav.main{display:flex;gap:30px;font-size:13px;font-weight:600;letter-spacing:.3px}
