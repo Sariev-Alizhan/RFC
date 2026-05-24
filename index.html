@@ -710,7 +710,7 @@ rfc.placeOrder=function(){
  var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
  var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t};}),total:subtotal(),status:"Новый"};
  state.crm.unshift(order);saveCrm();
- if(CLOUD){ try{ sb.from("orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
+ if(CLOUD){ try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
  state.cart.forEach(function(i){state.orders.unshift({t:i.t,name:i.name,status:"Оформлен"});});
  window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
  state.cart=[];renderCart();rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
@@ -755,7 +755,7 @@ rfc.adminLogin=function(){
 };
 rfc.adminLogout=function(){ if(CLOUD){sb.auth.signOut().then(function(){renderCrmLogin();});} };
 function cloudLoad(){
- sb.from("orders").select("*").order("created_at",{ascending:false}).then(function(r){
+ sb.from("rfc_orders").select("*").order("created_at",{ascending:false}).then(function(r){
   if(r&&r.error){ rfc.toast("Ошибка загрузки заказов"); return; }
   state.crm=(r.data||[]).map(function(o){return {id:o.id,date:fmtDate(o.created_at),name:o.name,phone:o.phone,email:o.email,country:o.country,city:o.city,address:o.address,comment:o.comment,delivery:o.delivery,items:o.items||[],total:o.total,status:o.status};});
   renderCrm();
@@ -787,8 +787,8 @@ function renderCrm(){
  '<div class="crm-list">'+rows+'</div></div>';
 }
 rfc.crmFilter=function(f){state.crmFilter=f;renderCrm();};
-rfc.crmStatus=function(i,v){if(state.crm[i]){var id=state.crm[i].id;state.crm[i].status=v;if(CLOUD){try{sb.from("orders").update({status:v}).eq("id",id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();}};
-rfc.crmDel=function(i){var o=state.crm[i];if(!o)return;state.crm.splice(i,1);if(CLOUD){try{sb.from("orders").delete().eq("id",o.id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();rfc.toast("Заказ удалён");};
+rfc.crmStatus=function(i,v){if(state.crm[i]){var id=state.crm[i].id;state.crm[i].status=v;if(CLOUD){try{sb.from("rfc_orders").update({status:v}).eq("id",id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();}};
+rfc.crmDel=function(i){var o=state.crm[i];if(!o)return;state.crm.splice(i,1);if(CLOUD){try{sb.from("rfc_orders").delete().eq("id",o.id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();rfc.toast("Заказ удалён");};
 
 
 function showScreen(sel){$$(".screen").forEach(function(s){s.classList.remove("on");});$(sel).classList.add("on");$(sel).scrollTop=0;document.body.style.overflow="hidden";}
