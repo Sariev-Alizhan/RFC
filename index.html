@@ -4,6 +4,19 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RFC — Red Flag Community</title>
+<meta name="description" content="RFC — Red Flag Community. Локальный бренд одежды из Казахстана: худи, футболки, свитшоты, кепки. Заказ через сайт, доставка по Казахстану и миру.">
+<link rel="icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Red Flag Community">
+<meta property="og:title" content="RFC — Red Flag Community">
+<meta property="og:description" content="Локальный бренд одежды из Казахстана. Заказ через сайт, доставка по КЗ и миру.">
+<meta property="og:image" content="https://rfc-kappa.vercel.app/og.jpg">
+<meta property="og:url" content="https://rfc-kappa.vercel.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RFC — Red Flag Community">
+<meta name="twitter:description" content="Локальный бренд одежды из Казахстана. Доставка по КЗ и миру.">
+<meta name="twitter:image" content="https://rfc-kappa.vercel.app/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600&family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -350,6 +363,26 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
   .ord-grid{grid-template-columns:1fr 1fr}
   .topbar{font-size:10px}
 }
+
+/* ====== INFO / Как заказать ====== */
+#info{padding-top:18px;padding-bottom:44px}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:10px}
+.info-card{border:1px solid #ececec;border-radius:16px;padding:24px 20px;background:#fff}
+.info-card .info-n{font-family:'Playfair Display',serif;font-size:22px;color:var(--red);font-weight:700}
+.info-card h3{font-size:14px;text-transform:uppercase;letter-spacing:.07em;margin:12px 0 8px}
+.info-card p{font-size:13.5px;line-height:1.6;color:#5a5a5a;margin:0}
+.info-contact{margin-top:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:14px}
+.info-contact span{color:#8a8a8a}
+.info-contact a{color:var(--ink);font-weight:600;border-bottom:2px solid var(--red);padding-bottom:2px;cursor:pointer;text-decoration:none}
+@media(max-width:860px){.info-grid{grid-template-columns:1fr 1fr;gap:12px}.info-card{padding:18px 16px;border-radius:14px}}
+@media(max-width:520px){.info-grid{grid-template-columns:1fr}}
+/* ====== COMING SOON ====== */
+.card .ph{position:relative}
+.card .soon-badge{position:absolute;top:12px;left:12px;background:var(--ink);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:6px 11px;border-radius:20px;z-index:2}
+.card.soon .ph{opacity:.9}
+.pr-soon{color:#9a9a9a;font-size:12.5px;font-weight:600;letter-spacing:.02em}
+.soon-note{background:#f6f6f6;border:1px solid #ececec;border-radius:14px;padding:16px 18px;font-size:14px;line-height:1.5;color:#444;margin:6px 0 16px}
+.btn-block.soon-btn{text-decoration:none;text-align:center;display:block}
 </style>
 </head>
 <body>
@@ -415,6 +448,16 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 </main>
 
 <!-- footer -->
+<section class="wrap" id="info">
+  <div class="sec-head rv"><h2>Как заказать</h2><span class="ln"></span><span class="cnt">оплата · доставка</span></div>
+  <div class="info-grid">
+    <div class="info-card rv"><span class="info-n">01</span><h3>Оформление</h3><p>Выбираешь товар и размер, оформляешь заказ — он приходит нам в WhatsApp. Подтверждаем наличие и детали.</p></div>
+    <div class="info-card rv"><span class="info-n">02</span><h3>Оплата</h3><p>Перевод Kaspi после подтверждения заказа в WhatsApp. Номер для оплаты пришлём в чате.</p></div>
+    <div class="info-card rv"><span class="info-n">03</span><h3>Доставка</h3><p>По Казахстану — 1–2 дня. По миру — от недели. Самовывоз — Астана. Трек пришлём после отправки.</p></div>
+    <div class="info-card rv"><span class="info-n">04</span><h3>Возврат</h3><p>Обмен или возврат в течение 14 дней при сохранении вида и бирок. Напиши нам — решим быстро.</p></div>
+  </div>
+  <div class="info-contact rv"><span>Связаться:</span><a href="https://wa.me/77774961358" target="_blank">WhatsApp</a><a href="https://instagram.com/redflagseverywear" target="_blank">Instagram</a></div>
+</section>
 <footer>
   <div class="wrap foot">
     <div>
@@ -434,10 +477,10 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
     <div>
       <h4>Доставка</h4>
       <ul>
-        <li><a>По Казахстану — 1–2 дня</a></li>
-        <li><a>По миру — от 1 недели</a></li>
-        <li><a>Самовывоз — Астана</a></li>
-        <li><a>Возврат и обмен</a></li>
+        <li><a data-scroll="info">По Казахстану — 1–2 дня</a></li>
+        <li><a data-scroll="info">По миру — от 1 недели</a></li>
+        <li><a data-scroll="info">Самовывоз — Астана</a></li>
+        <li><a data-scroll="info">Возврат и обмен</a></li>
       </ul>
     </div>
     <div>
@@ -522,6 +565,7 @@ COLLECTIONS.forEach(function(c){TYPES.forEach(function(ty){PRODUCTS.push({id:c.k
 /* ===================== HELPERS / GRAPHICS ===================== */
 function fmt(n){return "₸"+n.toLocaleString("ru-RU").replace(/\u00A0/g," ");}
 function isApp(t){return t==="hoodie"||t==="tee"||t==="sweat";}
+function isSoon(t){return t==="hoodie"||t==="sweat"||t==="socks";}
 var $=function(s,r){return (r||document).querySelector(s);};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
 
@@ -580,9 +624,10 @@ $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeo
   html+='<div class="feature photo rv"><img class="cover-img" src="'+(typeof IMG!=="undefined"?IMG["cover_"+c.key]:"")+'" alt="'+c.title+'"><span class="cover-go">Смотреть →</span></div>';
   // product cards (first 5)
   prods.forEach(function(p){
-   html+='<div class="card rv" data-open="'+p.id+'"><div class="ph">'+productArt(p.t,1)+
-   '<button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button></div>'+
-   '<div class="card-base"><span class="nm">'+p.name+'</span><div class="pr">'+fmt(p.price)+'</div></div></div>';
+   var soon=isSoon(p.t);
+   html+='<div class="card rv'+(soon?' soon':'')+'" data-open="'+p.id+'"><div class="ph">'+productArt(p.t,1)+
+   (soon?'<span class="soon-badge">Coming soon</span>':'<button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button>')+'</div>'+
+   '<div class="card-base"><span class="nm">'+p.name+'</span><div class="pr">'+(soon?'<span class="pr-soon">Скоро в продаже</span>':fmt(p.price))+'</div></div></div>';
   });
   // lifestyle banner
   var lsMap={white:"ls_manTee",red:"ls_manCapSun",other:"ls_beanie"};
@@ -617,6 +662,7 @@ function renderCart(){
 rfc.q=function(key,d){state.cart=state.cart.map(function(i){return i.key===key?Object.assign({},i,{qty:Math.max(1,i.qty+d)}):i;});renderCart();};
 rfc.rm=function(key){state.cart=state.cart.filter(function(i){return i.key!==key;});renderCart();};
 rfc.add=function(p,size,qty){
+ if(isSoon(p.t)){rfc.toast("Скоро в продаже");return;}
  var key=p.id+"-"+size;var ex=state.cart.filter(function(i){return i.key===key;})[0];
  if(ex){ex.qty+=qty;}else{state.cart.push({key:key,id:p.id,t:p.t,name:p.name,price:p.price,size:size,qty:qty});}
  renderCart();rfc.toast("Добавлено в корзину");
@@ -638,14 +684,16 @@ rfc.openProduct=function(id){
  var ap=isApp(p.t);
  var care=ap?'<div class="care">'+careIcons()+'</div>':'';
  var sizesBtns=SIZES.map(function(s){return '<button data-size="'+s+'" class="'+(s==="M"?"on":"")+'">'+s+'</button>';}).join("");
+ var soon=isSoon(p.t);
+ var buyBlock = soon
+  ? '<div class="soon-note">⚑ Скоро в продаже. Следи за стартом дропа в Instagram.</div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank">Узнать о старте — Instagram</a>'
+  : '<div class="lbl">Выберите размер: <span class="gd" onclick="rfc.guide()">Таблица размеров</span></div><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><div class="lbl">Количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  var media='<div class="pdp-media grain">'+ (typeof IMG!=="undefined"&&IMG[p.t] ? '<img class="pmedia" src="'+IMG[p.t]+'" alt="">' : (ap?'<div class="gar" style="width:62%">'+garment(p.t)+'</div>'+printHTML("red",1.5):'<div class="gar" style="width:62%">'+garment(p.t)+'</div><div class="print">'+flag(40,RED)+'</div>'))+'</div>';
  $("#pdp").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><button class="round" onclick="rfc.openCart()" style="border-radius:50%"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></button></div></div>'+
  '<div class="wrap pdp"><div class="pdp-info"><h1 class="pdp-title">'+p.name+'</h1><div class="pdp-price">'+fmt(p.price)+'</div><p class="pdp-desc">'+p.desc+'</p>'+care+
- '<div class="lbl">Выберите размер: <span class="gd" onclick="rfc.guide()">Таблица размеров</span></div><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div>'+
- '<div class="lbl">Количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div>'+
- '<button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button></div>'+media+'</div>';
- if(ap){$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
+ buyBlock+'</div>'+media+'</div>';
+ if(!soon&&ap){$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
  else{state.pSize="ONE SIZE";}
  showScreen("#pdp");
 };
