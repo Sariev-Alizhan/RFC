@@ -331,7 +331,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .mtable th{background:#fafafa;font-weight:600;color:#555}.mtable td.b{font-weight:800}
 
 /* ---------- toast ---------- */
-.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:13px 26px;border-radius:999px;font-size:14px;font-weight:700;z-index:90;opacity:0;transition:.3s;display:flex;align-items:center;gap:8px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:13px 26px;border-radius:999px;font-size:14px;font-weight:700;z-index:90;opacity:0;transition:.3s;display:flex;align-items:center;gap:8px;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .toast .d{width:8px;height:8px;border-radius:50%;background:var(--red)}
 
@@ -383,6 +383,9 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .pr-soon{color:#9a9a9a;font-size:12.5px;font-weight:600;letter-spacing:.02em}
 .soon-note{background:#f6f6f6;border:1px solid #ececec;border-radius:14px;padding:16px 18px;font-size:14px;line-height:1.5;color:#444;margin:6px 0 16px}
 .btn-block.soon-btn{text-decoration:none;text-align:center;display:block}
+/* кликабельность */
+a,button,select,label.opt,.cur,.gd,.cover-go,.chip,.act,.x,[data-scroll],[data-open],[data-quick],[data-home],.ibtn,.burger,.add,.round,.del,.qty button,.news button,.suc-l a,.info-contact a,.nav a,.menu a,.foot a{cursor:pointer}
+.marquee,.marquee *,nav.main,nav.main a,.menu a,.foot a,.cur,.logo,.cover-go,.gd,.chip,.opt,.soon-badge,.card .nm,.card .pr,button,.ibtn,.burger{-webkit-user-select:none;user-select:none}
 </style>
 </head>
 <body>
@@ -621,7 +624,7 @@ $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeo
   html+='<section class="wrap sec" id="'+c.key+'"><div class="sec-head rv"><h2>'+c.title+'</h2><span class="ln"></span><span class="cnt">'+prods.length+' позиций</span></div>';
   html+='<div class="col-grid">';
   // feature
-  html+='<div class="feature photo rv"><img class="cover-img" src="'+(typeof IMG!=="undefined"?IMG["cover_"+c.key]:"")+'" alt="'+c.title+'"><span class="cover-go">Смотреть →</span></div>';
+  html+='<div class="feature photo rv" data-open="'+c.key+'-tee"><img class="cover-img" src="'+(typeof IMG!=="undefined"?IMG["cover_"+c.key]:"")+'" alt="'+c.title+'"><span class="cover-go">Смотреть →</span></div>';
   // product cards (first 5)
   prods.forEach(function(p){
    var soon=isSoon(p.t);
@@ -876,6 +879,7 @@ $("#adminLink").onclick=rfc.openCrm;
 $("#menuAdmin").onclick=rfc.openCrm;
 (function(){var ig=$("#igLink");if(ig)ig.href="https://instagram.com/"+SHOP.ig;var wf=$("#waFoot");if(wf)wf.href=waLink(SHOP.wa,"Здравствуйте! Пишу по поводу Red Flag Community");var ef=$("#emailFoot");if(ef)ef.href="mailto:"+SHOP.email;})();
 $("#searchBtn").onclick=function(){rfc.toast("Поиск скоро будет ✦");};
+(function(){var c=document.querySelector(".cur");if(c)c.onclick=function(){rfc.toast("Цены и оплата — в тенге ₸");};})();
 $("#guide").onclick=function(e){if(e.target===this)rfc.closeGuide();};
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){rfc.closeCart();rfc.closeMenu();rfc.closeGuide();$$(".screen").forEach(function(s){s.classList.remove("on");});document.body.style.overflow="";}});
 
