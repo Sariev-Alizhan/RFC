@@ -71,6 +71,10 @@ nav.main a:hover{color:var(--red)}nav.main a:hover::after{width:100%}
 .hero-h1 .r{color:var(--red)}
 .hero-h1 em{font-family:var(--serif);font-style:italic;font-weight:600;text-transform:none}
 .hero-cta{display:flex;align-items:center;gap:18px;margin-top:clamp(26px,4vw,40px);flex-wrap:wrap}
+.hero-flag{margin-bottom:14px}
+.hero-flag svg{display:block}
+.hero-actions{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-top:clamp(26px,4vw,40px)}
+.hero-link{display:inline-flex;align-items:center;gap:12px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink);cursor:pointer}
 .btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border-radius:999px;padding:15px 38px;font-weight:700;font-size:14px;letter-spacing:.3px;transition:.25s}
 .btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.22)}
 .btn.red{background:var(--red)}
@@ -261,9 +265,11 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .care{display:flex;gap:14px;margin:24px 0}
 .lbl{font-weight:700;font-size:13px;margin:26px 0 12px}
 .lbl .gd{float:right;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.sizes{display:flex;align-items:center;background:var(--mist);border-radius:999px;padding:6px;gap:2px;width:fit-content;max-width:100%;flex-wrap:wrap}
-.sizes button{min-width:56px;height:54px;border-radius:999px;font-weight:700;font-size:14px;color:#8a8a8a;transition:.2s}
-.sizes button.on{background:#fff;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.size-row{display:inline-flex;align-items:center;background:var(--mist);border-radius:999px;padding:7px;gap:6px;max-width:100%;flex-wrap:wrap}
+.sizes{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sizes button{width:58px;height:58px;border-radius:50%;background:#fff;font-weight:600;font-size:15px;color:var(--ink);transition:.18s;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.sizes button.on{background:var(--ink);color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.size-guide-btn{width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:none;border-left:1.5px solid #d6d6d6;border-radius:0;color:var(--ink);margin-left:2px;cursor:pointer}
 .qty.lg{margin-top:6px}.qty.lg button{width:54px;height:52px;font-size:20px}.qty.lg span{min-width:90px;font-size:15px}
 
 /* ---------- checkout / orders ---------- */
@@ -323,12 +329,13 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .modal-bg.on .modal{transform:none}
 .modal .x{position:absolute;top:18px;right:18px;width:42px;height:42px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center}
 .modal h3{font-size:14px;color:#555;margin-bottom:6px}
-.diagram{height:200px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:8px}
-.diagram svg{height:180px;width:auto}
+.diagram{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:14px;padding:4px 0}
+.diagram svg{width:100%;max-width:420px;height:auto}
 .dim{position:absolute;font-size:12px;background:#fff;padding:1px 6px;color:#333}
 .mtable{width:100%;border-collapse:collapse;font-size:12.5px}
 .mtable th,.mtable td{border:1px solid var(--line);padding:10px 5px;text-align:center}
 .mtable th{background:#fafafa;font-weight:600;color:#555}.mtable td.b{font-weight:800}
+.mtable th i{font-style:normal;font-weight:400;color:#aaa;font-size:11px}
 
 /* ---------- toast ---------- */
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:13px 26px;border-radius:999px;font-size:14px;font-weight:700;z-index:90;opacity:0;transition:.3s;display:flex;align-items:center;gap:8px;pointer-events:none}
@@ -383,9 +390,15 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .pr-soon{color:#9a9a9a;font-size:12.5px;font-weight:600;letter-spacing:.02em}
 .soon-note{background:#f6f6f6;border:1px solid #ececec;border-radius:14px;padding:16px 18px;font-size:14px;line-height:1.5;color:#444;margin:6px 0 16px}
 .btn-block.soon-btn{text-decoration:none;text-align:center;display:block}
-/* кликабельность */
-a,button,select,label.opt,.cur,.gd,.cover-go,.chip,.act,.x,[data-scroll],[data-open],[data-quick],[data-home],.ibtn,.burger,.add,.round,.del,.qty button,.news button,.suc-l a,.info-contact a,.nav a,.menu a,.foot a{cursor:pointer}
-.marquee,.marquee *,nav.main,nav.main a,.menu a,.foot a,.cur,.logo,.cover-go,.gd,.chip,.opt,.soon-badge,.card .nm,.card .pr,button,.ibtn,.burger{-webkit-user-select:none;user-select:none}
+/* ====== Кликабельность: курсор-рука + запрет выделения на кнопках ====== */
+a,button,select,label.opt,.cur,.gd,.cover-go,.chip,.act,.x,
+[data-scroll],[data-open],[data-quick],[data-home],
+.ibtn,.burger,.add,.round,.del,.qty button,.news button,
+.suc-l a,.info-contact a,.nav a,.menu a,.foot a{cursor:pointer}
+.marquee,.marquee *,nav.main,nav.main a,.menu a,.foot a,.cur,.logo,
+.cover-go,.gd,.chip,.opt,.soon-badge,.card .nm,.card .pr,
+button,.ibtn,.burger,.cnt,.sec-head h2,.band{
+ -webkit-user-select:none;-moz-user-select:none;user-select:none}
 </style>
 </head>
 <body>
@@ -417,16 +430,11 @@ a,button,select,label.opt,.cur,.gd,.cover-go,.chip,.act,.x,[data-scroll],[data-o
 <main>
 <section class="wrap hero">
   <div class="hero-l">
-    <div class="kicker rv">Новая коллекция · Астана, Казахстан · Доставка по миру</div>
-    <h1 class="hero-h1 rv">We are <span class="r">not</span> perfect.<br><em>We are</em> <span class="r">honest.</span></h1>
-    <div class="hero-cta rv">
-      <button class="btn red" data-scroll="white">Купить коллекцию →</button>
-      <button class="btn ghost" data-scroll="about">О бренде</button>
-    </div>
-    <div class="hero-meta rv">
-      <div><b>3</b><span>КОЛЛЕКЦИИ</span></div>
-      <div><b>15</b><span>ПОЗИЦИЙ</span></div>
-      <div><b>100%</b><span>COTTON</span></div>
+    <div class="hero-flag rv"><svg width="58" height="58" viewBox="0 0 58 58" fill="none"><path d="M15 9v40" stroke="#E11236" stroke-width="4.5" stroke-linecap="round"/><path d="M17 11c8 0 9 6 17 6s8-4 12-4v17c-4 1-8 3-12 3-8 0-9-6-17-6V11Z" fill="#E11236"/></svg></div>
+    <h1 class="hero-h1 rv">We are not perfect.<br>We are <span class="r">honest.</span></h1>
+    <div class="hero-actions rv">
+      <a class="hero-link" data-scroll="white">Новая коллекция →</a>
+      <button class="btn" data-scroll="white">Купить</button>
     </div>
   </div>
   <div class="collage rv">
@@ -624,7 +632,7 @@ $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeo
   html+='<section class="wrap sec" id="'+c.key+'"><div class="sec-head rv"><h2>'+c.title+'</h2><span class="ln"></span><span class="cnt">'+prods.length+' позиций</span></div>';
   html+='<div class="col-grid">';
   // feature
-  html+='<div class="feature photo rv" data-open="'+c.key+'-tee"><img class="cover-img" src="'+(typeof IMG!=="undefined"?IMG["cover_"+c.key]:"")+'" alt="'+c.title+'"><span class="cover-go">Смотреть →</span></div>';
+  html+='<div class="feature photo rv"><img class="cover-img" src="'+(typeof IMG!=="undefined"?IMG["cover_"+c.key]:"")+'" alt="'+c.title+'"></div>';
   // product cards (first 5)
   prods.forEach(function(p){
    var soon=isSoon(p.t);
@@ -690,13 +698,13 @@ rfc.openProduct=function(id){
  var soon=isSoon(p.t);
  var buyBlock = soon
   ? '<div class="soon-note">⚑ Скоро в продаже. Следи за стартом дропа в Instagram.</div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank">Узнать о старте — Instagram</a>'
-  : '<div class="lbl">Выберите размер: <span class="gd" onclick="rfc.guide()">Таблица размеров</span></div><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><div class="lbl">Количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
+  : '<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  var media='<div class="pdp-media grain">'+ (typeof IMG!=="undefined"&&IMG[p.t] ? '<img class="pmedia" src="'+IMG[p.t]+'" alt="">' : (ap?'<div class="gar" style="width:62%">'+garment(p.t)+'</div>'+printHTML("red",1.5):'<div class="gar" style="width:62%">'+garment(p.t)+'</div><div class="print">'+flag(40,RED)+'</div>'))+'</div>';
  $("#pdp").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><button class="round" onclick="rfc.openCart()" style="border-radius:50%"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></button></div></div>'+
  '<div class="wrap pdp"><div class="pdp-info"><h1 class="pdp-title">'+p.name+'</h1><div class="pdp-price">'+fmt(p.price)+'</div><p class="pdp-desc">'+p.desc+'</p>'+care+
  buyBlock+'</div>'+media+'</div>';
- if(!soon&&ap){$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
+ if(!soon&&ap){state.pSize="M";$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
  else{state.pSize="ONE SIZE";}
  showScreen("#pdp");
 };
@@ -848,7 +856,7 @@ rfc.closeScreen=function(sel){$(sel).classList.remove("on");document.body.style.
 /* ===================== SIZE GUIDE ===================== */
 rfc.guide=function(){
  var rows=SIZE_TABLE.map(function(r){return '<tr>'+r.map(function(c,i){return '<td class="'+(i===0?"b":"")+'">'+c+'</td>';}).join("")+'</tr>';}).join("");
- $("#guide").innerHTML='<div class="modal"><button class="x" onclick="rfc.closeGuide()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button><h3>Size guide</h3><div class="diagram">'+garment("tee")+'<span class="dim" style="top:18px">Плечи</span><span class="dim" style="top:78px">Грудь</span></div><table class="mtable"><thead><tr><th>Размер</th><th>Длина</th><th>Грудь</th><th>Плечи</th><th>Рукава</th><th>Рост</th><th>Вес</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ $("#guide").innerHTML='<div class="modal"><button class="x" onclick="rfc.closeGuide()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button><h3>Size guide</h3><div class="diagram"><svg viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" fill="#111"/></marker></defs><path d="M150 62 L120 50 L78 74 L97 106 L120 96 L120 286 L300 286 L300 96 L323 106 L342 74 L300 50 L270 62 C262 80 236 86 210 86 C184 86 158 80 150 62 Z" fill="#fff" stroke="#222" stroke-width="1.6" stroke-linejoin="round"/><line x1="124" y1="66" x2="296" y2="66" stroke="#111" stroke-width="1.1" marker-start="url(#ah)" marker-end="url(#ah)"/><line x1="130" y1="150" x2="290" y2="150" stroke="#111" stroke-width="1.1" marker-start="url(#ah)" marker-end="url(#ah)"/><line x1="72" y1="72" x2="72" y2="286" stroke="#111" stroke-width="1.1" marker-start="url(#ah)" marker-end="url(#ah)"/><line x1="307" y1="102" x2="338" y2="80" stroke="#111" stroke-width="1.1" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="210" y="46" text-anchor="middle" font-size="15" fill="#111" font-family="Archivo,sans-serif">Плечи</text><rect x="176" y="139" width="68" height="22" fill="#fff"/><text x="210" y="155" text-anchor="middle" font-size="15" fill="#111" font-family="Archivo,sans-serif">Грудь</text><text x="54" y="180" text-anchor="middle" font-size="15" fill="#111" font-family="Archivo,sans-serif" transform="rotate(-90 54 180)">Длина</text><text x="348" y="82" font-size="15" fill="#111" font-family="Archivo,sans-serif">Рукава</text></svg></div><table class="mtable"><thead><tr><th>Размер</th><th>Длина<br><i>(см)</i></th><th>Грудь<br><i>(см)</i></th><th>Плечи<br><i>(см)</i></th><th>Рукава<br><i>(см)</i></th><th>Рост<br><i>(см)</i></th><th>Вес<br><i>(кг)</i></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
  $("#guide").classList.add("on");
 };
 rfc.closeGuide=function(){$("#guide").classList.remove("on");};
