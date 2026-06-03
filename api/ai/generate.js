@@ -88,6 +88,10 @@ export default async function handler(req, res) {
     const msg = e?.message || String(e);
     if (name === 'AuthenticationError') return res.status(401).json({ error: 'Higgsfield auth failed — check KEY_ID:KEY_SECRET in Vercel env vars' });
     if (name === 'NotEnoughCreditsError') return res.status(402).json({ error: 'Higgsfield: not enough credits on the account' });
+    if (name === 'AccountError') {
+      if (/credit/i.test(msg)) return res.status(402).json({ error: 'Higgsfield Cloud API: not enough credits' });
+      return res.status(402).json({ error: `Higgsfield account: ${msg}` });
+    }
     if (name === 'BadInputError') return res.status(400).json({ error: `Higgsfield bad input: ${msg}` });
     if (name === 'ValidationError') return res.status(400).json({ error: `Higgsfield validation: ${msg}` });
     return res.status(500).json({ error: msg, name });
