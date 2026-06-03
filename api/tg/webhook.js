@@ -259,7 +259,7 @@ async function mainMenuKb() {
   }
   return [
     [{ text: newCount > 0 ? `📦 Заказы (${newCount} 🔴)` : '📦 Заказы', callback_data: 'orders' }],
-    [{ text: '🎨 AI Студия', callback_data: 'ai' }, { text: '📊 Стата 🚧', callback_data: 'stats' }],
+    [{ text: '🎨 AI Студия', callback_data: 'ai' }, { text: '📊 Статистика', callback_data: 'stats' }],
     [{ text: '⚙️ Админы',     callback_data: 'admins' }, { text: 'ℹ️ Помощь', callback_data: 'help' }]
   ];
 }
@@ -578,9 +578,124 @@ async function showMainMenu(chatId, messageId) {
   return sendMsg(chatId, text, kb);
 }
 
-async function showStatsStub(chatId, messageId) {
-  return editMsg(chatId, messageId,
-    `📊 <b>Статистика</b>\n\n🚧 Скоро (фаза 6E)`, backToMenuKb());
+// Astana time (UTC+5) — RFC работает в Казахстане, "сегодня" должно считаться
+// по местному времени, а не UTC. Vercel functions крутятся в UTC.
+const ASTANA_OFFSET_MS = 5 * 3600 * 1000;
+
+function startOfTodayAstana() {
+  const nowUtc = new Date();
+  const astana = new Date(nowUtc.getTime() + ASTANA_OFFSET_MS);
+  astana.setUTCHours(0, 0, 0, 0);
+  return new Date(astana.getTime() - ASTANA_OFFSET_MS);
+}
+
+async function showStats(chatId, messageId) {
+  if (!sb) return editMsg(chatId, messageId, '⚠️ Supabase не подключён', backToMenuKb());
+
+  const todayStart = startOfTodayAstana();
+  const weekAgo  = new Date(todayStart.getTime() - 6 * 86400000);   // 7 дней включая сегодня
+  const monthAgo = new Date(todayStart.getTime() - 29 * 86400000);  // 30 дней включая сегодня
+
+  // ----- Orders -----
+  const { data: ordersData, error: oErr } = await sb.from('rfc_orders')
+    .select('id, status, total, created_at')
+    .gte('created_at', monthAgo.toISOString());
+
+  const { count: ordersTotalAll } = await sb.from('rfc_orders')
+    .select('*', { count: 'exact', head: true });
+
+  // ----- AI generations -----
+  const { data: aiData, error: aErr } = await sb.from('ai_generations')
+    .select('id, source, status, created_at')
+    .gte('created_at', monthAgo.toISOString());
+
+  const { count: aiTotalAll } = await sb.from('ai_generations')
+    .select('*', { count: 'exact', head: true });
+
+  // Helpers
+  const inRange = (created_at, start) => new Date(created_at) >= start;
+  const sumTotals = arr => arr.filter(o => o.status !== 'Отменён')
+    .reduce((s, o) => s + (Number(o.total) || 0), 0);
+
+  const orders = ordersData || [];
+  const todayO = orders.filter(o => inRange(o.created_at, todayStart));
+  const weekO  = orders.filter(o => inRange(o.created_at, weekAgo));
+  const monthO = orders;
+
+  const revToday = sumTotals(todayO);
+  const revWeek  = sumTotals(weekO);
+  const revMonth = sumTotals(monthO);
+
+  // Текущий статусный профиль (на основе последних 30 дней — практично)
+  const statusBuckets = {};
+  monthO.forEach(o => { statusBuckets[o.status || 'Новый'] = (statusBuckets[o.status || 'Новый'] || 0) + 1; });
+
+  const ai = aiData || [];
+  const aiTodayTg  = ai.filter(g => inRange(g.created_at, todayStart) && g.source === 'telegram').length;
+  const aiTodayWeb = ai.filter(g => inRange(g.created_at, todayStart) && g.source !== 'telegram').length;
+  const aiWeek     = ai.filter(g => inRange(g.created_at, weekAgo)).length;
+  const aiMonth    = ai.length;
+
+  const fmtN = n => Number(n || 0).toLocaleString('ru-RU');
+  const fmtP = n => '₸' + Number(n || 0).toLocaleString('ru-RU');
+
+  const lines = [];
+  lines.push(`📊 <b>Статистика RFC</b>`);
+  lines.push(`<i>${fmtDate(new Date())} · Астана</i>`);
+  lines.push('');
+
+  // Errors banner if any
+  if (oErr || aErr) {
+    lines.push(`⚠️ <i>Ошибка чтения: ${escHtml((oErr?.message || aErr?.message || '').slice(0, 100))}</i>`);
+    lines.push('');
+  }
+
+  lines.push(`📦 <b>Заказы</b>`);
+  lines.push(`Сегодня: <b>${fmtN(todayO.length)}</b>`);
+  lines.push(`Неделя:  <b>${fmtN(weekO.length)}</b>`);
+  lines.push(`Месяц:   <b>${fmtN(monthO.length)}</b>`);
+  if (Number.isFinite(ordersTotalAll)) lines.push(`Всего:   <b>${fmtN(ordersTotalAll)}</b>`);
+  lines.push('');
+
+  // Status breakdown (за месяц)
+  if (Object.keys(statusBuckets).length > 0) {
+    lines.push(`📌 <b>По статусам (за 30 дней)</b>`);
+    // Сортируем в порядке lifecycle
+    const order = ['Новый', 'Связались', 'Оплачен', 'Отправлен', 'Доставлен', 'Отменён'];
+    order.forEach(status => {
+      const cnt = statusBuckets[status] || 0;
+      if (cnt > 0) {
+        const ic = STATUS_ICON[status] || '⚪';
+        lines.push(`   ${ic} ${status}: <b>${fmtN(cnt)}</b>`);
+      }
+    });
+    lines.push('');
+  }
+
+  lines.push(`💰 <b>Выручка</b> <i>(без отменённых)</i>`);
+  lines.push(`Сегодня: <b>${fmtP(revToday)}</b>`);
+  lines.push(`Неделя:  <b>${fmtP(revWeek)}</b>`);
+  lines.push(`Месяц:   <b>${fmtP(revMonth)}</b>`);
+  lines.push('');
+
+  lines.push(`🎨 <b>AI-генерации</b>`);
+  const todayAiStr = aiTodayTg + aiTodayWeb > 0
+    ? `${fmtN(aiTodayTg + aiTodayWeb)} (${fmtN(aiTodayTg)} 📱 + ${fmtN(aiTodayWeb)} 💻)`
+    : '0';
+  lines.push(`Сегодня: <b>${todayAiStr}</b>`);
+  lines.push(`Неделя:  <b>${fmtN(aiWeek)}</b>`);
+  lines.push(`Месяц:   <b>${fmtN(aiMonth)}</b>`);
+  if (Number.isFinite(aiTotalAll)) lines.push(`Всего:   <b>${fmtN(aiTotalAll)}</b>`);
+  lines.push('');
+
+  lines.push(`💳 <b>Higgsfield Cloud</b>`);
+  lines.push(`<a href="https://cloud.higgsfield.ai/">Баланс и пополнение →</a>`);
+
+  const kb = [
+    [{ text: '🔄 Обновить', callback_data: 'stats' }],
+    [{ text: '📦 Заказы', callback_data: 'orders' }, { text: '🏠 Меню', callback_data: 'menu' }]
+  ];
+  return editMsg(chatId, messageId, lines.join('\n'), kb);
 }
 
 async function buildHelpText() {
@@ -681,7 +796,7 @@ async function routeCallback(cb) {
   if (data === 'menu')          return showMainMenu(chatId, messageId);
   if (data === 'orders')        return showOrdersList(chatId, messageId);
   if (data.startsWith('ord:'))  return showOrderDetail(chatId, messageId, data.slice(4));
-  if (data === 'stats')         return showStatsStub(chatId, messageId);
+  if (data === 'stats')         return showStats(chatId, messageId);
   if (data === 'help')          return showHelpMenu(chatId, messageId);
   if (data === 'admins')        return showAdminsMenu(chatId, messageId, userId);
   if (data === 'admins:list')   return showAdminsList(chatId, messageId);
