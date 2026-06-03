@@ -1,4 +1,5 @@
 import { higgsfield, config } from '@higgsfield/client/v2';
+import { sb, verifyAuth } from '../_lib/supabase.js';
 
 const KEY_ID = process.env.HIGGSFIELD_KEY_ID;
 const KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
@@ -7,10 +8,6 @@ if (KEY_ID && KEY_SECRET) {
   config({ credentials: `${KEY_ID}:${KEY_SECRET}` });
 }
 
-// RFC element names → English descriptions appended to prompt.
-// Higgsfield Cloud API doesn't accept MCP-uploaded reference UUIDs;
-// these textual hints give the model enough to render the right look
-// until we wire real client.uploadImage() references in a later step.
 const ELEMENT_DESC = {
   'rfc-navy-cap': 'wearing a navy blue baseball cap with a small embroidered red pennant flag patch on the front',
   'rfc-flag-tee': 'wearing a black cotton t-shirt with a large red pennant flag printed across the chest',
@@ -18,13 +15,16 @@ const ELEMENT_DESC = {
 };
 
 const VALID_ASPECTS = new Set(['1:1', '4:5', '9:16', '16:9', '3:4', '21:9']);
+const MODEL = 'flux-pro/kontext/max/text-to-image';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const auth = await verifyAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: 'Unauthorized: ' + auth.error });
+
   if (!KEY_ID || !KEY_SECRET) {
-    return res.status(500).json({ error: 'Server config: HIGGSFIELD_KEY_ID and HIGGSFIELD_KEY_SECRET must be set in Vercel env vars' });
+    return res.status(500).json({ error: 'Server config: HIGGSFIELD_KEY_ID and HIGGSFIELD_KEY_SECRET must be set' });
   }
 
   const body = req.body || {};
@@ -32,62 +32,78 @@ export default async function handler(req, res) {
   const aspect = VALID_ASPECTS.has(body.aspect) ? body.aspect : '4:5';
   const elements = Array.isArray(body.elements) ? body.elements : [];
 
-  if (!prompt) {
-    return res.status(400).json({ error: 'Missing prompt' });
-  }
-  if (prompt.length > 4000) {
-    return res.status(400).json({ error: 'Prompt too long (max 4000 chars)' });
-  }
+  if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+  if (prompt.length > 4000) return res.status(400).json({ error: 'Prompt too long (max 4000 chars)' });
 
-  // Enrich prompt with element descriptions
-  const elText = elements
-    .map(n => ELEMENT_DESC[n])
-    .filter(Boolean)
-    .join(', ');
+  const elText = elements.map(n => ELEMENT_DESC[n]).filter(Boolean).join(', ');
   const fullPrompt = elText ? `${prompt}. Subject ${elText}.` : prompt;
 
+  let rowId = null;
+  if (sb) {
+    const { data: row, error: insertErr } = await sb.from('ai_generations').insert({
+      user_id: auth.user.id,
+      prompt: prompt,
+      prompt_used: fullPrompt,
+      model: MODEL,
+      aspect,
+      elements,
+      status: 'submitting'
+    }).select('id').single();
+    if (insertErr) {
+      console.error('ai_generations insert failed:', insertErr.message);
+    } else {
+      rowId = row?.id || null;
+    }
+  }
+
   try {
-    // withPolling:false → submit and return immediately, frontend will poll status
-    const jobSet = await higgsfield.subscribe('flux-pro/kontext/max/text-to-image', {
-      input: {
-        prompt: fullPrompt,
-        aspect_ratio: aspect,
-        safety_tolerance: 2
-      },
+    const jobSet = await higgsfield.subscribe(MODEL, {
+      input: { prompt: fullPrompt, aspect_ratio: aspect, safety_tolerance: 2 },
       withPolling: false
     });
 
-    // Rare case: Higgsfield completed synchronously
-    if (jobSet.isCompleted) {
-      const url = jobSet.jobs?.[0]?.results?.raw?.url;
-      if (url) {
-        return res.status(200).json({
-          job_id: jobSet.id,
-          status: 'completed',
-          result_url: url,
-          prompt_used: fullPrompt
-        });
-      }
-    }
-    if (jobSet.isFailed) {
-      return res.status(500).json({ error: 'Higgsfield: generation failed at submit', job_id: jobSet.id });
-    }
-    if (jobSet.isNsfw) {
-      return res.status(422).json({ error: 'Higgsfield: content flagged as NSFW' });
+    const immediateUrl = jobSet.isCompleted ? jobSet.jobs?.[0]?.results?.raw?.url : null;
+    const finalStatus = immediateUrl ? 'completed' : (jobSet.isFailed ? 'error' : (jobSet.isNsfw ? 'error' : 'pending'));
+    const finalError = jobSet.isFailed ? 'submit failed' : (jobSet.isNsfw ? 'nsfw' : null);
+
+    if (sb && rowId) {
+      await sb.from('ai_generations').update({
+        job_id: jobSet.id,
+        status: finalStatus,
+        result_url: immediateUrl,
+        error: finalError
+      }).eq('id', rowId);
     }
 
-    // Normal path: queued/in_progress — frontend polls /api/ai/status?id=...
+    if (immediateUrl) {
+      return res.status(200).json({
+        row_id: rowId, job_id: jobSet.id, status: 'completed',
+        result_url: immediateUrl, prompt_used: fullPrompt
+      });
+    }
+    if (jobSet.isFailed) {
+      return res.status(500).json({ error: 'Higgsfield: generation failed at submit', row_id: rowId, job_id: jobSet.id });
+    }
+    if (jobSet.isNsfw) {
+      return res.status(422).json({ error: 'Higgsfield: content flagged as NSFW', row_id: rowId });
+    }
+
     return res.status(200).json({
-      job_id: jobSet.id,
-      status: 'pending',
-      prompt_used: fullPrompt
+      row_id: rowId, job_id: jobSet.id, status: 'pending', prompt_used: fullPrompt
     });
 
   } catch (e) {
     const name = e?.name || '';
     const msg = e?.message || String(e);
+
+    if (sb && rowId) {
+      await sb.from('ai_generations').update({
+        status: 'error', error: `${name}: ${msg}`.slice(0, 500)
+      }).eq('id', rowId);
+    }
+
     if (name === 'AuthenticationError') return res.status(401).json({ error: 'Higgsfield auth failed — check KEY_ID:KEY_SECRET in Vercel env vars' });
-    if (name === 'NotEnoughCreditsError') return res.status(402).json({ error: 'Higgsfield: not enough credits on the account' });
+    if (name === 'NotEnoughCreditsError') return res.status(402).json({ error: 'Higgsfield: not enough credits' });
     if (name === 'AccountError') {
       if (/credit/i.test(msg)) return res.status(402).json({ error: 'Higgsfield Cloud API: not enough credits' });
       return res.status(402).json({ error: `Higgsfield account: ${msg}` });

@@ -279,6 +279,22 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .ai-result img{width:100%;border-radius:14px;border:1px solid var(--line);display:block}
 .ai-result-actions{display:flex;gap:8px;flex-wrap:wrap}
 .ai-hint{font-size:11px;color:#888;background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.55;margin-top:4px}
+.ai-history{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
+.ai-hist-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
+.ai-hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.ai-hist-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.15s}
+.ai-hist-card:hover{border-color:var(--ink);transform:translateY(-2px)}
+.ai-hist-thumb{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#fafafa;overflow:hidden;position:relative}
+.ai-hist-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ai-hist-thumb.bad{background:#fff5f5}
+.ai-hist-thumb.pend{background:#fafafa}
+.ai-hist-bad{font-size:32px;color:#e11236;font-weight:700}
+.ai-hist-pend{font-size:24px;color:#bbb;animation:aifade 1.5s ease-in-out infinite}
+@keyframes aifade{0%,100%{opacity:.4}50%{opacity:1}}
+.ai-hist-meta{padding:8px 10px}
+.ai-hist-date{font-size:10px;color:#999;letter-spacing:.04em;margin-bottom:4px;text-transform:uppercase;font-weight:600}
+.ai-hist-prompt{font-size:11px;color:var(--ink);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(max-width:760px){.ai-hist-grid{grid-template-columns:repeat(2,1fr)}}
 button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:760px){.ai-grid{grid-template-columns:1fr}.ai-row{grid-template-columns:1fr}.admin-tab{padding:12px 14px;font-size:13px}}
 .crm-search{display:flex;gap:10px;margin-bottom:18px}
@@ -920,7 +936,25 @@ function renderAiBlock(){
   '<div class="ai-els">'+elBtns+'</div>'+
   '<button class="btn-block" onclick="rfc.aiGenerate()"'+dis+'>'+(busy?"Генерирую…":"Сгенерировать")+'</button>'+
   '<div class="ai-hint">🚩 Подключено к Higgsfield Cloud API · модель Flux Pro Kontext Max · элементы пока подмешиваются текстом в промпт (нативные референсы — следующий шаг). Каждая генерация ≈ 5–15 кредитов.</div>'+
- '</div><div class="ai-result-col">'+res+'</div></div>';
+ '</div><div class="ai-result-col">'+res+'</div></div>'+renderAiHistory();
+}
+function renderAiHistory(){
+ var h=state.aiHistory||[];
+ var head='<div class="ai-hist-h"><span class="ai-lbl">История · последние '+h.length+'</span><button class="act" onclick="rfc.aiLoadHistory()" style="padding:6px 12px;font-size:11px">Обновить</button></div>';
+ if(!h.length)return '<div class="ai-history">'+head+'<div class="ai-empty" style="min-height:120px;padding:30px;font-size:12px">Пока пусто. Сделай первую генерацию.</div></div>';
+ var months=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+ var cards=h.map(function(it){
+  var d=new Date(it.created_at);
+  var dt=d.getDate()+" "+months[d.getMonth()]+", "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+  var thumb=it.result_url?'<img src="'+it.result_url+'" alt="">':(it.status==="error"?'<div class="ai-hist-bad">×</div>':'<div class="ai-hist-pend">…</div>');
+  var promo=(it.prompt||"").replace(/[<>"']/g,"").slice(0,80);
+  var stCls=it.status==="completed"?"ok":(it.status==="error"?"bad":"pend");
+  return '<div class="ai-hist-card" onclick="rfc.aiReuse(\''+it.id+'\')" title="Кликни — подставит промпт в форму">'+
+   '<div class="ai-hist-thumb '+stCls+'">'+thumb+'</div>'+
+   '<div class="ai-hist-meta"><div class="ai-hist-date">'+dt+'</div><div class="ai-hist-prompt">'+promo+'</div></div>'+
+  '</div>';
+ }).join("");
+ return '<div class="ai-history">'+head+'<div class="ai-hist-grid">'+cards+'</div></div>';
 }
 rfc.crmFilter=function(f){state.crmFilter=f;renderCrm();};
 rfc.crmStatus=function(i,v){if(state.crm[i]){var id=state.crm[i].id;state.crm[i].status=v;if(CLOUD){try{sb.from("rfc_orders").update({status:v}).eq("id",id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();}};
@@ -929,7 +963,7 @@ function copyText(s){try{navigator.clipboard.writeText(s);rfc.toast("Скопи�
 rfc.crmSetSearch=function(v){state.crmSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('crmSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 rfc.crmSetSort=function(v){state.crmSort=v;renderCrm();};
 rfc.crmCopy=function(i){var o=state.crm[i];if(!o)return;var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");var t=o.name+"\n"+o.phone+(o.email?"\n"+o.email:"")+"\nДоставка: "+(o.delivery||"")+"\nАдрес: "+addr+(o.comment?"\nКоммент: "+o.comment:"")+"\nИтого: "+fmt(o.total)+"\nЗаказ: "+o.id;copyText(t);};
-rfc.adminTab=function(t){state.adminTab=t;renderCrm();};
+rfc.adminTab=function(t){state.adminTab=t;renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}};
 rfc.aiToggleEl=function(name){var s=(state.aiElements||[]).slice();var i=s.indexOf(name);if(i>=0)s.splice(i,1);else s.push(name);state.aiElements=s;renderCrm();};
 rfc.aiCopyUrl=function(){if(state.aiResult)copyText(state.aiResult);};
 rfc.aiReset=function(){state.aiStatus="idle";state.aiResult=null;state.aiError=null;state.aiJobId=null;renderCrm();};
@@ -937,25 +971,64 @@ rfc.aiGenerate=function(){
  var p=(state.aiPrompt||"").trim();
  if(!p){alert("Впиши промпт");return;}
  state.aiStatus="submitting";state.aiResult=null;state.aiError=null;renderCrm();
- fetch("/api/ai/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:p,model:state.aiModel||"nano_banana_pro",aspect:state.aiAspect||"4:5",elements:state.aiElements||[]})})
+ var hdrs={"Content-Type":"application/json"};
+ var sess=sb&&sb.auth?sb.auth.getSession():Promise.resolve({data:{session:null}});
+ sess.then(function(r){
+   var tok=r&&r.data&&r.data.session&&r.data.session.access_token;
+   if(tok)hdrs["Authorization"]="Bearer "+tok;
+   return fetch("/api/ai/generate",{method:"POST",headers:hdrs,body:JSON.stringify({prompt:p,model:state.aiModel||"nano_banana_pro",aspect:state.aiAspect||"4:5",elements:state.aiElements||[]})});
+ })
   .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d};});})
   .then(function(x){
    if(!x.ok||x.d.error)throw new Error(x.d.error||("HTTP "+(x.ok?"?":"err")));
-   if(x.d.status==="completed"&&x.d.result_url){state.aiStatus="done";state.aiResult=x.d.result_url;renderCrm();return;}
+   if(x.d.status==="completed"&&x.d.result_url){state.aiStatus="done";state.aiResult=x.d.result_url;renderCrm();rfc.aiLoadHistory();return;}
    if(!x.d.job_id)throw new Error("нет job_id в ответе");
    state.aiStatus="polling";state.aiJobId=x.d.job_id;renderCrm();
+   rfc.aiLoadHistory();
    rfc.aiPoll(x.d.job_id,0);
   }).catch(function(e){state.aiStatus="error";state.aiError=e.message||"сетевая ошибка";renderCrm();});
 };
 rfc.aiPoll=function(id,tries){
  if(tries>60){state.aiStatus="error";state.aiError="превышено время ожидания (2 мин)";renderCrm();return;}
- fetch("/api/ai/status?id="+encodeURIComponent(id))
+ var hdrs={};
+ var sess=sb&&sb.auth?sb.auth.getSession():Promise.resolve({data:{session:null}});
+ sess.then(function(r){
+   var tok=r&&r.data&&r.data.session&&r.data.session.access_token;
+   if(tok)hdrs["Authorization"]="Bearer "+tok;
+   return fetch("/api/ai/status?id="+encodeURIComponent(id),{headers:hdrs});
+ })
   .then(function(r){return r.json();})
   .then(function(d){
-   if(d.status==="completed"&&d.result_url){state.aiStatus="done";state.aiResult=d.result_url;renderCrm();}
-   else if(d.status==="error"||d.error){state.aiStatus="error";state.aiError=d.error||"генерация не удалась";renderCrm();}
+   if(d.status==="completed"&&d.result_url){state.aiStatus="done";state.aiResult=d.result_url;renderCrm();rfc.aiLoadHistory();}
+   else if(d.status==="error"||d.error){state.aiStatus="error";state.aiError=d.error||"генерация не удалась";renderCrm();rfc.aiLoadHistory();}
    else{setTimeout(function(){rfc.aiPoll(id,tries+1);},2000);}
   }).catch(function(e){state.aiStatus="error";state.aiError=e.message||"ошибка статуса";renderCrm();});
+};
+rfc.aiLoadHistory=function(){
+ var hdrs={};
+ var sess=sb&&sb.auth?sb.auth.getSession():Promise.resolve({data:{session:null}});
+ sess.then(function(r){
+   var tok=r&&r.data&&r.data.session&&r.data.session.access_token;
+   if(!tok){state.aiHistory=[];return null;}
+   hdrs["Authorization"]="Bearer "+tok;
+   return fetch("/api/ai/history?limit=20",{headers:hdrs});
+ })
+  .then(function(r){if(!r)return null;return r.json();})
+  .then(function(d){
+   if(!d)return;
+   state.aiHistory=Array.isArray(d.items)?d.items:[];
+   if(state.adminTab==="ai")renderCrm();
+  }).catch(function(){state.aiHistory=[];});
+};
+rfc.aiReuse=function(id){
+ var h=(state.aiHistory||[]).find(function(x){return x.id===id;});
+ if(!h)return;
+ state.aiPrompt=h.prompt||"";
+ if(h.aspect)state.aiAspect=h.aspect;
+ if(Array.isArray(h.elements))state.aiElements=h.elements;
+ if(h.status==="completed"&&h.result_url){state.aiStatus="done";state.aiResult=h.result_url;}
+ else{state.aiStatus="idle";state.aiResult=null;}
+ renderCrm();
 };
 
 
