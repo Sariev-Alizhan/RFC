@@ -919,7 +919,7 @@ function renderAiBlock(){
   '<label class="ai-lbl">Элементы (вшиваются в промпт)</label>'+
   '<div class="ai-els">'+elBtns+'</div>'+
   '<button class="btn-block" onclick="rfc.aiGenerate()"'+dis+'>'+(busy?"Генерирую…":"Сгенерировать")+'</button>'+
-  '<div class="ai-hint">⚠️ Сейчас мок-эндпоинт: вернёт заглушку (наше og.jpg). Реальная генерация подключится на Шаге 3 — после API-ключей Higgsfield в Vercel.</div>'+
+  '<div class="ai-hint">🚩 Подключено к Higgsfield Cloud API · модель Flux Pro Kontext Max · элементы пока подмешиваются текстом в промпт (нативные референсы — следующий шаг). Каждая генерация ≈ 5–15 кредитов.</div>'+
  '</div><div class="ai-result-col">'+res+'</div></div>';
 }
 rfc.crmFilter=function(f){state.crmFilter=f;renderCrm();};
@@ -941,6 +941,7 @@ rfc.aiGenerate=function(){
   .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d};});})
   .then(function(x){
    if(!x.ok||x.d.error)throw new Error(x.d.error||("HTTP "+(x.ok?"?":"err")));
+   if(x.d.status==="completed"&&x.d.result_url){state.aiStatus="done";state.aiResult=x.d.result_url;renderCrm();return;}
    if(!x.d.job_id)throw new Error("нет job_id в ответе");
    state.aiStatus="polling";state.aiJobId=x.d.job_id;renderCrm();
    rfc.aiPoll(x.d.job_id,0);
