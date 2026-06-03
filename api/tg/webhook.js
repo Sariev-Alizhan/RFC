@@ -246,14 +246,18 @@ function buildStatusKb(orderId, currentStatus, phone) {
     }
     kb.push(row);
   }
-  // WhatsApp / phone deeplinks
+  // WhatsApp deeplink (если есть телефон). Кнопку «Позвонить» убрали —
+  // Telegram inline buttons НЕ поддерживают tel: URLs (отбивает 400
+  // BUTTON_URL_INVALID на весь editMessageText). Телефон остаётся
+  // кликабельным в самом тексте сообщения через <a href="tel:...">.
   if (phone) {
     const cp = String(phone).replace(/[^\d+]/g, '');
     const waNumber = cp.replace(/^\+/, '');
-    kb.push([
-      { text: '💬 WhatsApp', url: `https://wa.me/${waNumber}` },
-      { text: '📞 Позвонить', url: `tel:${cp}` }
-    ]);
+    if (waNumber.length >= 7) {  // минимальная защита от пустых номеров
+      kb.push([
+        { text: '💬 WhatsApp клиенту', url: `https://wa.me/${waNumber}` }
+      ]);
+    }
   }
   kb.push([{ text: '🔄 Обновить', callback_data: `ord:${orderId}` }]);
   kb.push([
