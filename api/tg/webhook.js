@@ -51,9 +51,14 @@ async function tg(method, payload) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    return r.json().catch(() => null);
+    const json = await r.json().catch(() => null);
+    if (json && json.ok === false) {
+      console.error(`[TG ${method}] NOT OK:`, JSON.stringify(json).slice(0, 500),
+        '| payload keys:', Object.keys(payload).join(','));
+    }
+    return json;
   } catch (e) {
-    console.error(`TG ${method} failed:`, e.message);
+    console.error(`[TG ${method}] threw:`, e.message);
     return null;
   }
 }
@@ -314,12 +319,18 @@ async function showOrdersList(chatId, messageId) {
 // ════════════════════════════════════════════════════════════════════
 
 async function showOrderDetail(chatId, messageId, orderId) {
+  console.log('[showOrderDetail] start', { orderId, hasSb: !!sb, chatId, messageId });
   if (!sb) return editMsg(chatId, messageId, '⚠️ Supabase не подключён', backToOrdersKb());
 
   const { data, error } = await sb.from('rfc_orders')
     .select('*')
     .eq('id', orderId)
     .maybeSingle();
+
+  console.log('[showOrderDetail] supabase result', {
+    found: !!data, error: error?.message,
+    id: data?.id, status: data?.status
+  });
 
   if (error) {
     return editMsg(chatId, messageId,
@@ -333,7 +344,10 @@ async function showOrderDetail(chatId, messageId, orderId) {
 
   const text = formatOrderFull(data);
   const kb = buildStatusKb(data.id, data.status || 'Новый', data.phone);
-  return editMsg(chatId, messageId, text, kb);
+  console.log('[showOrderDetail] sending editMsg', { textLen: text.length, kbRows: kb.length });
+  const r = await editMsg(chatId, messageId, text, kb);
+  console.log('[showOrderDetail] editMsg result', { ok: r?.ok, desc: r?.description });
+  return r;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -596,6 +610,8 @@ export default async function handler(req, res) {
     const chatId = cb.message?.chat?.id;
     const messageId = cb.message?.message_id;
     const cbData = cb.data || '';
+
+    console.log('[callback] received', { data: cbData, userId, chatId, messageId });
 
     if (!(await isAdmin(userId))) {
       await ackCallback(cb.id, '🔒 Доступ закрыт', true);
