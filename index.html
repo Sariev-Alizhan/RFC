@@ -254,6 +254,17 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .act.wa{background:#25D366;color:#fff;border-color:#25D366}.act.wa:hover{background:#1da851}
 .act.del{margin-left:auto;color:#aa2222;border-color:transparent}.act.del:hover{background:#fbeaed}
 .crm-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:50px}
+.crm-search{display:flex;gap:10px;margin-bottom:18px}
+.crm-search input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;background:#fff}
+.crm-search input:focus{outline:none;border-color:var(--ink)}
+.crm-search .crm-sel{padding:12px 14px;font-size:13px}
+.crm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;padding:2px 0}
+.crm-row{display:flex;flex-direction:column;gap:2px;min-width:0}
+.crm-row-full{grid-column:1/-1}
+.crm-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9a9a9a;font-weight:700}
+.crm-v{color:#1a1a1a;word-break:break-word;font-size:13.5px}
+.crm-v.crm-note{color:#c47d00!important;font-style:italic}
+@media(max-width:520px){.crm-grid{grid-template-columns:1fr}.crm-search{flex-direction:column}}
 @media(max-width:760px){.crm-list{grid-template-columns:1fr}.crm-stats{grid-template-columns:1fr 1fr}.crm-stats .stat:last-child{grid-column:1/3}}
 
 /* ---------- pdp ---------- */
@@ -791,7 +802,7 @@ function renderSuccess(){
 var CRM_STATUSES=["Новый","Связались","Оплачен","Отправлен","Доставлен","Отменён"];
 function crmClass(s){return s==="Новый"?"s-new":s==="Связались"?"s-call":s==="Оплачен"?"s-paid":s==="Отправлен"?"s-ship":s==="Доставлен"?"s-done":"s-cancel";}
 function crmBar(title){return '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">'+title+'</div><span style="width:46px"></span></div></div>';}
-function fmtDate(iso){try{var x=new Date(iso),p=function(n){return(n<10?"0":"")+n;};return p(x.getDate())+"."+p(x.getMonth()+1)+", "+p(x.getHours())+":"+p(x.getMinutes());}catch(e){return "";}}
+function fmtDate(iso){try{var x=new Date(iso),m=["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"],p=function(n){return(n<10?"0":"")+n;};return x.getDate()+" "+m[x.getMonth()]+", "+p(x.getHours())+":"+p(x.getMinutes());}catch(e){return "";}}
 rfc.openCrm=function(){
  rfc.closeMenu();
  if(CLOUD){ showScreen("#crm"); $("#crm").innerHTML=crmBar("RFC · CRM")+'<div class="wrap" style="padding:60px 18px;text-align:center;color:#999">Загрузка…</div>';
@@ -815,11 +826,20 @@ function cloudLoad(){
  });
 }
 function renderCrm(){
- var list=state.crm.filter(function(o){return state.crmFilter==="all"||o.status===state.crmFilter;});
+ var q=(state.crmSearch||"").trim().toLowerCase();
+ var sort=state.crmSort||"new";
+ var list=state.crm.filter(function(o){
+  if(state.crmFilter!=="all"&&o.status!==state.crmFilter)return false;
+  if(q){var hay=((o.name||"")+" "+(o.phone||"")+" "+(o.email||"")+" "+(o.id||"")).toLowerCase();if(hay.indexOf(q)===-1)return false;}
+  return true;
+ });
+ if(sort==="high")list=list.slice().sort(function(a,b){return b.total-a.total;});
+ else if(sort==="old")list=list.slice().reverse();
  var total=state.crm.length, fresh=state.crm.filter(function(o){return o.status==="Новый";}).length;
  var revenue=state.crm.filter(function(o){return o.status!=="Отменён";}).reduce(function(a,o){return a+o.total;},0);
  var chips='<button class="chip '+(state.crmFilter==="all"?"on":"")+'" onclick="rfc.crmFilter(\'all\')">Все · '+total+'</button>'+
   CRM_STATUSES.map(function(s){var n=state.crm.filter(function(o){return o.status===s;}).length;return '<button class="chip '+(state.crmFilter===s?"on":"")+'" onclick="rfc.crmFilter(\''+s+'\')">'+s+' · '+n+'</button>';}).join("");
+ var searchBar='<div class="crm-search"><input id="crmSearch" type="text" placeholder="Поиск по ФИО, телефону, email или ID…" value="'+(state.crmSearch||"").replace(/"/g,"&quot;")+'" oninput="rfc.crmSetSearch(this.value)"><select class="crm-sel" onchange="rfc.crmSetSort(this.value)"><option value="new"'+(sort==="new"?" selected":"")+'>Сначала новые</option><option value="old"'+(sort==="old"?" selected":"")+'>Сначала старые</option><option value="high"'+(sort==="high"?" selected":"")+'>По сумме ↓</option></select></div>';
  var rows=list.length?list.map(function(o,idx){
   var realIdx=state.crm.indexOf(o);
   var its=o.items.map(function(i){return '<div class="ci-line"><div class="ci-mini">'+productArt(i.t,.5)+'</div><span>'+i.name+' · '+i.size+' ×'+i.qty+'</span><b>'+fmt(i.price*i.qty)+'</b></div>';}).join("");
@@ -827,21 +847,35 @@ function renderCrm(){
   var greet="Здравствуйте, "+o.name+"! Это Red Flag Community. Спасибо за заказ "+o.id+". ";
   var waBtn='<a class="act wa" href="'+waLink(o.phone,greet)+'" target="_blank">'+waIcon(16)+'WhatsApp</a>';
   var mailBtn=o.email?'<a class="act" href="'+mailLink(o.email,"Ваш заказ "+o.id+" — Red Flag Community",greet)+'">Почта</a>':'';
-  return '<div class="crm-card"><div class="crm-h"><div><span class="crm-id">'+o.id+'</span><span class="crm-date">'+o.date+'</span></div><span class="crm-badge '+crmClass(o.status)+'">'+o.status+'</span></div>'+
-   '<div class="crm-cust"><b>'+o.name+'</b><span>'+o.phone+(o.email?' · '+o.email:'')+'</span><span class="crm-addr">'+o.delivery+' — '+o.country+', '+o.city+(o.address?', '+o.address:'')+'</span>'+(o.comment?'<span class="crm-note">«'+o.comment+'»</span>':'')+'</div>'+
+  var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");
+  var grid='<div class="crm-grid">'+
+   '<div class="crm-row"><span class="crm-lbl">ФИО</span><b class="crm-v">'+(o.name||"—")+'</b></div>'+
+   '<div class="crm-row"><span class="crm-lbl">Телефон</span><b class="crm-v">'+(o.phone||"—")+'</b></div>'+
+   (o.email?'<div class="crm-row"><span class="crm-lbl">Email</span><span class="crm-v">'+o.email+'</span></div>':'')+
+   '<div class="crm-row"><span class="crm-lbl">Доставка</span><span class="crm-v">'+(o.delivery||"—")+'</span></div>'+
+   '<div class="crm-row crm-row-full"><span class="crm-lbl">Адрес</span><span class="crm-v">'+(addr||"—")+'</span></div>'+
+   (o.comment?'<div class="crm-row crm-row-full"><span class="crm-lbl">Комментарий</span><span class="crm-v crm-note">«'+o.comment+'»</span></div>':'')+
+  '</div>';
+  return '<div class="crm-card"><div class="crm-h"><div><span class="crm-id">'+o.id+'</span><span class="crm-date">'+(o.date||"")+'</span></div><span class="crm-badge '+crmClass(o.status)+'">'+o.status+'</span></div>'+
+   grid+
    '<div class="crm-items">'+its+'<div class="crm-tot"><span>Итого</span><b>'+fmt(o.total)+'</b></div></div>'+
-   '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
- }).join(""):'<div class="crm-empty">Заказов в этом статусе нет</div>';
+   '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
+ }).join(""):'<div class="crm-empty">Ничего не найдено</div>';
  $("#crm").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
  '<div class="wrap crm">'+
  '<div class="crm-stats"><div class="stat"><b>'+total+'</b><span>Всего заказов</span></div><div class="stat"><b style="color:var(--red)">'+fresh+'</b><span>Новых</span></div><div class="stat"><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+
+ searchBar+
  '<div class="crm-chips">'+chips+'</div>'+
  '<div class="crm-list">'+rows+'</div></div>';
 }
 rfc.crmFilter=function(f){state.crmFilter=f;renderCrm();};
 rfc.crmStatus=function(i,v){if(state.crm[i]){var id=state.crm[i].id;state.crm[i].status=v;if(CLOUD){try{sb.from("rfc_orders").update({status:v}).eq("id",id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();}};
 rfc.crmDel=function(i){var o=state.crm[i];if(!o)return;state.crm.splice(i,1);if(CLOUD){try{sb.from("rfc_orders").delete().eq("id",o.id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();rfc.toast("Заказ удалён");};
+function copyText(s){try{navigator.clipboard.writeText(s);rfc.toast("Скопировано");}catch(e){try{var ta=document.createElement("textarea");ta.value=s;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);rfc.toast("Скопировано");}catch(_){rfc.toast("Не удалось скопировать");}}}
+rfc.crmSetSearch=function(v){state.crmSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('crmSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
+rfc.crmSetSort=function(v){state.crmSort=v;renderCrm();};
+rfc.crmCopy=function(i){var o=state.crm[i];if(!o)return;var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");var t=o.name+"\n"+o.phone+(o.email?"\n"+o.email:"")+"\nДоставка: "+(o.delivery||"")+"\nАдрес: "+addr+(o.comment?"\nКоммент: "+o.comment:"")+"\nИтого: "+fmt(o.total)+"\nЗаказ: "+o.id;copyText(t);};
 
 
 function showScreen(sel){$$(".screen").forEach(function(s){s.classList.remove("on");});$(sel).classList.add("on");$(sel).scrollTop=0;document.body.style.overflow="hidden";}
