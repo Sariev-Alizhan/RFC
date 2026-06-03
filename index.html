@@ -254,6 +254,33 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .act.wa{background:#25D366;color:#fff;border-color:#25D366}.act.wa:hover{background:#1da851}
 .act.del{margin-left:auto;color:#aa2222;border-color:transparent}.act.del:hover{background:#fbeaed}
 .crm-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:50px}
+.admin-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.admin-tab{background:none;border:none;padding:14px 20px;font-size:14px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:.18s;font-family:inherit;letter-spacing:.01em}
+.admin-tab:hover{color:var(--ink)}
+.admin-tab.on{color:var(--ink);border-bottom-color:var(--ink)}
+.ai-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.ai-form-col{display:flex;flex-direction:column;gap:10px}
+.ai-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:700;margin-top:4px}
+.ai-prompt{width:100%;min-height:140px;border:1px solid var(--line);border-radius:14px;padding:14px;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;background:#fff;color:var(--ink)}
+.ai-prompt:focus{outline:none;border-color:var(--ink)}
+.ai-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ai-field{display:flex;flex-direction:column;gap:6px}
+.ai-els{display:flex;gap:8px;flex-wrap:wrap}
+.ai-el{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:inherit;transition:.15s;color:var(--ink)}
+.ai-el:hover{border-color:var(--ink)}
+.ai-el.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ai-empty{border:1px dashed var(--line);border-radius:14px;padding:60px 20px;text-align:center;color:#999;font-size:13px;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ai-err{border-color:#e11236;color:#e11236;border-style:solid;background:#fff5f5}
+.ai-loader{border:1px solid var(--line);border-radius:14px;padding:60px 20px;text-align:center;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.ai-spinner{width:38px;height:38px;border:3px solid var(--mist);border-top-color:var(--ink);border-radius:50%;animation:aispin .8s linear infinite}
+@keyframes aispin{to{transform:rotate(360deg)}}
+.ai-loader-text{color:#666;font-size:13px}
+.ai-result{display:flex;flex-direction:column;gap:12px}
+.ai-result img{width:100%;border-radius:14px;border:1px solid var(--line);display:block}
+.ai-result-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ai-hint{font-size:11px;color:#888;background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.55;margin-top:4px}
+button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:760px){.ai-grid{grid-template-columns:1fr}.ai-row{grid-template-columns:1fr}.admin-tab{padding:12px 14px;font-size:13px}}
 .crm-search{display:flex;gap:10px;margin-bottom:18px}
 .crm-search input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;background:#fff}
 .crm-search input:focus{outline:none;border-color:var(--ink)}
@@ -606,7 +633,7 @@ function productArt(t,scale){
 }
 
 /* ===================== STATE ===================== */
-var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",
+var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",
  orders:[{t:"hoodie",name:'Худи "Red Flag Community"',status:"ДОСТАВЛЕНО"},
          {t:"socks",name:'Носки "RFC Essential"',status:"ДОСТАВКА",date:"20 апреля"},
          {t:"cap",name:'Кепка "RFC Logo"',status:"ОПЛАЧЕНО"}],
@@ -861,13 +888,39 @@ function renderCrm(){
    '<div class="crm-items">'+its+'<div class="crm-tot"><span>Итого</span><b>'+fmt(o.total)+'</b></div></div>'+
    '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
  }).join(""):'<div class="crm-empty">Ничего не найдено</div>';
+ var tab=state.adminTab||"orders";
+ var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')">Заказы · '+total+'</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')">AI Студия</button></div>';
+ var ordersBlock='<div class="crm-stats"><div class="stat"><b>'+total+'</b><span>Всего заказов</span></div><div class="stat"><b style="color:var(--red)">'+fresh+'</b><span>Новых</span></div><div class="stat"><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+searchBar+'<div class="crm-chips">'+chips+'</div><div class="crm-list">'+rows+'</div>';
  $("#crm").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
- '<div class="wrap crm">'+
- '<div class="crm-stats"><div class="stat"><b>'+total+'</b><span>Всего заказов</span></div><div class="stat"><b style="color:var(--red)">'+fresh+'</b><span>Новых</span></div><div class="stat"><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+
- searchBar+
- '<div class="crm-chips">'+chips+'</div>'+
- '<div class="crm-list">'+rows+'</div></div>';
+ '<div class="wrap crm">'+tabBar+(tab==="ai"?renderAiBlock():ordersBlock)+'</div>';
+}
+function renderAiBlock(){
+ var els=[{name:"rfc-navy-cap",label:"Navy кепка"},{name:"rfc-flag-tee",label:"Чёрная футболка"},{name:"rfc-camo-cap",label:"Камо-кепка"}];
+ var sel=state.aiElements||[];
+ var elBtns=els.map(function(e){var on=sel.indexOf(e.name)>=0;return '<button type="button" class="ai-el '+(on?"on":"")+'" onclick="rfc.aiToggleEl(\''+e.name+'\')">'+e.label+'</button>';}).join("");
+ var st=state.aiStatus||"idle";
+ var busy=(st==="submitting"||st==="polling");
+ var dis=busy?" disabled":"";
+ var res;
+ if(busy)res='<div class="ai-loader"><div class="ai-spinner"></div><div class="ai-loader-text">'+(st==="submitting"?"Отправляю запрос…":"Генерирую… до 60 сек")+'</div></div>';
+ else if(st==="done"&&state.aiResult)res='<div class="ai-result"><img src="'+state.aiResult+'" alt="generated"><div class="ai-result-actions"><a class="act" href="'+state.aiResult+'" target="_blank" download>Скачать</a><button class="act" onclick="rfc.aiCopyUrl()">Скопировать ссылку</button><button class="act" onclick="rfc.aiReset()">Новый запрос</button></div></div>';
+ else if(st==="error")res='<div class="ai-empty ai-err">Ошибка: '+(state.aiError||"неизвестно")+'<br><button class="act" style="margin-top:14px" onclick="rfc.aiReset()">Попробовать снова</button></div>';
+ else res='<div class="ai-empty">Здесь появится результат генерации.</div>';
+ var prompt=(state.aiPrompt||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+ var aspect=state.aiAspect||"4:5",model=state.aiModel||"nano_banana_pro";
+ return '<div class="ai-grid"><div class="ai-form-col">'+
+  '<label class="ai-lbl">Промпт</label>'+
+  '<textarea id="aiPrompt" class="ai-prompt" placeholder="Опиши кадр на английском (премиум-стритвир, Астана, кепка/футболка, свет, ракурс…)" oninput="state.aiPrompt=this.value"'+dis+'>'+prompt+'</textarea>'+
+  '<div class="ai-row">'+
+   '<div class="ai-field"><label class="ai-lbl">Модель</label><select class="crm-sel" onchange="state.aiModel=this.value"'+dis+'><option value="nano_banana_pro"'+(model==="nano_banana_pro"?" selected":"")+'>Nano Banana Pro</option><option value="seedream_v4_5"'+(model==="seedream_v4_5"?" selected":"")+'>Seedream 4.5</option></select></div>'+
+   '<div class="ai-field"><label class="ai-lbl">Формат</label><select class="crm-sel" onchange="state.aiAspect=this.value"'+dis+'>'+["4:5","1:1","9:16","16:9"].map(function(a){return '<option value="'+a+'"'+(aspect===a?" selected":"")+'>'+a+'</option>';}).join("")+'</select></div>'+
+  '</div>'+
+  '<label class="ai-lbl">Элементы (вшиваются в промпт)</label>'+
+  '<div class="ai-els">'+elBtns+'</div>'+
+  '<button class="btn-block" onclick="rfc.aiGenerate()"'+dis+'>'+(busy?"Генерирую…":"Сгенерировать")+'</button>'+
+  '<div class="ai-hint">⚠️ Сейчас мок-эндпоинт: вернёт заглушку (наше og.jpg). Реальная генерация подключится на Шаге 3 — после API-ключей Higgsfield в Vercel.</div>'+
+ '</div><div class="ai-result-col">'+res+'</div></div>';
 }
 rfc.crmFilter=function(f){state.crmFilter=f;renderCrm();};
 rfc.crmStatus=function(i,v){if(state.crm[i]){var id=state.crm[i].id;state.crm[i].status=v;if(CLOUD){try{sb.from("rfc_orders").update({status:v}).eq("id",id).then(function(){});}catch(e){}}else{saveCrm();}renderCrm();}};
@@ -876,6 +929,33 @@ function copyText(s){try{navigator.clipboard.writeText(s);rfc.toast("Скопи�
 rfc.crmSetSearch=function(v){state.crmSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('crmSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 rfc.crmSetSort=function(v){state.crmSort=v;renderCrm();};
 rfc.crmCopy=function(i){var o=state.crm[i];if(!o)return;var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");var t=o.name+"\n"+o.phone+(o.email?"\n"+o.email:"")+"\nДоставка: "+(o.delivery||"")+"\nАдрес: "+addr+(o.comment?"\nКоммент: "+o.comment:"")+"\nИтого: "+fmt(o.total)+"\nЗаказ: "+o.id;copyText(t);};
+rfc.adminTab=function(t){state.adminTab=t;renderCrm();};
+rfc.aiToggleEl=function(name){var s=(state.aiElements||[]).slice();var i=s.indexOf(name);if(i>=0)s.splice(i,1);else s.push(name);state.aiElements=s;renderCrm();};
+rfc.aiCopyUrl=function(){if(state.aiResult)copyText(state.aiResult);};
+rfc.aiReset=function(){state.aiStatus="idle";state.aiResult=null;state.aiError=null;state.aiJobId=null;renderCrm();};
+rfc.aiGenerate=function(){
+ var p=(state.aiPrompt||"").trim();
+ if(!p){alert("Впиши промпт");return;}
+ state.aiStatus="submitting";state.aiResult=null;state.aiError=null;renderCrm();
+ fetch("/api/ai/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:p,model:state.aiModel||"nano_banana_pro",aspect:state.aiAspect||"4:5",elements:state.aiElements||[]})})
+  .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d};});})
+  .then(function(x){
+   if(!x.ok||x.d.error)throw new Error(x.d.error||("HTTP "+(x.ok?"?":"err")));
+   if(!x.d.job_id)throw new Error("нет job_id в ответе");
+   state.aiStatus="polling";state.aiJobId=x.d.job_id;renderCrm();
+   rfc.aiPoll(x.d.job_id,0);
+  }).catch(function(e){state.aiStatus="error";state.aiError=e.message||"сетевая ошибка";renderCrm();});
+};
+rfc.aiPoll=function(id,tries){
+ if(tries>60){state.aiStatus="error";state.aiError="превышено время ожидания (2 мин)";renderCrm();return;}
+ fetch("/api/ai/status?id="+encodeURIComponent(id))
+  .then(function(r){return r.json();})
+  .then(function(d){
+   if(d.status==="completed"&&d.result_url){state.aiStatus="done";state.aiResult=d.result_url;renderCrm();}
+   else if(d.status==="error"||d.error){state.aiStatus="error";state.aiError=d.error||"генерация не удалась";renderCrm();}
+   else{setTimeout(function(){rfc.aiPoll(id,tries+1);},2000);}
+  }).catch(function(e){state.aiStatus="error";state.aiError=e.message||"ошибка статуса";renderCrm();});
+};
 
 
 function showScreen(sel){$$(".screen").forEach(function(s){s.classList.remove("on");});$(sel).classList.add("on");$(sel).scrollTop=0;document.body.style.overflow="hidden";}
