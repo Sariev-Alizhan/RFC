@@ -310,7 +310,21 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .cat-edit-actions .act{flex:1;text-align:center;font-size:12px;padding:9px 10px;font-weight:600}
 .cat-edit-actions .cat-save{background:var(--ink);color:#fff;border-color:var(--ink)}
 .cat-edit-actions .cat-save:hover:not(:disabled){opacity:.88}
-@media(max-width:760px){.catalog-grid{grid-template-columns:repeat(2,1fr)}}
+.cat-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.cat-photo{position:relative;aspect-ratio:1/1;background:#fafafa;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.cat-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.cat-photo-actions{position:absolute;top:4px;left:4px;right:4px;display:flex;justify-content:space-between;gap:2px;opacity:0;transition:.15s}
+.cat-photo:hover .cat-photo-actions{opacity:1}
+.cat-photo-actions button{width:24px;height:24px;border:none;border-radius:5px;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0;font-weight:700;line-height:1}
+.cat-photo-actions button:hover:not(:disabled){background:#000}
+.cat-photo-actions button:disabled{opacity:.3;cursor:not-allowed}
+.cat-photo-actions .cat-photo-del{background:rgba(225,18,54,.85)}
+.cat-photo-actions .cat-photo-del:hover:not(:disabled){background:#e11236}
+.cat-photo-main{position:absolute;bottom:4px;left:4px;font-size:8px;background:rgba(0,0,0,.75);color:#fff;padding:3px 6px;border-radius:4px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.cat-photo-add{aspect-ratio:1/1;border:2px dashed var(--line);border-radius:8px;background:#fafafa;cursor:pointer;font-size:10px;color:#666;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;transition:.15s;line-height:1.4;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.cat-photo-add:hover:not(:disabled){border-color:var(--ink);color:var(--ink);background:#fff}
+.cat-photo-add:disabled{cursor:not-allowed;opacity:.6}
+@media(max-width:760px){.catalog-grid{grid-template-columns:repeat(2,1fr)}.cat-photo-grid{grid-template-columns:repeat(3,1fr)}.cat-photo-actions{opacity:1}}
 .ai-history{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
 .ai-hist-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
 .ai-hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
@@ -681,7 +695,7 @@ function productArt(t,scale){
 }
 
 /* ===================== STATE ===================== */
-var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,productEditing:null,productEditForm:null,productSaving:false,productSaveError:null,
+var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,productEditing:null,productEditForm:null,productSaving:false,productSaveError:null,productImageBusy:false,productImageError:null,
  orders:[{t:"hoodie",name:'Худи "Red Flag Community"',status:"ДОСТАВЛЕНО"},
          {t:"socks",name:'Носки "RFC Essential"',status:"ДОСТАВКА",date:"20 апреля"},
          {t:"cap",name:'Кепка "RFC Logo"',status:"ОПЛАЧЕНО"}],
@@ -1049,6 +1063,90 @@ rfc.productSave=function(id){
   renderCrm();
  });
 };
+rfc.productImageUpload=function(productId){
+ if(state.productImageBusy)return;
+ var input=document.createElement("input");
+ input.type="file";input.accept="image/jpeg,image/png,image/webp";input.multiple=true;
+ input.onchange=function(e){
+  var files=Array.prototype.slice.call(e.target.files||[]);
+  if(!files.length)return;
+  rfc.productImageUploadFiles(productId,files);
+ };
+ input.click();
+};
+rfc.productImageUploadFiles=function(productId,files){
+ if(!sb){alert("Supabase не подключён");return;}
+ var p=(state.products||[]).find(function(x){return x.id===productId;});
+ if(!p)return;
+ for(var i=0;i<files.length;i++){
+  if(files[i].size>5*1024*1024){
+   state.productImageError="Файл слишком большой (макс 5 MB): "+files[i].name;
+   renderCrm();return;
+  }
+ }
+ state.productImageBusy=true;state.productImageError=null;renderCrm();
+ var uploads=files.map(function(file){
+  var ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+  if(["jpg","jpeg","png","webp"].indexOf(ext)<0)ext="jpg";
+  var path=p.slug+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"."+ext;
+  return sb.storage.from("product-images").upload(path,file,{contentType:file.type,upsert:false}).then(function(r){
+   if(r.error)throw new Error(r.error.message);
+   return sb.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+  });
+ });
+ Promise.all(uploads).then(function(newUrls){
+  var existing=Array.isArray(p.images)?p.images:[];
+  var combined=existing.concat(newUrls);
+  return sb.from("rfc_products").update({images:combined,updated_at:new Date().toISOString()}).eq("id",productId).then(function(r){
+   if(r.error)throw new Error(r.error.message);
+   p.images=combined;
+  });
+ }).then(function(){
+  state.productImageBusy=false;renderCrm();
+ }).catch(function(e){
+  state.productImageError=e.message||"неизвестная ошибка";
+  state.productImageBusy=false;renderCrm();
+ });
+};
+rfc.productImageRemove=function(productId,imageUrl){
+ if(state.productImageBusy)return;
+ if(!confirm("Удалить эту фотографию?\n\nФайл будет удалён из Storage и из карточки товара."))return;
+ var p=(state.products||[]).find(function(x){return x.id===productId;});
+ if(!p)return;
+ state.productImageBusy=true;state.productImageError=null;renderCrm();
+ // Извлекаем путь из URL: .../product-images/PATH
+ var match=imageUrl.match(/\/product-images\/(.+?)(\?|$)/);
+ var storagePath=match?match[1]:null;
+ var newImages=(p.images||[]).filter(function(u){return u!==imageUrl;});
+ var removeFromStorage=storagePath
+  ? sb.storage.from("product-images").remove([storagePath]).then(function(){return null;})
+  : Promise.resolve(null);
+ removeFromStorage.then(function(){
+  return sb.from("rfc_products").update({images:newImages,updated_at:new Date().toISOString()}).eq("id",productId);
+ }).then(function(r){
+  state.productImageBusy=false;
+  if(r&&r.error){state.productImageError="БД: "+r.error.message;renderCrm();return;}
+  p.images=newImages;renderCrm();
+ }).catch(function(e){
+  state.productImageError=e.message||"неизвестная ошибка";
+  state.productImageBusy=false;renderCrm();
+ });
+};
+rfc.productImageMove=function(productId,fromIdx,toIdx){
+ if(state.productImageBusy)return;
+ var p=(state.products||[]).find(function(x){return x.id===productId;});
+ if(!p||!Array.isArray(p.images))return;
+ if(toIdx<0||toIdx>=p.images.length||fromIdx===toIdx)return;
+ var images=p.images.slice();
+ var moved=images.splice(fromIdx,1)[0];
+ images.splice(toIdx,0,moved);
+ state.productImageBusy=true;renderCrm();
+ sb.from("rfc_products").update({images:images,updated_at:new Date().toISOString()}).eq("id",productId).then(function(r){
+  state.productImageBusy=false;
+  if(r.error){state.productImageError="БД: "+r.error.message;renderCrm();return;}
+  p.images=images;renderCrm();
+ });
+};
 function renderCatalogBlock(){
  if(state.productsLoading)return '<div class="ai-loader" style="padding:60px"><div class="ai-spinner"></div><div class="ai-loader-text">Загружаю каталог…</div></div>';
  if(state.productsError)return '<div class="crm-empty">❌ '+state.productsError+'<br><br><button class="act" onclick="rfc.loadProducts()">Попробовать снова</button></div>';
@@ -1073,8 +1171,27 @@ function renderCatalogBlock(){
    var saving=state.productSaving;
    var err=state.productSaveError;
    var nameEsc=(f.name||"").replace(/"/g,'&quot;').replace(/</g,'&lt;');
+   var imgs=Array.isArray(p.images)?p.images:[];
+   var imgBusy=state.productImageBusy;
+   var imgErr=state.productImageError;
+   var photoTiles=imgs.map(function(url,idx){
+    var first=idx===0,last=idx===imgs.length-1;
+    var safeUrl=url.replace(/"/g,'&quot;');
+    return '<div class="cat-photo">'+
+     '<img src="'+safeUrl+'" alt="">'+
+     '<div class="cat-photo-actions">'+
+      '<button '+(first||imgBusy?"disabled":"")+' onclick="rfc.productImageMove(\''+p.id+'\','+idx+','+(idx-1)+')" title="Сдвинуть влево">←</button>'+
+      '<button '+(last||imgBusy?"disabled":"")+' onclick="rfc.productImageMove(\''+p.id+'\','+idx+','+(idx+1)+')" title="Сдвинуть вправо">→</button>'+
+      '<button class="cat-photo-del" '+(imgBusy?"disabled":"")+' onclick="rfc.productImageRemove(\''+p.id+'\',\''+safeUrl+'\')" title="Удалить">🗑</button>'+
+     '</div>'+
+     (first?'<span class="cat-photo-main">главная</span>':'')+
+    '</div>';
+   }).join('');
+   var addBtn='<button class="cat-photo-add" '+(imgBusy?"disabled":"")+' onclick="rfc.productImageUpload(\''+p.id+'\')">'+
+    (imgBusy?'<span class="ai-spinner" style="width:18px;height:18px;border-width:2px"></span>':(imgs.length===0?'<span>📷<br>Добавить<br>фото</span>':'<span>+<br>Ещё</span>'))+
+   '</button>';
    return '<div class="cat-card cat-editing">'+
-    '<div class="cat-thumb">'+img+'</div>'+
+    '<div class="cat-thumb">'+(imgs[0]?'<img src="'+imgs[0].replace(/"/g,'&quot;')+'" alt="">':'<div class="cat-noimg">нет фото</div>')+'</div>'+
     '<div class="cat-body">'+
      '<div class="cat-meta">'+typeLabel+' · '+collectionLabel+'</div>'+
      '<label class="cat-edit-lbl">Название</label>'+
@@ -1082,10 +1199,13 @@ function renderCatalogBlock(){
      '<label class="cat-edit-lbl">Цена, ₸</label>'+
      '<input class="cat-edit-input" type="text" inputmode="numeric" value="'+(f.price||0)+'" oninput="rfc.productEditField(\'price\',this.value)" '+(saving?"disabled":"")+'>'+
      '<label class="cat-edit-toggle"><input type="checkbox" '+(f.available?"checked":"")+' onchange="rfc.productEditField(\'available\',this.checked)" '+(saving?"disabled":"")+'> Доступен на сайте</label>'+
+     '<label class="cat-edit-lbl" style="margin-top:18px">Фотографии<span style="color:#bbb;font-weight:500;text-transform:none;letter-spacing:0;margin-left:8px">сохраняются сразу при загрузке</span></label>'+
+     '<div class="cat-photo-grid">'+photoTiles+addBtn+'</div>'+
+     (imgErr?'<div class="cat-edit-err">📷 '+imgErr+'</div>':'')+
      (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
      '<div class="cat-edit-actions">'+
-      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving?"disabled":"")+'>'+(saving?"Сохраняю…":"💾 Сохранить")+'</button>'+
-      '<button class="act" onclick="rfc.productEditCancel()" '+(saving?"disabled":"")+'>Отмена</button>'+
+      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving||imgBusy?"disabled":"")+'>'+(saving?"Сохраняю…":"💾 Сохранить")+'</button>'+
+      '<button class="act" onclick="rfc.productEditCancel()" '+(saving||imgBusy?"disabled":"")+'>Закрыть</button>'+
      '</div>'+
     '</div>'+
    '</div>';
