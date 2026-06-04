@@ -295,26 +295,22 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .cat-badge{font-size:9px;padding:4px 8px;border-radius:6px;font-weight:600;letter-spacing:.04em}
 .cat-on{background:#e8f7ed;color:#1a7d35}
 .cat-off{background:#f5f5f5;color:#888}
-.cat-card{cursor:pointer}
-.cat-edit{position:absolute;top:10px;right:10px;width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;opacity:.7;transition:.15s}
-.cat-edit:hover{opacity:1;border-color:var(--ink)}
-.cat-card.cat-editing{cursor:default;grid-column:1/-1;border:2px solid var(--ink);padding:18px;background:#fafafa;display:flex;flex-direction:column;gap:12px;transform:none}
-.cat-card.cat-editing:hover{transform:none}
-.cat-edit-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-family:Unbounded,sans-serif;font-size:14px;font-weight:600}
-.cat-edit-close{width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-size:14px}
-.cat-edit-close:hover{border-color:var(--ink)}
-.cat-edit-row{display:flex;flex-direction:column;gap:6px}
-.cat-edit-row label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#888;font-weight:600}
-.cat-edit-row .inp{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff}
-.cat-edit-row .inp:focus{outline:none;border-color:var(--ink)}
-.cat-edit-check label{display:flex;align-items:center;gap:8px;text-transform:none;color:#333;font-size:13px;letter-spacing:0;cursor:pointer}
-.cat-edit-check input{margin:0;cursor:pointer}
-.cat-edit-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px}
-.cat-edit-actions .btn-block{margin:0;flex:1 1 auto;min-width:140px;padding:11px 18px}
-.cat-edit-actions .act{padding:10px 14px}
-.cat-danger{color:#b22}
-.cat-danger:hover{background:#b22;color:#fff;border-color:#b22}
-@media(max-width:760px){.catalog-grid{grid-template-columns:repeat(2,1fr)} .cat-card.cat-editing{grid-column:1/-1}}
+.cat-edit{position:absolute;top:10px;right:10px;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;z-index:2}
+.cat-edit:hover{background:var(--ink);color:#fff;border-color:var(--ink);transform:scale(1.08)}
+.cat-editing{border-color:var(--ink)!important;box-shadow:0 0 0 3px rgba(0,0,0,.05);transform:none!important}
+.cat-editing .cat-edit{display:none}
+.cat-edit-lbl{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#999;font-weight:600;margin:14px 0 6px}
+.cat-edit-input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:inherit;font-size:14px;box-sizing:border-box;outline:none;transition:.1s;background:#fff}
+.cat-edit-input:focus{border-color:var(--ink)}
+.cat-edit-input:disabled{background:#fafafa;color:#999;cursor:not-allowed}
+.cat-edit-toggle{display:flex;align-items:center;gap:8px;font-size:13px;margin:14px 0 0;cursor:pointer;user-select:none;color:var(--ink)}
+.cat-edit-toggle input{width:16px;height:16px;cursor:pointer;accent-color:var(--ink)}
+.cat-edit-err{font-size:11px;color:#e11236;margin-top:10px;padding:8px 10px;background:#fff5f5;border-radius:6px;line-height:1.4}
+.cat-edit-actions{display:flex;gap:8px;margin-top:14px}
+.cat-edit-actions .act{flex:1;text-align:center;font-size:12px;padding:9px 10px;font-weight:600}
+.cat-edit-actions .cat-save{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cat-edit-actions .cat-save:hover:not(:disabled){opacity:.88}
+@media(max-width:760px){.catalog-grid{grid-template-columns:repeat(2,1fr)}}
 .ai-history{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
 .ai-hist-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
 .ai-hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
@@ -685,7 +681,7 @@ function productArt(t,scale){
 }
 
 /* ===================== STATE ===================== */
-var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,editingProductId:null,creatingProduct:false,savingProduct:false,
+var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,productEditing:null,productEditForm:null,productSaving:false,productSaveError:null,
  orders:[{t:"hoodie",name:'Худи "Red Flag Community"',status:"ДОСТАВЛЕНО"},
          {t:"socks",name:'Носки "RFC Essential"',status:"ДОСТАВКА",date:"20 апреля"},
          {t:"cap",name:'Кепка "RFC Logo"',status:"ОПЛАЧЕНО"}],
@@ -709,11 +705,10 @@ $$("[data-flag]").forEach(function(el){var p=el.getAttribute("data-flag").split(
 $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeof IMG!=="undefined"&&IMG[k])el.src=IMG[k];});
 
 /* ===================== BUILD COLLECTIONS ===================== */
-state.publicProducts=PRODUCTS.slice();
-function buildCollections(){
+(function(){
  var html="";
  COLLECTIONS.forEach(function(c){
-  var prods=state.publicProducts.filter(function(p){return p.col===c.key;});
+  var prods=PRODUCTS.filter(function(p){return p.col===c.key;});
   html+='<section class="wrap sec" id="'+c.key+'"><div class="sec-head rv"><h2>'+c.title+'</h2><span class="ln"></span><span class="cnt">'+prods.length+' позиций</span></div>';
   html+='<div class="col-grid">';
   // feature
@@ -735,20 +730,8 @@ function buildCollections(){
   if(c.key==="white"){html+='<section class="wrap"><div class="strip rv"><img src="'+(typeof IMG!=="undefined"?IMG.ls_label:"")+'" alt="Red Flag Community"></div></section>';}
  });
  $("#collections").innerHTML=html;
-}
-buildCollections();
-// Try to load published catalog from Supabase. On any failure — keep hardcoded.
-if(sb){
- try{
-  sb.from("rfc_products").select("*").eq("available",true).order("sort_order").then(function(r){
-   if(!r||r.error||!r.data||!r.data.length)return;
-   var mapped=r.data.map(function(p){return {id:p.slug,t:p.type,name:p.name,price:Number(p.price)||0,desc:p.description||"",col:p.collection};}).filter(function(p){return p.id&&p.t&&p.col;});
-   if(!mapped.length)return;
-   state.publicProducts=mapped;
-   buildCollections();
-  }).catch(function(){});
- }catch(e){}
-}
+ // fix band flag size
+})();
 
 /* ===================== CART ===================== */
 function cartCount(){return state.cart.reduce(function(a,c){return a+c.qty;},0);}
@@ -787,7 +770,7 @@ rfc.closeAll=function(){$$(".screen").forEach(function(s){s.classList.remove("on
 
 /* ===================== PDP ===================== */
 rfc.openProduct=function(id){
- var p=(state.publicProducts||PRODUCTS).filter(function(x){return x.id===id;})[0];if(!p)return;
+ var p=PRODUCTS.filter(function(x){return x.id===id;})[0];if(!p)return;
  state.pdp=p;state.pSize="M";state.pQty=1;
  var ap=isApp(p.t);
  var care=ap?'<div class="care">'+careIcons()+'</div>':'';
@@ -1033,86 +1016,44 @@ rfc.importProducts=function(){
   state.productsLoaded=false;rfc.loadProducts();
  });
 };
-rfc.refreshPublicCatalog=function(){
- if(!sb)return;
- try{sb.from("rfc_products").select("*").eq("available",true).order("sort_order").then(function(r){
-  if(!r||r.error||!r.data||!r.data.length)return;
-  var mapped=r.data.map(function(p){return {id:p.slug,t:p.type,name:p.name,price:Number(p.price)||0,desc:p.description||"",col:p.collection};}).filter(function(p){return p.id&&p.t&&p.col;});
-  if(!mapped.length)return;
-  state.publicProducts=mapped;
-  if(typeof buildCollections==="function")buildCollections();
- }).catch(function(){});}catch(e){}
+rfc.productEdit=function(id){
+ var p=(state.products||[]).find(function(x){return x.id===id;});
+ if(!p)return;
+ state.productEditing=id;
+ state.productEditForm={name:p.name||"",price:Number(p.price)||0,available:p.available!==false};
+ state.productSaveError=null;
+ renderCrm();
 };
-rfc.editProduct=function(id){if(state.savingProduct)return;state.editingProductId=id;state.creatingProduct=false;renderCrm();};
-rfc.cancelEdit=function(){if(state.savingProduct)return;state.editingProductId=null;state.creatingProduct=false;renderCrm();};
-rfc.newProduct=function(){if(state.savingProduct)return;state.creatingProduct=true;state.editingProductId=null;renderCrm();};
-rfc.saveProduct=function(id){
- if(!sb){alert("Supabase не подключён");return;}
- var nameEl=$("#pe_name"),priceEl=$("#pe_price"),hidEl=$("#pe_hidden");
- if(!nameEl||!priceEl){return;}
- var name=(nameEl.value||"").trim();
- var price=parseInt(priceEl.value,10);
- if(!name){alert("Название не может быть пустым");return;}
- if(!(price>=0)){alert("Цена должна быть числом ≥ 0");return;}
- var patch={name:name,price:price,available:!(hidEl&&hidEl.checked),updated_at:new Date().toISOString()};
- state.savingProduct=true;renderCrm();
- sb.from("rfc_products").update(patch).eq("slug",id).then(function(r){
-  state.savingProduct=false;
-  if(r.error){alert("Ошибка сохранения: "+r.error.message);renderCrm();return;}
-  var i=(state.products||[]).findIndex(function(p){return p.slug===id;});
-  if(i>=0){Object.assign(state.products[i],patch);}
-  state.editingProductId=null;
+rfc.productEditCancel=function(){
+ state.productEditing=null;state.productEditForm=null;state.productSaveError=null;state.productSaving=false;
+ renderCrm();
+};
+rfc.productEditField=function(field,value){
+ if(!state.productEditForm)return;
+ if(field==="price"){var n=parseInt(String(value).replace(/[^\d]/g,""),10);state.productEditForm.price=Number.isFinite(n)?n:0;}
+ else if(field==="available"){state.productEditForm.available=!!value;}
+ else{state.productEditForm[field]=value;}
+};
+rfc.productSave=function(id){
+ if(!sb||!state.productEditForm)return;
+ var f=state.productEditForm;
+ if(!f.name||!f.name.trim()){alert("Название не может быть пустым");return;}
+ if(!Number.isFinite(f.price)||f.price<0){alert("Цена должна быть положительным числом");return;}
+ state.productSaving=true;state.productSaveError=null;renderCrm();
+ sb.from("rfc_products").update({name:f.name.trim(),price:f.price,available:f.available,updated_at:new Date().toISOString()}).eq("id",id).then(function(r){
+  state.productSaving=false;
+  if(r.error){state.productSaveError=r.error.message;renderCrm();return;}
+  var p=(state.products||[]).find(function(x){return x.id===id;});
+  if(p){p.name=f.name.trim();p.price=f.price;p.available=f.available;}
+  state.productEditing=null;state.productEditForm=null;
   renderCrm();
-  rfc.toast("Сохранено");
-  rfc.refreshPublicCatalog();
  });
 };
-rfc.deleteProduct=function(id){
- if(!sb){alert("Supabase не подключён");return;}
- if(!confirm("Удалить товар? Действие необратимо."))return;
- state.savingProduct=true;renderCrm();
- sb.from("rfc_products").delete().eq("slug",id).then(function(r){
-  state.savingProduct=false;
-  if(r.error){alert("Ошибка удаления: "+r.error.message);renderCrm();return;}
-  state.products=(state.products||[]).filter(function(p){return p.slug!==id;});
-  state.editingProductId=null;
-  renderCrm();
-  rfc.toast("Удалено");
-  rfc.refreshPublicCatalog();
- });
-};
-rfc.submitNewProduct=function(){
- if(!sb){alert("Supabase не подключён");return;}
- var nameEl=$("#np_name"),priceEl=$("#np_price"),colEl=$("#np_col"),typeEl=$("#np_type"),hidEl=$("#np_hidden");
- var name=(nameEl&&nameEl.value||"").trim();
- var price=parseInt(priceEl&&priceEl.value,10);
- var col=colEl&&colEl.value||"other";
- var ty=typeEl&&typeEl.value||"cap";
- if(!name){alert("Название не может быть пустым");return;}
- if(!(price>=0)){alert("Цена должна быть числом ≥ 0");return;}
- var baseSlug=col+"-"+ty;
- var existingSlugs={};(state.products||[]).forEach(function(p){existingSlugs[p.slug]=true;});
- var slug=baseSlug,n=2;while(existingSlugs[slug]){slug=baseSlug+"-"+n;n++;}
- var maxSort=(state.products||[]).reduce(function(m,p){return Math.max(m,Number(p.sort_order)||0);},0);
- var row={slug:slug,name:name,collection:col,type:ty,price:price,description:null,images:[],available:!(hidEl&&hidEl.checked),sort_order:maxSort+1};
- state.savingProduct=true;renderCrm();
- sb.from("rfc_products").insert(row).select().then(function(r){
-  state.savingProduct=false;
-  if(r.error){alert("Ошибка создания: "+r.error.message);renderCrm();return;}
-  if(r.data&&r.data[0])(state.products=state.products||[]).unshift(r.data[0]);
-  state.creatingProduct=false;
-  renderCrm();
-  rfc.toast("Создано");
-  rfc.refreshPublicCatalog();
- });
-};
-function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function escAttr(s){return escHtml(s);}
 function renderCatalogBlock(){
  if(state.productsLoading)return '<div class="ai-loader" style="padding:60px"><div class="ai-spinner"></div><div class="ai-loader-text">Загружаю каталог…</div></div>';
- if(state.productsError)return '<div class="crm-empty">❌ '+escHtml(state.productsError)+'<br><br><button class="act" onclick="rfc.loadProducts()">Попробовать снова</button></div>';
+ if(state.productsError)return '<div class="crm-empty">❌ '+state.productsError+'<br><br><button class="act" onclick="rfc.loadProducts()">Попробовать снова</button></div>';
  var products=state.products||[];
- if(products.length===0&&!state.creatingProduct){
+ if(products.length===0){
   return '<div class="catalog-empty">'+
    '<div style="font-size:54px;margin-bottom:12px">📦</div>'+
    '<h3 style="margin:0 0 8px;font-family:Unbounded;font-weight:600;font-size:20px">Каталог пуст</h3>'+
@@ -1120,65 +1061,56 @@ function renderCatalogBlock(){
    '<button class="btn-block" style="max-width:380px" '+(state.productsImporting?'disabled':'')+' onclick="rfc.importProducts()">'+
     (state.productsImporting?'Импортирую…':'Импортировать '+PRODUCTS.length+' товаров')+
    '</button>'+
-   '<div style="margin-top:14px"><button class="act" onclick="rfc.newProduct()">+ Добавить с нуля</button></div>'+
   '</div>';
  }
- var newForm=state.creatingProduct?renderNewProductForm():'';
  var cards=products.map(function(p){
-  if(state.editingProductId===p.id)return renderProductEditor(p);
-  var img=p.images&&p.images[0]?'<img src="'+escAttr(p.images[0])+'" alt="">':'<div class="cat-noimg">нет фото</div>';
+  var img=p.images&&p.images[0]?'<img src="'+p.images[0]+'" alt="">':'<div class="cat-noimg">нет фото</div>';
   var collectionLabel={white:'White',red:'Red',other:'Другие'}[p.collection]||p.collection;
   var typeLabel={cap:'🧢 Кепка',tee:'👕 Футболка',hoodie:'🟫 Худи',sweat:'🟦 Свитшот',socks:'🧦 Носки',boxers:'🩳 Трусы'}[p.type]||p.type;
+  // Editing view
+  if(state.productEditing===p.id){
+   var f=state.productEditForm||{name:"",price:0,available:true};
+   var saving=state.productSaving;
+   var err=state.productSaveError;
+   var nameEsc=(f.name||"").replace(/"/g,'&quot;').replace(/</g,'&lt;');
+   return '<div class="cat-card cat-editing">'+
+    '<div class="cat-thumb">'+img+'</div>'+
+    '<div class="cat-body">'+
+     '<div class="cat-meta">'+typeLabel+' · '+collectionLabel+'</div>'+
+     '<label class="cat-edit-lbl">Название</label>'+
+     '<input class="cat-edit-input" type="text" value="'+nameEsc+'" oninput="rfc.productEditField(\'name\',this.value)" '+(saving?"disabled":"")+'>'+
+     '<label class="cat-edit-lbl">Цена, ₸</label>'+
+     '<input class="cat-edit-input" type="text" inputmode="numeric" value="'+(f.price||0)+'" oninput="rfc.productEditField(\'price\',this.value)" '+(saving?"disabled":"")+'>'+
+     '<label class="cat-edit-toggle"><input type="checkbox" '+(f.available?"checked":"")+' onchange="rfc.productEditField(\'available\',this.checked)" '+(saving?"disabled":"")+'> Доступен на сайте</label>'+
+     (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
+     '<div class="cat-edit-actions">'+
+      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving?"disabled":"")+'>'+(saving?"Сохраняю…":"💾 Сохранить")+'</button>'+
+      '<button class="act" onclick="rfc.productEditCancel()" '+(saving?"disabled":"")+'>Отмена</button>'+
+     '</div>'+
+    '</div>'+
+   '</div>';
+  }
+  // Normal view
   var price="₸"+(Number(p.price)||0).toLocaleString('ru-RU').replace(/\u00A0/g,' ');
   var availBadge=p.available?'<span class="cat-badge cat-on">✅ В наличии</span>':'<span class="cat-badge cat-off">⛔ Скрыт</span>';
-  return '<div class="cat-card" onclick="rfc.editProduct(\''+escAttr(p.id)+'\')">'+
+  return '<div class="cat-card">'+
    '<div class="cat-thumb">'+img+'</div>'+
    '<div class="cat-body">'+
     '<div class="cat-meta">'+typeLabel+' · '+collectionLabel+'</div>'+
-    '<div class="cat-name">'+escHtml(p.name||'без названия')+'</div>'+
+    '<div class="cat-name">'+(p.name||'без названия').replace(/[<>]/g,'')+'</div>'+
     '<div class="cat-row">'+
      '<span class="cat-price">'+price+'</span>'+
      availBadge+
     '</div>'+
    '</div>'+
-   '<button class="cat-edit" onclick="event.stopPropagation();rfc.editProduct(\''+escAttr(p.id)+'\')" title="Редактировать">✏️</button>'+
+   '<button class="cat-edit" onclick="rfc.productEdit(\''+p.id+'\')" title="Редактировать">✏️</button>'+
   '</div>';
  }).join('');
  return '<div class="catalog-head">'+
-  '<div><b style="font-family:Unbounded;font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИК ПО КАРТОЧКЕ — РЕДАКТОР</span></div>'+
-  '<div style="display:flex;gap:8px"><button class="act" '+(state.creatingProduct?'disabled':'')+' onclick="rfc.newProduct()">+ Добавить товар</button><button class="act" onclick="rfc.loadProducts()">🔄</button></div>'+
+  '<div><b style="font-family:Unbounded;font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ ✏️ ДЛЯ ПРАВКИ</span></div>'+
+  '<button class="act" onclick="rfc.loadProducts()">🔄 Обновить</button>'+
  '</div>'+
- newForm+
  '<div class="catalog-grid">'+cards+'</div>';
-}
-function renderProductEditor(p){
- var disabled=state.savingProduct?'disabled':'';
- return '<div class="cat-card cat-editing" onclick="event.stopPropagation()">'+
-  '<div class="cat-edit-head"><b>Редактирование</b><button class="cat-edit-close" onclick="rfc.cancelEdit()" '+disabled+'>✕</button></div>'+
-  '<div class="cat-edit-row"><label>Название</label><input id="pe_name" class="inp" type="text" value="'+escAttr(p.name||'')+'" '+disabled+'></div>'+
-  '<div class="cat-edit-row"><label>Цена, ₸</label><input id="pe_price" class="inp" type="number" min="0" step="100" value="'+(Number(p.price)||0)+'" '+disabled+'></div>'+
-  '<div class="cat-edit-row cat-edit-check"><label><input id="pe_hidden" type="checkbox" '+(p.available===false?'checked':'')+' '+disabled+'> Скрыть с главной</label></div>'+
-  '<div class="cat-edit-actions">'+
-   '<button class="btn-block" '+disabled+' onclick="rfc.saveProduct(\''+escAttr(p.id)+'\')">'+(state.savingProduct?'Сохраняю…':'💾 Сохранить')+'</button>'+
-   '<button class="act" '+disabled+' onclick="rfc.cancelEdit()">Отмена</button>'+
-   '<button class="act cat-danger" '+disabled+' onclick="rfc.deleteProduct(\''+escAttr(p.id)+'\')">🗑 Удалить</button>'+
-  '</div>'+
- '</div>';
-}
-function renderNewProductForm(){
- var disabled=state.savingProduct?'disabled':'';
- return '<div class="cat-card cat-editing" style="margin-bottom:14px">'+
-  '<div class="cat-edit-head"><b>Новый товар</b><button class="cat-edit-close" onclick="rfc.cancelEdit()" '+disabled+'>✕</button></div>'+
-  '<div class="cat-edit-row"><label>Название</label><input id="np_name" class="inp" type="text" placeholder="Например: Кепка RFC Logo" '+disabled+'></div>'+
-  '<div class="cat-edit-row"><label>Цена, ₸</label><input id="np_price" class="inp" type="number" min="0" step="100" value="0" '+disabled+'></div>'+
-  '<div class="cat-edit-row"><label>Коллекция</label><select id="np_col" class="inp" '+disabled+'><option value="white">White</option><option value="red">Red</option><option value="other">Другие</option></select></div>'+
-  '<div class="cat-edit-row"><label>Тип</label><select id="np_type" class="inp" '+disabled+'><option value="cap">🧢 Кепка</option><option value="tee">👕 Футболка</option><option value="hoodie">🟫 Худи</option><option value="sweat">🟦 Свитшот</option><option value="socks">🧦 Носки</option><option value="boxers">🩳 Трусы</option></select></div>'+
-  '<div class="cat-edit-row cat-edit-check"><label><input id="np_hidden" type="checkbox" '+disabled+'> Сразу скрыть с главной</label></div>'+
-  '<div class="cat-edit-actions">'+
-   '<button class="btn-block" '+disabled+' onclick="rfc.submitNewProduct()">'+(state.savingProduct?'Создаю…':'💾 Создать')+'</button>'+
-   '<button class="act" '+disabled+' onclick="rfc.cancelEdit()">Отмена</button>'+
-  '</div>'+
- '</div>';
 }
 rfc.aiToggleEl=function(name){var s=(state.aiElements||[]).slice();var i=s.indexOf(name);if(i>=0)s.splice(i,1);else s.push(name);state.aiElements=s;renderCrm();};
 rfc.aiCopyUrl=function(){if(state.aiResult)copyText(state.aiResult);};
@@ -1269,7 +1201,7 @@ document.addEventListener("click",function(e){
  var quick=e.target.closest("[data-quick]");
  var scroll=e.target.closest("[data-scroll]");
  var home=e.target.closest("[data-home]");
- if(quick){e.stopPropagation();var p=(state.publicProducts||PRODUCTS).filter(function(x){return x.id===quick.getAttribute("data-quick");})[0];if(p)rfc.add(p,"M",1);rfc.openCart();return;}
+ if(quick){e.stopPropagation();var p=PRODUCTS.filter(function(x){return x.id===quick.getAttribute("data-quick");})[0];rfc.add(p,"M",1);rfc.openCart();return;}
  if(open){rfc.openProduct(open.getAttribute("data-open"));return;}
  if(scroll){var id=scroll.getAttribute("data-scroll");rfc.closeAll();rfc.closeMenu();var el=document.getElementById(id);if(el){setTimeout(function(){el.scrollIntoView({behavior:"smooth"});},60);}return;}
  if(home){rfc.closeAll();window.scrollTo({top:0,behavior:"smooth"});return;}
