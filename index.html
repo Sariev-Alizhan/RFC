@@ -766,6 +766,10 @@ rfc.loadSiteProducts=function(){
    return {id:row.slug,t:row.type,name:row.name,price:Number(row.price)||0,desc:row.description||"",col:row.collection,images:Array.isArray(row.images)?row.images:[]};
   });
   renderCollections();
+  // Fix: новые .rv элементы после re-render не наблюдаются IO — сразу делаем их видимыми
+  try{
+   document.querySelectorAll("#collections .rv").forEach(function(el){el.classList.add("in");});
+  }catch(e){}
  });
 };
 // Async подгрузка БД-каталога после первичного рендера hardcoded
