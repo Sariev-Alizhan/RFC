@@ -116,6 +116,8 @@ nav.main a:hover{color:var(--red)}nav.main a:hover::after{width:100%}
 
 .card{position:relative;cursor:pointer;border-radius:var(--r);overflow:hidden}
 .card .ph{position:relative;background:var(--mist);aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:.4s cubic-bezier(.2,.7,.2,1)}
+.card-photo{width:100%;height:100%;object-fit:cover;display:block;transition:.4s cubic-bezier(.2,.7,.2,1)}
+.card.card-real:hover .card-photo{transform:scale(1.04)}
 .card:hover .ph{transform:scale(1.015)}
 .card .gar{width:78%;height:78%;transition:.5s}
 .gsvg{width:100%;height:auto;display:block}
@@ -719,7 +721,7 @@ $$("[data-flag]").forEach(function(el){var p=el.getAttribute("data-flag").split(
 $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeof IMG!=="undefined"&&IMG[k])el.src=IMG[k];});
 
 /* ===================== BUILD COLLECTIONS ===================== */
-(function(){
+function renderCollections(){
  var html="";
  COLLECTIONS.forEach(function(c){
   var prods=PRODUCTS.filter(function(p){return p.col===c.key;});
@@ -730,7 +732,9 @@ $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeo
   // product cards (first 5)
   prods.forEach(function(p){
    var soon=isSoon(p.t);
-   html+='<div class="card rv'+(soon?' soon':'')+'" data-open="'+p.id+'"><div class="ph">'+productArt(p.t,1)+
+   var hasPhoto=p.images&&p.images[0];
+   var thumb=hasPhoto?'<img class="card-photo" src="'+String(p.images[0]).replace(/"/g,'&quot;')+'" alt="'+String(p.name||"").replace(/"/g,'&quot;')+'" loading="lazy">':productArt(p.t,1);
+   html+='<div class="card rv'+(soon?' soon':'')+(hasPhoto?' card-real':'')+'" data-open="'+p.id+'"><div class="ph">'+thumb+
    (soon?'<span class="soon-badge">Coming soon</span>':'<button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button>')+'</div>'+
    '<div class="card-base"><span class="nm">'+p.name+'</span><div class="pr">'+(soon?'<span class="pr-soon">Скоро в продаже</span>':fmt(p.price))+'</div></div></div>';
   });
@@ -744,8 +748,20 @@ $$("[data-img]").forEach(function(el){var k=el.getAttribute("data-img");if(typeo
   if(c.key==="white"){html+='<section class="wrap"><div class="strip rv"><img src="'+(typeof IMG!=="undefined"?IMG.ls_label:"")+'" alt="Red Flag Community"></div></section>';}
  });
  $("#collections").innerHTML=html;
- // fix band flag size
-})();
+}
+renderCollections();
+rfc.loadSiteProducts=function(){
+ if(!sb)return;
+ sb.from("rfc_products").select("*").eq("available",true).order("sort_order").order("collection").order("type").then(function(r){
+  if(r.error||!r.data||!r.data.length)return;
+  PRODUCTS=r.data.map(function(row){
+   return {id:row.slug,t:row.type,name:row.name,price:Number(row.price)||0,desc:row.description||"",col:row.collection,images:Array.isArray(row.images)?row.images:[]};
+  });
+  renderCollections();
+ });
+};
+// Async подгрузка БД-каталога после первичного рендера hardcoded
+setTimeout(function(){try{rfc.loadSiteProducts();}catch(e){console.log("loadSiteProducts failed:",e&&e.message);}},150);
 
 /* ===================== CART ===================== */
 function cartCount(){return state.cart.reduce(function(a,c){return a+c.qty;},0);}
@@ -793,7 +809,8 @@ rfc.openProduct=function(id){
  var buyBlock = soon
   ? '<div class="soon-note">⚑ Скоро в продаже. Следи за стартом дропа в Instagram.</div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank">Узнать о старте — Instagram</a>'
   : '<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
- var media='<div class="pdp-media grain">'+ (typeof IMG!=="undefined"&&IMG[p.t] ? '<img class="pmedia" src="'+IMG[p.t]+'" alt="">' : (ap?'<div class="gar" style="width:62%">'+garment(p.t)+'</div>'+printHTML("red",1.5):'<div class="gar" style="width:62%">'+garment(p.t)+'</div><div class="print">'+flag(40,RED)+'</div>'))+'</div>';
+ var pPhoto=p.images&&p.images[0]?'<img class="pmedia" src="'+String(p.images[0]).replace(/"/g,'&quot;')+'" alt="">':(typeof IMG!=="undefined"&&IMG[p.t]?'<img class="pmedia" src="'+IMG[p.t]+'" alt="">':(ap?'<div class="gar" style="width:62%">'+garment(p.t)+'</div>'+printHTML("red",1.5):'<div class="gar" style="width:62%">'+garment(p.t)+'</div><div class="print">'+flag(40,RED)+'</div>'));
+ var media='<div class="pdp-media grain">'+pPhoto+'</div>';
  $("#pdp").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><button class="round" onclick="rfc.openCart()" style="border-radius:50%"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></button></div></div>'+
  '<div class="wrap pdp"><div class="pdp-info"><h1 class="pdp-title">'+p.name+'</h1><div class="pdp-price">'+fmt(p.price)+'</div><p class="pdp-desc">'+p.desc+'</p>'+care+
