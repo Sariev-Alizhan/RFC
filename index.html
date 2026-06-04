@@ -312,6 +312,14 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(50px,7vw,90px)}
 .cat-edit-actions .act{flex:1;text-align:center;font-size:12px;padding:9px 10px;font-weight:600}
 .cat-edit-actions .cat-save{background:var(--ink);color:#fff;border-color:var(--ink)}
 .cat-edit-actions .cat-save:hover:not(:disabled){opacity:.88}
+.cat-new{border-color:var(--ink)!important;background:#fafafa}
+.cat-new .cat-noimg{color:var(--ink);font-weight:600;letter-spacing:.08em}
+.cat-del-btn{margin-top:10px;width:100%;background:#fff;color:#e11236;border:1px solid #f0c0c8;font-weight:600;font-size:12px;padding:9px 10px;text-align:center}
+.cat-del-btn:hover:not(:disabled){background:#e11236;color:#fff;border-color:#e11236}
+.cat-add-btn{background:var(--ink)!important;color:#fff!important;border-color:var(--ink)!important;font-weight:600}
+.cat-add-btn:hover:not(:disabled){opacity:.88}
+.cat-add-btn:disabled{opacity:.4}
+select.cat-edit-input{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;appearance:none;-webkit-appearance:none}
 .cat-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
 .cat-photo{position:relative;aspect-ratio:1/1;background:#fafafa;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
 .cat-photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -697,7 +705,7 @@ function productArt(t,scale){
 }
 
 /* ===================== STATE ===================== */
-var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,productEditing:null,productEditForm:null,productSaving:false,productSaveError:null,productImageBusy:false,productImageError:null,
+var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,productEditing:null,productEditForm:null,productSaving:false,productSaveError:null,productImageBusy:false,productImageError:null,productCreating:false,productCreateForm:null,productDeleting:false,
  orders:[{t:"hoodie",name:'Худи "Red Flag Community"',status:"ДОСТАВЛЕНО"},
          {t:"socks",name:'Носки "RFC Essential"',status:"ДОСТАВКА",date:"20 апреля"},
          {t:"cap",name:'Кепка "RFC Logo"',status:"ОПЛАЧЕНО"}],
@@ -1164,6 +1172,71 @@ rfc.productImageMove=function(productId,fromIdx,toIdx){
   p.images=images;renderCrm();
  });
 };
+rfc.productCreate=function(){
+ state.productCreating=true;
+ state.productCreateForm={name:"",price:29000,type:"tee",collection:"red",available:true};
+ state.productSaveError=null;
+ renderCrm();
+};
+rfc.productCreateCancel=function(){
+ state.productCreating=false;state.productCreateForm=null;state.productSaveError=null;
+ renderCrm();
+};
+rfc.productCreateField=function(field,value){
+ if(!state.productCreateForm)return;
+ if(field==="price"){var n=parseInt(String(value).replace(/[^\d]/g,""),10);state.productCreateForm.price=Number.isFinite(n)?n:0;}
+ else if(field==="available"){state.productCreateForm.available=!!value;}
+ else{state.productCreateForm[field]=value;}
+};
+rfc.productCreateSave=function(){
+ if(!sb||!state.productCreateForm)return;
+ var f=state.productCreateForm;
+ if(!f.name||!f.name.trim()){alert("Название не может быть пустым");return;}
+ if(!Number.isFinite(f.price)||f.price<0){alert("Цена должна быть положительным числом");return;}
+ if(!f.type){alert("Выбери тип товара");return;}
+ if(!f.collection){alert("Выбери коллекцию");return;}
+ var baseSlug=(f.collection+"-"+f.type).toLowerCase();
+ var slug=baseSlug,counter=1;
+ while((state.products||[]).some(function(p){return p.slug===slug;})){counter++;slug=baseSlug+"-"+counter;}
+ var maxOrder=(state.products||[]).reduce(function(m,p){return Math.max(m,Number(p.sort_order)||0);},-1);
+ state.productSaving=true;state.productSaveError=null;renderCrm();
+ sb.from("rfc_products").insert({slug:slug,name:f.name.trim(),collection:f.collection,type:f.type,price:f.price,available:f.available,images:[],sort_order:maxOrder+1}).select().single().then(function(r){
+  state.productSaving=false;
+  if(r.error){state.productSaveError=r.error.message;renderCrm();return;}
+  state.products.push(r.data);
+  state.productCreating=false;state.productCreateForm=null;
+  // Сразу откроем editing для нового товара чтобы юзер мог загрузить фото
+  state.productEditing=r.data.id;
+  state.productEditForm={name:r.data.name,price:Number(r.data.price)||0,available:r.data.available!==false};
+  renderCrm();
+ });
+};
+rfc.productDelete=function(id){
+ var p=(state.products||[]).find(function(x){return x.id===id;});
+ if(!p)return;
+ if(!confirm("Удалить товар «"+p.name+"»?\n\nЭто действие нельзя отменить.\nВсе фотографии товара также удалятся из Storage."))return;
+ if(!sb)return;
+ state.productDeleting=true;state.productSaveError=null;renderCrm();
+ var imageRemovals=[];
+ (p.images||[]).forEach(function(url){
+  var match=String(url).match(/\/product-images\/(.+?)(\?|$)/);
+  if(match)imageRemovals.push(sb.storage.from("product-images").remove([match[1]]));
+ });
+ var cleanupStorage=imageRemovals.length?Promise.all(imageRemovals).catch(function(){return null;}):Promise.resolve(null);
+ cleanupStorage.then(function(){
+  return sb.from("rfc_products").delete().eq("id",id);
+ }).then(function(r){
+  state.productDeleting=false;
+  if(r.error){state.productSaveError="БД: "+r.error.message;renderCrm();return;}
+  state.products=(state.products||[]).filter(function(x){return x.id!==id;});
+  state.productEditing=null;state.productEditForm=null;
+  renderCrm();
+ }).catch(function(e){
+  state.productDeleting=false;
+  state.productSaveError=e.message||"ошибка";
+  renderCrm();
+ });
+};
 function renderCatalogBlock(){
  if(state.productsLoading)return '<div class="ai-loader" style="padding:60px"><div class="ai-spinner"></div><div class="ai-loader-text">Загружаю каталог…</div></div>';
  if(state.productsError)return '<div class="crm-empty">❌ '+state.productsError+'<br><br><button class="act" onclick="rfc.loadProducts()">Попробовать снова</button></div>';
@@ -1176,6 +1249,36 @@ function renderCatalogBlock(){
    '<button class="btn-block" style="max-width:380px" '+(state.productsImporting?'disabled':'')+' onclick="rfc.importProducts()">'+
     (state.productsImporting?'Импортирую…':'Импортировать '+PRODUCTS.length+' товаров')+
    '</button>'+
+  '</div>';
+ }
+ // Карточка создания нового товара (рендерится первой если productCreating=true)
+ var createCard='';
+ if(state.productCreating){
+  var cf=state.productCreateForm||{name:"",price:29000,type:"tee",collection:"red",available:true};
+  var saving=state.productSaving;
+  var err=state.productSaveError;
+  var nameEsc=(cf.name||"").replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  var typeOpts=[{v:'cap',l:'🧢 Кепка'},{v:'tee',l:'👕 Футболка'},{v:'hoodie',l:'🟫 Худи'},{v:'sweat',l:'🟦 Свитшот'},{v:'socks',l:'🧦 Носки'},{v:'boxers',l:'🩳 Трусы'}].map(function(o){return '<option value="'+o.v+'"'+(cf.type===o.v?' selected':'')+'>'+o.l+'</option>';}).join('');
+  var colOpts=[{v:'white',l:'⚪ White Collection'},{v:'red',l:'🔴 Red Collection'},{v:'other',l:'⚫ Другие'}].map(function(o){return '<option value="'+o.v+'"'+(cf.collection===o.v?' selected':'')+'>'+o.l+'</option>';}).join('');
+  createCard='<div class="cat-card cat-editing cat-new">'+
+   '<div class="cat-thumb"><div class="cat-noimg">новый товар</div></div>'+
+   '<div class="cat-body">'+
+    '<div class="cat-meta" style="color:var(--ink)">+ СОЗДАНИЕ ТОВАРА</div>'+
+    '<label class="cat-edit-lbl">Тип</label>'+
+    '<select class="cat-edit-input" onchange="rfc.productCreateField(\'type\',this.value)" '+(saving?"disabled":"")+'>'+typeOpts+'</select>'+
+    '<label class="cat-edit-lbl">Коллекция</label>'+
+    '<select class="cat-edit-input" onchange="rfc.productCreateField(\'collection\',this.value)" '+(saving?"disabled":"")+'>'+colOpts+'</select>'+
+    '<label class="cat-edit-lbl">Название</label>'+
+    '<input class="cat-edit-input" type="text" placeholder="Напр.: Трусы RFC Red" value="'+nameEsc+'" oninput="rfc.productCreateField(\'name\',this.value)" '+(saving?"disabled":"")+'>'+
+    '<label class="cat-edit-lbl">Цена, ₸</label>'+
+    '<input class="cat-edit-input" type="text" inputmode="numeric" value="'+(cf.price||0)+'" oninput="rfc.productCreateField(\'price\',this.value)" '+(saving?"disabled":"")+'>'+
+    '<label class="cat-edit-toggle"><input type="checkbox" '+(cf.available?"checked":"")+' onchange="rfc.productCreateField(\'available\',this.checked)" '+(saving?"disabled":"")+'> Доступен на сайте сразу</label>'+
+    (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
+    '<div class="cat-edit-actions">'+
+     '<button class="act cat-save" onclick="rfc.productCreateSave()" '+(saving?"disabled":"")+'>'+(saving?"Создаю…":"💾 Создать")+'</button>'+
+     '<button class="act" onclick="rfc.productCreateCancel()" '+(saving?"disabled":"")+'>Отмена</button>'+
+    '</div>'+
+   '</div>'+
   '</div>';
  }
  var cards=products.map(function(p){
@@ -1221,9 +1324,10 @@ function renderCatalogBlock(){
      (imgErr?'<div class="cat-edit-err">📷 '+imgErr+'</div>':'')+
      (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
      '<div class="cat-edit-actions">'+
-      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving||imgBusy?"disabled":"")+'>'+(saving?"Сохраняю…":"💾 Сохранить")+'</button>'+
-      '<button class="act" onclick="rfc.productEditCancel()" '+(saving||imgBusy?"disabled":"")+'>Закрыть</button>'+
+      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(saving?"Сохраняю…":"💾 Сохранить")+'</button>'+
+      '<button class="act" onclick="rfc.productEditCancel()" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>Закрыть</button>'+
      '</div>'+
+     '<button class="act cat-del-btn" onclick="rfc.productDelete(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(state.productDeleting?"Удаляю…":"🗑 Удалить товар")+'</button>'+
     '</div>'+
    '</div>';
   }
@@ -1245,9 +1349,9 @@ function renderCatalogBlock(){
  }).join('');
  return '<div class="catalog-head">'+
   '<div><b style="font-family:Unbounded;font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ ✏️ ДЛЯ ПРАВКИ</span></div>'+
-  '<button class="act" onclick="rfc.loadProducts()">🔄 Обновить</button>'+
+  '<div style="display:flex;gap:8px"><button class="act cat-add-btn" onclick="rfc.productCreate()" '+(state.productCreating||state.productEditing?"disabled":"")+'>+ Добавить</button><button class="act" onclick="rfc.loadProducts()">🔄 Обновить</button></div>'+
  '</div>'+
- '<div class="catalog-grid">'+cards+'</div>';
+ '<div class="catalog-grid">'+createCard+cards+'</div>';
 }
 rfc.aiToggleEl=function(name){var s=(state.aiElements||[]).slice();var i=s.indexOf(name);if(i>=0)s.splice(i,1);else s.push(name);state.aiElements=s;renderCrm();};
 rfc.aiCopyUrl=function(){if(state.aiResult)copyText(state.aiResult);};
