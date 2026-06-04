@@ -1286,7 +1286,7 @@ function renderCatalogBlock(){
   '</div>';
  }
  var cards=products.map(function(p){
-  var img=p.images&&p.images[0]?'<img src="'+p.images[0]+'" alt="">':'<div class="cat-noimg">нет фото</div>';
+  var img=p.images&&p.images[0]?'<img src="'+p.images[0]+'" alt="">':productArt(p.t,0.7);
   var collectionLabel={white:'White',red:'Red',other:'Другие'}[p.collection]||p.collection;
   var typeLabel={cap:'🧢 Кепка',tee:'👕 Футболка',hoodie:'🟫 Худи',sweat:'🟦 Свитшот',socks:'🧦 Носки',boxers:'🩳 Трусы'}[p.type]||p.type;
   // Editing view
@@ -1315,7 +1315,7 @@ function renderCatalogBlock(){
     (imgBusy?'<span class="ai-spinner" style="width:18px;height:18px;border-width:2px"></span>':(imgs.length===0?'<span>📷<br>Добавить<br>фото</span>':'<span>+<br>Ещё</span>'))+
    '</button>';
    return '<div class="cat-card cat-editing">'+
-    '<div class="cat-thumb">'+(imgs[0]?'<img src="'+imgs[0].replace(/"/g,'&quot;')+'" alt="">':'<div class="cat-noimg">нет фото</div>')+'</div>'+
+    '<div class="cat-thumb">'+(imgs[0]?'<img src="'+imgs[0].replace(/"/g,'&quot;')+'" alt="">':productArt(p.type,0.7))+'</div>'+
     '<div class="cat-body">'+
      '<div class="cat-meta">'+typeLabel+' · '+collectionLabel+'</div>'+
      '<label class="cat-edit-lbl">Название</label>'+
