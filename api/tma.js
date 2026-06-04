@@ -1,8 +1,8 @@
 // /api/tma.js — единый endpoint для Telegram Mini App
 // HMAC проверка initData → admin check → actions для orders/AI
 
-const crypto = require("crypto");
-const { createClient } = require("@supabase/supabase-js");
+import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
 const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, {
   auth: { persistSession: false }
@@ -40,7 +40,7 @@ async function isAdmin(tgUserId) {
   const envList = (process.env.TELEGRAM_ADMIN_IDS || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
   if (envList.indexOf(String(tgUserId)) >= 0) return true;
   try {
-    const r = await sb.from("tg_admins").select("tg_user_id").eq("tg_user_id", String(tgUserId)).maybeSingle();
+    const r = await sb.from("tg_admins").select("telegram_user_id").eq("telegram_user_id", String(tgUserId)).maybeSingle();
     return !!(r && r.data);
   } catch (e) { return false; }
 }
@@ -78,7 +78,7 @@ async function hfPoll(jobSetId) {
 }
 
 /* -------- HTTP handler -------- */
-module.exports = async function (req, res) {
+export default async function (req, res) {
   // CORS for Telegram WebApp
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
