@@ -1,10 +1,10 @@
 import { sb } from './_lib/supabase.js';
 
+// One-shot migration. This whole file is deleted right after a single run.
+const TOKEN = 'mig-rfc-3a91f7d4-2026-06-05';
+
 export default async function handler(req, res) {
-  const secret = process.env.SUPABASE_WEBHOOK_SECRET;
-  if (!secret || req.query.s !== secret) {
-    return res.status(401).json({ error: 'unauthorized' });
-  }
+  if (req.query.t !== TOKEN) return res.status(401).json({ error: 'unauthorized' });
   if (!sb) return res.status(500).json({ error: 'supabase not configured' });
 
   const before = await sb.from('rfc_products').select('slug,type,name').eq('type', 'socks');
