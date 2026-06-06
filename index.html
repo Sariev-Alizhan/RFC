@@ -443,6 +443,12 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .sizes{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .sizes button{width:58px;height:58px;border-radius:50%;background:#fff;font-weight:600;font-size:15px;color:var(--ink);transition:.18s;box-shadow:0 2px 8px rgba(0,0,0,.05)}
 .sizes button.on{background:var(--ink);color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.swatch-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.swatch{width:38px;height:38px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #d8d8d8,0 2px 6px rgba(0,0,0,.06);cursor:pointer;padding:0;transition:.2s;position:relative}
+.swatch:hover{transform:scale(1.07)}
+.swatch.on{box-shadow:0 0 0 2px var(--ink),0 4px 12px rgba(0,0,0,.15);transform:scale(1.05)}
+.swatch-name{font-size:13px;color:#666;margin-bottom:8px}
+.swatch-name b{color:var(--ink);font-weight:700}
 .size-guide-btn{width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:none;border-left:1.5px solid #d6d6d6;border-radius:0;color:var(--ink);margin-left:2px;cursor:pointer}
 .qty.lg{margin-top:6px}.qty.lg button{width:54px;height:52px;font-size:20px}.qty.lg span{min-width:90px;font-size:15px}
 
@@ -732,6 +738,22 @@ var COLLECTIONS=[
  {key:"other",title:"ДРУГИЕ",theme:"dark",fl:"Аксессуары"}
 ];
 var SIZES=["S","M","L","XL","XXL"];
+var VARIANTS={
+ cap:[
+  {key:"black", name:"Чёрный washed", swatch:"#1a1a1a",                                                                  images:["/img/products/cap-black-front.jpg","/img/products/cap-black-side.jpg","/img/products/cap-black-model.jpg"]},
+  {key:"navy",  name:"Navy",          swatch:"#1f3a5f",                                                                  images:["/img/products/cap-navy-front.jpg","/img/products/cap-navy-side.jpg"]},
+  {key:"denim", name:"Denim teal",    swatch:"#3a6b7e",                                                                  images:["/img/products/cap-denim-front.jpg","/img/products/cap-denim-side.jpg"]},
+  {key:"camo",  name:"Камо",          swatch:"linear-gradient(135deg,#4a5837 0%,#7d6e4a 35%,#3d3a25 70%,#5b4f30 100%)",  images:["/img/products/cap-camo-front.jpg","/img/products/cap-camo-side.jpg"]}
+ ],
+ tee:[
+  {key:"black", name:"Чёрный", swatch:"#1a1a1a", images:["/img/products/tee-pair-bigflag.jpg","/img/products/tee-real-front.jpg","/img/products/tee-real-back.jpg","/img/products/tee-pair-smallflag.jpg"]},
+  {key:"white", name:"Белый",  swatch:"#ffffff", images:["/img/products/tee-pair-smallflag.jpg","/img/products/tee-pair-bigflag.jpg"]}
+ ],
+ boxers:[
+  {key:"black", name:"Чёрный",  swatch:"#1a1a1a", images:["/img/products/boxers-black.jpg"]},
+  {key:"red",   name:"Красный", swatch:"#E11236", images:["/img/products/boxers-red.jpg"]}
+ ]
+};
 var SIZE_TABLE=[["S","68,5","58","57,5","23,5","165-170","45-55"],["M","70","60","58","24","165-175","55-65"],["L","71,5","62","59,5","24,5","170-180","60-75"],["XL","73","64","61","25","175-185","70-85"],["XXL","74,5","66","61,5","25,5","180-190","80-90"]];
 var DELIVERY=[
  {k:"kz",name:"Доставка по Казахстану",sub:"1–2 дня",note:"1–2 ДНЯ"},
@@ -896,16 +918,21 @@ function renderCart(){
   foot.innerHTML="";return;
  }
  body.innerHTML=state.cart.map(function(i){
-  return '<div class="crow"><div class="ci">'+productArt(i.t,.7)+'</div><div class="cd"><div class="cn">'+i.name+'</div><div class="cs">Размер: '+i.size+'</div><div class="crb"><div class="qty"><button onclick="rfc.q(\''+i.key+'\',-1)">−</button><span>'+i.qty+'</span><button onclick="rfc.q(\''+i.key+'\',1)">+</button></div><div style="display:flex;align-items:center;gap:10px"><b style="font-size:13px">'+fmt(i.price*i.qty)+'</b><button class="del" onclick="rfc.rm(\''+i.key+'\')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div></div></div>';
+  var meta='Размер: '+i.size+(i.color?' · Цвет: '+i.color:'');
+  var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6%;box-sizing:border-box">':productArt(i.t,.7);
+  return '<div class="crow"><div class="ci">'+thumb+'</div><div class="cd"><div class="cn">'+i.name+'</div><div class="cs">'+meta+'</div><div class="crb"><div class="qty"><button onclick="rfc.q(\''+i.key+'\',-1)">−</button><span>'+i.qty+'</span><button onclick="rfc.q(\''+i.key+'\',1)">+</button></div><div style="display:flex;align-items:center;gap:10px"><b style="font-size:13px">'+fmt(i.price*i.qty)+'</b><button class="del" onclick="rfc.rm(\''+i.key+'\')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div></div></div>';
  }).join("");
  foot.innerHTML='<div class="cart-foot"><div class="sum tot"><span>Итого</span><span>'+fmt(subtotal())+'</span></div><div class="sum" style="font-size:12px;color:#999;margin-top:2px"><span>Доставку рассчитаем при подтверждении</span></div><button class="btn-block" onclick="rfc.checkout()">Оформить заказ</button></div>';
 }
 rfc.q=function(key,d){state.cart=state.cart.map(function(i){return i.key===key?Object.assign({},i,{qty:Math.max(1,i.qty+d)}):i;});renderCart();};
 rfc.rm=function(key){state.cart=state.cart.filter(function(i){return i.key!==key;});renderCart();};
-rfc.add=function(p,size,qty){
+rfc.add=function(p,size,qty,variant){
  if(isSoon(p.t)){rfc.toast("Скоро в продаже");return;}
- var key=p.id+"-"+size;var ex=state.cart.filter(function(i){return i.key===key;})[0];
- if(ex){ex.qty+=qty;}else{state.cart.push({key:key,id:p.id,t:p.t,name:p.name,price:p.price,size:size,qty:qty});}
+ var vKey=variant?variant.key:"";
+ var key=p.id+"-"+size+(vKey?"-"+vKey:"");
+ var img=variant&&variant.images?variant.images[0]:(p.images&&p.images[0]||null);
+ var ex=state.cart.filter(function(i){return i.key===key;})[0];
+ if(ex){ex.qty+=qty;}else{state.cart.push({key:key,id:p.id,t:p.t,name:p.name,price:p.price,size:size,qty:qty,color:variant?variant.name:null,colorKey:vKey||null,img:img});}
  renderCart();rfc.toast("Добавлено в корзину");
 };
 
@@ -926,11 +953,24 @@ rfc.openProduct=function(id){
  var care=ap?'<div class="care">'+careIcons()+'</div>':'';
  var sizesBtns=SIZES.map(function(s){return '<button data-size="'+s+'" class="'+(s==="M"?"on":"")+'">'+s+'</button>';}).join("");
  var soon=isSoon(p.t);
+ var vlist=VARIANTS[p.t]||[];
+ var activeVar=null;
+ if(vlist.length){
+  var pImgs=p.images||[];
+  activeVar=vlist.find(function(v){return v.images.some(function(im){return pImgs.indexOf(im)!==-1;});})||vlist[0];
+ }
+ state.pdpVariant=activeVar;
+ var swatchBlock="";
+ if(activeVar){
+  var swatches=vlist.map(function(v){return '<button class="swatch'+(v.key===activeVar.key?" on":"")+'" data-key="'+v.key+'" style="background:'+v.swatch+'" onclick="rfc.setVariant(\''+v.key+'\')" aria-label="'+v.name+'" title="'+v.name+'"></button>';}).join("");
+  swatchBlock='<div class="lbl">Цвет:</div><div class="swatch-name">Выбрано: <b id="pdpColorName">'+activeVar.name+'</b></div><div class="swatch-row">'+swatches+'</div>';
+ }
  var buyBlock = soon
   ? '<div class="soon-note">⚑ Скоро в продаже. Следи за стартом дропа в Instagram.</div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank">Узнать о старте — Instagram</a>'
-  : '<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
+  : swatchBlock+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  state.pdpImgIdx=0;
- var pPhoto=pdpGallery(p,ap);
+ var displayP=activeVar?Object.assign({},p,{images:activeVar.images}):p;
+ var pPhoto=pdpGallery(displayP,ap);
  var media='<div class="pdp-media grain">'+pPhoto+'</div>';
  $("#pdp").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><button class="round" onclick="rfc.openCart()" style="border-radius:50%"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></button></div></div>'+
@@ -959,9 +999,23 @@ function pdpGallery(p,ap){
   '<button class="gal-nav r" onclick="rfc.gal(1)" aria-label="Следующее"><svg viewBox="0 0 24 24"><path d="M10 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
   '<div class="gal-dots" id="pdpGalDots">'+dots+'</div></div>';
 }
-rfc.gal=function(dir){if(!state.pdp)return;var n=(state.pdp.images||[]).length;if(n<2)return;state.pdpImgIdx=(state.pdpImgIdx+dir+n)%n;galSync();};
+rfc.gal=function(dir){var v=state.pdpVariant;var imgs=v?v.images:((state.pdp&&state.pdp.images)||[]);var n=imgs.length;if(n<2)return;state.pdpImgIdx=(state.pdpImgIdx+dir+n)%n;galSync();};
 rfc.galTo=function(i){state.pdpImgIdx=i;galSync();};
-function galSync(){var t=document.getElementById("pdpGalTrack");if(t)t.style.transform="translateX(-"+(state.pdpImgIdx*100)+"%)";var ds=document.querySelectorAll("#pdpGalDots .gal-dot");ds.forEach(function(d,i){d.classList.toggle("on",i===state.pdpImgIdx);});var c=document.getElementById("pdpGalCount");var n=(state.pdp&&state.pdp.images?state.pdp.images.length:0);if(c&&n)c.textContent=(state.pdpImgIdx+1)+" / "+n;}
+rfc.setVariant=function(key){
+ var p=state.pdp;if(!p)return;
+ var vlist=VARIANTS[p.t]||[];var v=vlist.find(function(x){return x.key===key;});if(!v)return;
+ state.pdpVariant=v;state.pdpImgIdx=0;
+ var mediaWrap=document.querySelector(".pdp-media");
+ if(mediaWrap){
+  var ap=isApp(p.t);
+  var displayP=Object.assign({},p,{images:v.images});
+  mediaWrap.innerHTML=pdpGallery(displayP,ap);
+  attachGalSwipe();
+ }
+ document.querySelectorAll(".swatch").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-key")===key);});
+ var nm=document.getElementById("pdpColorName");if(nm)nm.textContent=v.name;
+};
+function galSync(){var t=document.getElementById("pdpGalTrack");if(t)t.style.transform="translateX(-"+(state.pdpImgIdx*100)+"%)";var ds=document.querySelectorAll("#pdpGalDots .gal-dot");ds.forEach(function(d,i){d.classList.toggle("on",i===state.pdpImgIdx);});var c=document.getElementById("pdpGalCount");var v=state.pdpVariant;var n=v?v.images.length:(state.pdp&&state.pdp.images?state.pdp.images.length:0);if(c&&n)c.textContent=(state.pdpImgIdx+1)+" / "+n;}
 function attachGalSwipe(){
  var el=document.getElementById("pdpGal");if(!el)return;
  var sx=0,dx=0,sw=false;
@@ -972,7 +1026,7 @@ function attachGalSwipe(){
  document.addEventListener("keydown",onkey);
 }
 rfc.pq=function(d){state.pQty=Math.max(1,state.pQty+d);$("#pqty").textContent=state.pQty;};
-rfc.addPdp=function(){rfc.add(state.pdp,state.pSize,state.pQty);rfc.openCart();};
+rfc.addPdp=function(){rfc.add(state.pdp,state.pSize,state.pQty,state.pdpVariant);rfc.openCart();};
 function careIcons(){
  var s='width="26" height="26" fill="none" stroke="#555" stroke-width="1.3"';
  return '<svg viewBox="0 0 32 32" '+s+'><path d="M4 14c3-4 5-4 8 0s5 4 8 0 5-4 8 0v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><text x="16" y="22" font-size="8" stroke="none" fill="#555" text-anchor="middle">40</text></svg>'+
@@ -988,7 +1042,7 @@ rfc.checkout=function(){
  rfc.closeCart();renderCheckout();showScreen("#checkout");
 };
 function renderCheckout(){
- var items=state.cart.map(function(i){return '<div class="crow"><div class="ci">'+productArt(i.t,.7)+'</div><div class="cd"><div class="cn">'+i.name+'</div><div class="cs">Размер: '+i.size+' · '+i.qty+' шт</div><b style="font-size:14px">'+fmt(i.price*i.qty)+'</b></div></div>';}).join("");
+ var items=state.cart.map(function(i){var meta='Размер: '+i.size+(i.color?' · Цвет: '+i.color:'')+' · '+i.qty+' шт';var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6%;box-sizing:border-box">':productArt(i.t,.7);return '<div class="crow"><div class="ci">'+thumb+'</div><div class="cd"><div class="cn">'+i.name+'</div><div class="cs">'+meta+'</div><b style="font-size:14px">'+fmt(i.price*i.qty)+'</b></div></div>';}).join("");
  var delOpts=DELIVERY.map(function(d){return '<label class="opt '+(state.del===d.k?"on":"")+'" data-k="'+d.k+'" onclick="rfc.setDel(\''+d.k+'\')"><span class="radio"></span><span class="om"><b>'+d.name+'</b>'+(d.sub?'<small>'+d.sub+'</small>':'')+'</span><span class="on-note">'+d.note+'</span></label>';}).join("");
  $("#checkout").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.openCart();rfc.closeScreen(\'#checkout\')"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><span style="width:46px"></span></div></div>'+
@@ -1020,7 +1074,7 @@ function shopMessage(o){
  L.push("Доставка: "+o.delivery,"Адрес: "+o.country+", "+o.city+(o.address?", "+o.address:""));
  if(o.comment)L.push("Комментарий: "+o.comment);
  L.push("","Товары:");
- o.items.forEach(function(i){L.push("• "+i.name+" — "+i.size+" x"+i.qty+" — "+fmt(i.price*i.qty));});
+ o.items.forEach(function(i){L.push("• "+i.name+(i.color?" ["+i.color+"]":"")+" — "+i.size+" x"+i.qty+" — "+fmt(i.price*i.qty));});
  L.push("","Итого: "+fmt(o.total));
  return L.join("\n");
 }
@@ -1030,7 +1084,7 @@ rfc.placeOrder=function(){
  var name=val("fName"),phone=val("fPhone");
  if(!name||!phone){rfc.toast("Заполните имя и телефон");return;}
  var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
- var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t};}),total:subtotal(),status:"Новый"};
+ var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal(),status:"Новый"};
  state.crm.unshift(order);saveCrm();
  if(CLOUD){ try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
  state.cart.forEach(function(i){state.orders.unshift({t:i.t,name:i.name,status:"Оформлен"});});
@@ -1103,7 +1157,7 @@ function renderCrm(){
  var searchBar='<div class="crm-search"><input id="crmSearch" type="text" placeholder="🔍  Поиск по ФИО, телефону, email или ID…" value="'+(state.crmSearch||"").replace(/"/g,"&quot;")+'" oninput="rfc.crmSetSearch(this.value)"><select class="crm-sel" onchange="rfc.crmSetSort(this.value)"><option value="new"'+(sort==="new"?" selected":"")+'>Сначала новые</option><option value="old"'+(sort==="old"?" selected":"")+'>Сначала старые</option><option value="high"'+(sort==="high"?" selected":"")+'>По сумме ↓</option></select></div>';
  var rows=list.length?list.map(function(o,idx){
   var realIdx=state.crm.indexOf(o);
-  var its=o.items.map(function(i){return '<div class="ci-line"><div class="ci-mini">'+productArt(i.t,.5)+'</div><span>'+i.name+' · '+i.size+' ×'+i.qty+'</span><b>'+fmt(i.price*i.qty)+'</b></div>';}).join("");
+  var its=o.items.map(function(i){var meta=i.size+(i.color?' · '+i.color:'')+' ×'+i.qty;var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6%;box-sizing:border-box">':productArt(i.t,.5);return '<div class="ci-line"><div class="ci-mini">'+thumb+'</div><span>'+i.name+' · '+meta+'</span><b>'+fmt(i.price*i.qty)+'</b></div>';}).join("");
   var opts=CRM_STATUSES.map(function(s){return '<option '+(o.status===s?"selected":"")+' value="'+s+'">'+CRM_STATUS_EMOJI[s]+' '+s+'</option>';}).join("");
   var greet="Здравствуйте, "+o.name+"! Это Red Flag Community. Спасибо за заказ "+o.id+". ";
   var waBtn='<a class="act wa" href="'+waLink(o.phone,greet)+'" target="_blank">'+waIcon(16)+'WhatsApp</a>';
