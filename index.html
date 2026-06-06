@@ -638,6 +638,40 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 @media(max-width:600px){.lb-nav{display:none}}
 .gal-slide img, .pmedia{cursor:zoom-in}
 
+/* ---------- related products on PDP ---------- */
+.related{padding-block:clamp(40px,5vw,72px)}
+.rel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(12px,2vw,22px)}
+.rel-card{background:none;border:none;cursor:pointer;text-align:left;padding:0;transition:.3s cubic-bezier(.2,.7,.2,1)}
+.rel-card:hover{transform:translateY(-3px)}
+.rel-ph{position:relative;background:var(--mist);border-radius:14px;aspect-ratio:1;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:.4s}
+.rel-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:.5s cubic-bezier(.2,.7,.2,1)}
+.rel-card:hover .rel-ph img{transform:scale(1.05)}
+.rel-info{padding:14px 4px 0}
+.rel-name{font-size:13px;color:#222;font-weight:500;line-height:1.3}
+.rel-price{font-family:var(--serif);font-weight:700;font-size:14px;color:var(--ink);margin-top:5px;letter-spacing:-.01em}
+@media(max-width:860px){.rel-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- reviews ---------- */
+.reviews{padding-block:clamp(48px,7vw,96px)}
+.rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,24px)}
+.rev-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px 26px;display:flex;flex-direction:column;gap:12px;transition:.3s}
+.rev-card:hover{border-color:#ccc;box-shadow:0 8px 28px rgba(0,0,0,.06);transform:translateY(-2px)}
+.rev-stars{color:#f5b400;letter-spacing:2px;font-size:14px}
+.rev-text{font-size:14.5px;line-height:1.7;color:#333;flex:1}
+.rev-author{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
+.rev-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--ink),#333);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none;font-family:var(--serif)}
+.rev-meta b{font-size:13.5px;color:var(--ink);display:block}
+.rev-meta small{font-size:11.5px;color:var(--muted);letter-spacing:.04em}
+@media(max-width:860px){.rev-grid{grid-template-columns:1fr;gap:14px}}
+
+/* ---------- stock / urgency ---------- */
+.stock-row{display:flex;align-items:center;gap:8px;margin:18px 0 6px;font-size:12px;letter-spacing:.02em;color:#444}
+.stock-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18);flex:none}
+.stock-dot.low{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.22);animation:stockPulse 1.6s ease-in-out infinite}
+@keyframes stockPulse{50%{opacity:.5}}
+.stock-low{color:#a16207;font-weight:600}
+.card .hot-badge{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px;border-radius:99px;z-index:2}
+
 /* ---------- responsive ---------- */
 @media(max-width:1024px){
   .foot{grid-template-columns:1fr 1fr;gap:34px}
@@ -766,6 +800,35 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
     <div class="info-card rv"><span class="info-n">04</span><h3>Возврат</h3><p>Обмен или возврат в течение 14 дней при сохранении вида и бирок. Напиши нам — решим быстро.</p></div>
   </div>
   <div class="info-contact rv"><span>Связаться:</span><a href="https://wa.me/77774961358" target="_blank">WhatsApp</a><a href="https://instagram.com/redflagseverywear" target="_blank">Instagram</a></div>
+</section>
+<section class="wrap reviews" id="reviews">
+  <div class="sec-head rv"><h2>Что говорят</h2><span class="ln"></span><span class="cnt">отзывы клиентов</span></div>
+  <div class="rev-grid">
+    <article class="rev-card rv">
+      <div class="rev-stars">★★★★★</div>
+      <p class="rev-text">«Кепка в живую ещё круче, чем на фото. Качество вышивки топ, посадка идеальная. Доставили в Алматы за день — заберу теперь футболку.»</p>
+      <div class="rev-author">
+        <div class="rev-avatar">А</div>
+        <div class="rev-meta"><b>Алишер Б.</b><small>АЛМАТЫ · ИЮНЬ 2026</small></div>
+      </div>
+    </article>
+    <article class="rev-card rv">
+      <div class="rev-stars">★★★★★</div>
+      <p class="rev-text">«Заказывала трусы парню на ДР — он в восторге. Ткань плотная, резинка не давит. Упаковка вообще как у премиум-брендов.»</p>
+      <div class="rev-author">
+        <div class="rev-avatar">М</div>
+        <div class="rev-meta"><b>Мадина С.</b><small>АСТАНА · МАЙ 2026</small></div>
+      </div>
+    </article>
+    <article class="rev-card rv">
+      <div class="rev-stars">★★★★★</div>
+      <p class="rev-text">«Купил футболку с большим флагом — носят все знакомые после неё. Менеджер ответил в WhatsApp за 5 минут, доставили в Караганду за 2 дня.»</p>
+      <div class="rev-author">
+        <div class="rev-avatar">Е</div>
+        <div class="rev-meta"><b>Ерлан К.</b><small>КАРАГАНДА · МАЙ 2026</small></div>
+      </div>
+    </article>
+  </div>
 </section>
 <section class="wrap legal" id="legal">
   <div class="sec-head rv"><h2>Условия и политика</h2><span class="ln"></span><span class="cnt">оферта · конфиденциальность</span></div>
@@ -1010,7 +1073,7 @@ function renderCollections(){
     thumb=productArt(p.t,1);
    }
    html+='<div class="card rv'+(soon?' soon':'')+(hasPhoto?' card-real':'')+'" data-open="'+p.id+'"><div class="ph">'+thumb+
-   (soon?'<span class="soon-badge">Coming soon</span>':'<button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button>')+'</div>'+
+   (soon?'<span class="soon-badge">Coming soon</span>':((isHot(p.id)?'<span class="hot-badge">Хит</span>':'')+'<button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button>'))+'</div>'+
    '<div class="card-base"><span class="nm">'+p.name+'</span><div class="pr">'+(soon?'<span class="pr-soon">Скоро в продаже</span>':fmt(p.price))+'</div></div></div>';
   });
   // lifestyle banner
@@ -1141,7 +1204,7 @@ rfc.openProduct=function(id){
  }
  var buyBlock = soon
   ? '<div class="soon-note">⚑ Скоро в продаже. Следи за стартом дропа в Instagram.</div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank">Узнать о старте — Instagram</a>'
-  : swatchBlock+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
+  : swatchBlock+stockBlock(p)+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  state.pdpImgIdx=0;
  var displayP=activeVar?Object.assign({},p,{images:activeVar.images}):p;
  var pPhoto=pdpGallery(displayP,ap);
@@ -1149,7 +1212,8 @@ rfc.openProduct=function(id){
  $("#pdp").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><button class="round" onclick="rfc.openCart()" style="border-radius:50%"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></button></div></div>'+
  '<div class="wrap pdp"><div class="pdp-info">'+(function(){var c=COLLECTIONS.find(function(x){return x.key===p.col;});return c?'<span class="pdp-coll col-'+c.key+'">'+c.title+'</span>':'';})()+'<h1 class="pdp-title">'+p.name+'</h1><div class="pdp-price">'+fmt(p.price)+'</div><p class="pdp-desc">'+p.desc+'</p>'+care+
- buyBlock+'</div>'+media+'</div>';
+ buyBlock+'</div>'+media+'</div>'+
+ relatedSection(p);
  if(!soon&&ap){state.pSize="M";$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
  else{state.pSize="ONE SIZE";}
  showScreen("#pdp");
@@ -1163,6 +1227,29 @@ rfc.openProduct=function(id){
   setTimeout(function(){var sb=document.getElementById("pdpSticky");if(sb)sb.classList.add("on");},80);
  }else{document.body.classList.remove("pdp-open");}
 };
+function stockSeed(id){var h=0;for(var i=0;i<id.length;i++){h=((h<<5)-h+id.charCodeAt(i))|0;}return Math.abs(h);}
+function pseudoStock(id){var s=stockSeed(id);return 2+(s%14);}
+function isHot(id){return stockSeed(id)%3===0;}
+function stockBlock(p){
+ var n=pseudoStock(p.id);
+ if(n<=4){return '<div class="stock-row"><span class="stock-dot low"></span><span class="stock-low">Осталось '+n+' '+(n===1?'шт':'шт')+' — успей</span></div>';}
+ return '<div class="stock-row"><span class="stock-dot"></span><span>В наличии · Отправка 1–2 дня</span></div>';
+}
+function relatedSection(p){
+ var pool=PRODUCTS.filter(function(x){return x.id!==p.id && !isSoon(x.t);});
+ var sameCol=pool.filter(function(x){return x.col===p.col;});
+ var sameType=pool.filter(function(x){return x.t===p.t;});
+ var rest=pool.filter(function(x){return x.col!==p.col && x.t!==p.t;});
+ var seen={};var picked=[];
+ [sameCol,sameType,rest].forEach(function(arr){arr.forEach(function(x){if(!seen[x.id]&&picked.length<4){seen[x.id]=1;picked.push(x);}});});
+ if(!picked.length) return "";
+ var cards=picked.map(function(x){
+  var img=(x.images&&x.images[0])||"";
+  var thumb=img?'<img src="'+String(img).replace(/"/g,'&quot;')+'" alt="" loading="lazy">':productArt(x.t,1);
+  return '<button class="rel-card" onclick="rfc.openProduct(\''+x.id+'\')"><div class="rel-ph">'+thumb+'</div><div class="rel-info"><div class="rel-name">'+x.name+'</div><div class="rel-price">'+fmt(x.price)+'</div></div></button>';
+ }).join("");
+ return '<section class="wrap related"><div class="sec-head"><h2>Вам также может понравиться</h2><span class="ln"></span><span class="cnt">подбор RFC</span></div><div class="rel-grid">'+cards+'</div></section>';
+}
 function pdpGallery(p,ap){
  var imgs=(p.images&&p.images.length)?p.images:[];
  var fallback=(typeof IMG!=="undefined"&&IMG[p.t])
