@@ -502,6 +502,15 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .acc .ai{background:var(--ink);color:#fff;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex:none}
 .acc .am{flex:1;color:#444;font-size:14px}.acc .ao{color:#888}
 .sec-h{font-weight:700;font-size:15px;margin:24px 0 14px}
+.field .err-msg{color:var(--red);font-size:12px;font-weight:600;margin-top:6px;display:none}
+.field.has-error .inp{border-color:var(--red)}
+.field.has-error .err-msg{display:block}
+.consent{display:flex;align-items:flex-start;gap:10px;margin:18px 0 8px;cursor:pointer;user-select:none}
+.consent input{flex:none;width:18px;height:18px;margin-top:1px;cursor:pointer;accent-color:var(--red)}
+.consent span{font-size:12.5px;line-height:1.55;color:#555}
+.consent span a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+.success .ord-id{display:inline-block;background:var(--mist);font-family:'SF Mono','Menlo',monospace;font-size:15px;font-weight:700;color:var(--ink);padding:8px 16px;border-radius:8px;margin-top:14px;letter-spacing:.04em}
+.success .ord-id-cap{font-size:11px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:24px;display:block}
 .field{margin-bottom:12px}
 .field label{display:block;font-size:11px;color:var(--muted);margin:0 0 5px 16px}
 .inp,.sel{width:100%;border:1px solid var(--line);border-radius:14px;padding:15px 16px;font-size:14px;outline:none;transition:.2s;background:#fff}
@@ -582,6 +591,24 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .pdp-sticky .ps-btn{background:var(--ink);color:#fff;border:none;padding:13px 20px;border-radius:99px;font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
 .pdp-sticky .ps-btn:hover{background:var(--red)}
 @media(max-width:860px){body.pdp-open .pdp-sticky{display:flex}}
+.search-ov{position:fixed;inset:0;background:rgba(11,11,11,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;opacity:0;pointer-events:none;transition:opacity .25s}
+.search-ov.on{opacity:1;pointer-events:auto}
+.search-box{background:#fff;width:min(680px,calc(100% - 32px));border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;max-height:70vh}
+.search-input-row{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line);color:#666}
+.search-input-row input{flex:1;border:none;outline:none;font-size:16px;font-family:inherit;color:var(--ink);background:none}
+.search-close{width:36px;height:36px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;color:var(--ink);transition:.2s}
+.search-close:hover{background:var(--ink);color:#fff}
+.search-results{flex:1;overflow-y:auto;padding:10px}
+.search-results .sr-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+.search-results .sr-hint{padding:24px 20px;color:#888;font-size:13px}
+.sr-item{display:flex;align-items:center;gap:14px;padding:12px;border-radius:12px;cursor:pointer;transition:.18s;text-align:left}
+.sr-item:hover{background:var(--mist)}
+.sr-thumb{width:62px;height:62px;border-radius:10px;background:var(--mist);flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sr-thumb img{width:100%;height:100%;object-fit:cover}
+.sr-info{flex:1;min-width:0}
+.sr-name{font-size:14px;font-weight:600;color:var(--ink)}
+.sr-meta{font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.04em}
+.sr-price{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--ink)}
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:120;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .lb.on{opacity:1;pointer-events:auto}
 .lb img{max-width:96vw;max-height:92vh;object-fit:contain;cursor:zoom-out;user-select:none;-webkit-user-drag:none}
@@ -634,6 +661,14 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .info-contact span{color:#8a8a8a}
 .info-contact a{color:var(--ink);font-weight:600;border-bottom:2px solid var(--red);padding-bottom:2px;cursor:pointer;text-decoration:none}
 @media(max-width:860px){.info-grid{grid-template-columns:1fr 1fr;gap:12px}.info-card{padding:18px 16px;border-radius:14px}}
+.legal{padding-block:clamp(40px,5vw,72px)}
+.legal-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.legal-card{border:1px solid #ececec;border-radius:18px;padding:32px 30px;background:#fff}
+.legal-card h3{font-family:var(--serif);font-weight:700;font-size:24px;color:var(--ink);margin-bottom:18px;letter-spacing:-.01em}
+.legal-card p{font-size:14px;line-height:1.75;color:#444;margin-bottom:14px}
+.legal-card p:last-child{margin-bottom:0}
+.legal-card b{color:var(--ink)}
+@media(max-width:760px){.legal-grid{grid-template-columns:1fr;gap:14px}.legal-card{padding:24px 22px}}
 @media(max-width:520px){.info-grid{grid-template-columns:1fr}}
 /* ====== COMING SOON ====== */
 .card .ph{position:relative}
@@ -715,6 +750,24 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
   </div>
   <div class="info-contact rv"><span>Связаться:</span><a href="https://wa.me/77774961358" target="_blank">WhatsApp</a><a href="https://instagram.com/redflagseverywear" target="_blank">Instagram</a></div>
 </section>
+<section class="wrap legal" id="legal">
+  <div class="sec-head rv"><h2>Условия и политика</h2><span class="ln"></span><span class="cnt">оферта · конфиденциальность</span></div>
+  <div class="legal-grid">
+    <article class="legal-card rv">
+      <h3>Публичная оферта</h3>
+      <p>Размещение заказа на сайте <b>redflag.kz</b> является акцептом публичной оферты. Заказ подтверждается оператором в WhatsApp. Право собственности на товар переходит после полной оплаты и передачи покупателю.</p>
+      <p><b>Возврат и обмен:</b> в течение 14 календарных дней с момента получения при сохранении товарного вида, ярлыков и упаковки. Возврату не подлежат носки и нижнее белье согласно п.6 ст.30 ЗРК «О защите прав потребителей».</p>
+      <p><b>Доставка:</b> по Казахстану — курьерская служба, 1–3 рабочих дня. Международная — от 7 дней. Самовывоз — Астана, по согласованию.</p>
+    </article>
+    <article class="legal-card rv">
+      <h3>Политика конфиденциальности</h3>
+      <p>Мы собираем минимально необходимые персональные данные (имя, телефон, email, адрес доставки) только для исполнения заказа.</p>
+      <p>Данные не передаются третьим лицам кроме служб доставки и платёжных систем. Хранение — на защищённых серверах Supabase (EU).</p>
+      <p>Вы можете запросить удаление ваших данных, написав на <a id="legalEmail" style="text-decoration:underline">email</a> магазина.</p>
+      <p style="color:#999;font-size:12px;margin-top:14px">© 2026 Red Flag Community · ИП будет добавлено после регистрации</p>
+    </article>
+  </div>
+</section>
 <footer>
   <div class="wrap foot">
     <div>
@@ -738,7 +791,8 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
         <li><a data-scroll="info">По Казахстану — 1–2 дня</a></li>
         <li><a data-scroll="info">По миру — от 1 недели</a></li>
         <li><a data-scroll="info">Самовывоз — Астана</a></li>
-        <li><a data-scroll="info">Возврат и обмен</a></li>
+        <li><a data-scroll="legal">Возврат и обмен</a></li>
+        <li><a data-scroll="legal">Оферта · Конфиденциальность</a></li>
       </ul>
     </div>
     <div>
@@ -758,6 +812,16 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
 
 <!-- overlays -->
 <div class="scrim" id="scrim"></div>
+<div class="search-ov" id="searchOv" onclick="rfc.searchClose(event)">
+  <div class="search-box" onclick="event.stopPropagation()">
+    <div class="search-input-row">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
+      <input id="searchInp" placeholder="Поиск по каталогу — кепка, футболка, трусы…" oninput="rfc.searchRun(this.value)" autocomplete="off">
+      <button class="search-close" onclick="rfc.searchClose()" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="search-results" id="searchRes"></div>
+  </div>
+</div>
 
 <nav class="menu" id="menu">
   <div class="logo">RFC</div>
@@ -998,7 +1062,11 @@ setTimeout(function(){try{rfc.loadSiteProducts();}catch(e){console.log("loadSite
 function cartCount(){return state.cart.reduce(function(a,c){return a+c.qty;},0);}
 function subtotal(){return state.cart.reduce(function(a,c){return a+c.price*c.qty;},0);}
 function fee(){return 0;}
+function saveCart(){try{localStorage.setItem("rfc_cart",JSON.stringify(state.cart));}catch(e){}}
+function loadCart(){try{var d=localStorage.getItem("rfc_cart");if(d){var a=JSON.parse(d);if(Array.isArray(a))state.cart=a;}}catch(e){}}
+loadCart();
 function renderCart(){
+ saveCart();
  var c=cartCount();var b=$("#cartCount");
  if(c>0){b.style.display="flex";b.textContent=c;}else{b.style.display="none";}
  var body=$("#cartBody"),foot=$("#cartFootWrap");
@@ -1171,13 +1239,14 @@ function renderCheckout(){
  '<div class="cart-foot" style="border:none;padding:18px 0 0"><div class="sum tot"><span>Итого</span><span>'+fmt(subtotal())+'</span></div><div class="sum" style="font-size:12px;color:#999"><span>Доставку рассчитаем при подтверждении</span></div></div></div>'+
  '<div class="panel">'+
  '<div class="sec-h" style="margin-top:0">Контактные данные</div>'+
- '<div class="field"><label>Имя *</label><input class="inp" id="fName" placeholder="Ваше имя"></div>'+
- '<div class="field"><label>Телефон / WhatsApp *</label><input class="inp" id="fPhone" placeholder="+7 700 000 00 00"></div>'+
- '<div class="field"><label>Email</label><input class="inp" id="fEmail" placeholder="you@mail.com"></div>'+
- '<div class="two"><div class="field"><label>Страна</label><input class="inp" id="fCountry" value="'+SHOP.country+'"></div><div class="field"><label>Город</label><input class="inp" id="fCity" value="'+SHOP.city+'"></div></div>'+
- '<div class="field"><label>Адрес</label><input class="inp" id="fAddr" placeholder="Улица, дом, квартира"></div>'+
+ '<div class="field" id="ffName"><label>Имя *</label><input class="inp" id="fName" placeholder="Ваше имя" autocomplete="name"><div class="err-msg">Введите имя</div></div>'+
+ '<div class="field" id="ffPhone"><label>Телефон / WhatsApp *</label><input class="inp" id="fPhone" placeholder="+7 700 000 00 00" inputmode="tel" autocomplete="tel"><div class="err-msg">Введите корректный телефон (минимум 10 цифр)</div></div>'+
+ '<div class="field" id="ffEmail"><label>Email</label><input class="inp" id="fEmail" placeholder="you@mail.com" inputmode="email" autocomplete="email"><div class="err-msg">Неверный формат email</div></div>'+
+ '<div class="two"><div class="field"><label>Страна</label><input class="inp" id="fCountry" value="'+SHOP.country+'" autocomplete="country-name"></div><div class="field"><label>Город</label><input class="inp" id="fCity" value="'+SHOP.city+'" autocomplete="address-level2"></div></div>'+
+ '<div class="field"><label>Адрес</label><input class="inp" id="fAddr" placeholder="Улица, дом, квартира" autocomplete="street-address"></div>'+
  '<div class="field"><label>Комментарий</label><input class="inp" id="fComment" placeholder="Необязательно"></div>'+
  '<div class="sec-h">Доставка</div><div class="opts">'+delOpts+'</div>'+
+ '<label class="consent" id="ffConsent"><input type="checkbox" id="fConsent"><span>Я согласен с обработкой персональных данных и принимаю <a data-scroll="legal">условия оферты</a> и <a data-scroll="legal">политику конфиденциальности</a>.</span></label>'+
  '<button class="btn-block wa" onclick="rfc.placeOrder()">'+waIcon(18)+'Оформить через WhatsApp</button>'+
  '<p class="note">Заказ откроется в WhatsApp — отправьте нам сообщение, и мы свяжемся с вами. Доставка по КЗ 1–2 дня · по миру от недели.</p>'+
  '</div></div>';
@@ -1202,11 +1271,19 @@ function shopMessage(o){
 function saveCrm(){try{localStorage.setItem("rfc_crm",JSON.stringify(state.crm));}catch(e){}}
 function loadCrm(){try{var d=localStorage.getItem("rfc_crm");if(d){var a=JSON.parse(d);if(a&&a.length)state.crm=a;}}catch(e){}}
 rfc.placeOrder=function(){
- var name=val("fName"),phone=val("fPhone");
- if(!name||!phone){rfc.toast("Заполните имя и телефон");return;}
+ var name=val("fName"),phone=val("fPhone"),email=val("fEmail");
+ var errors=[];
+ $$("#checkout .field").forEach(function(f){f.classList.remove("has-error");});
+ if(!name){$("#ffName").classList.add("has-error");errors.push("имя");}
+ var phoneDigits=phone.replace(/\D/g,"");
+ if(phoneDigits.length<10){$("#ffPhone").classList.add("has-error");errors.push("телефон");}
+ if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$("#ffEmail").classList.add("has-error");errors.push("email");}
+ var consentBox=$("#fConsent");
+ if(!consentBox||!consentBox.checked){var c=$("#ffConsent");if(c)c.style.color="var(--red)";rfc.toast("Подтвердите согласие на обработку данных");return;}
+ if(errors.length){rfc.toast("Проверьте: "+errors.join(", "));return;}
  var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
  var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal(),status:"Новый"};
- state.crm.unshift(order);saveCrm();
+ state.lastOrder=order;state.crm.unshift(order);saveCrm();
  if(CLOUD){ try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
  state.cart.forEach(function(i){state.orders.unshift({t:i.t,name:i.name,status:"Оформлен"});});
  window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
@@ -1226,8 +1303,10 @@ function renderOrders(){
 
 /* ===================== SUCCESS ===================== */
 function renderSuccess(){
+ var o=state.lastOrder;
+ var idBlock=o?'<span class="ord-id-cap">Номер заказа</span><div class="ord-id">'+o.id+'</div>':"";
  $("#success").innerHTML=
- '<div class="success"><div class="suc-l"><div class="logo">RFC</div><h1>Заказ отправлен!</h1><p>Мы открыли WhatsApp с деталями вашего заказа — отправьте сообщение, и менеджер свяжется с вами. Доставка по Казахстану 1–2 дня, по миру от недели.</p><a onclick="rfc.closeAll()">К покупкам →</a></div>'+
+ '<div class="success"><div class="suc-l"><div class="logo">RFC</div><h1>Заказ отправлен!</h1><p>Мы открыли WhatsApp с деталями вашего заказа — отправьте сообщение, и менеджер свяжется с вами. Доставка по Казахстану 1–2 дня, по миру от недели.</p>'+idBlock+'<a onclick="rfc.closeAll()" style="margin-top:34px;display:inline-block">К покупкам →</a></div>'+
  '<div class="suc-r grain">'+flag(150,"#fff")+'<div class="w">Red Flag<br>Community</div><span class="rfc">RFC ©</span></div></div>';
 }
 
@@ -1778,8 +1857,36 @@ $("#ordersLink").onclick=rfc.openOrders;
 $("#menuOrders").onclick=rfc.openOrders;
 $("#adminLink").onclick=rfc.openCrm;
 $("#menuAdmin").onclick=rfc.openCrm;
-(function(){var ig=$("#igLink");if(ig)ig.href="https://instagram.com/"+SHOP.ig;var wf=$("#waFoot");if(wf)wf.href=waLink(SHOP.wa,"Здравствуйте! Пишу по поводу Red Flag Community");var ef=$("#emailFoot");if(ef)ef.href="mailto:"+SHOP.email;var fab=$("#waFab");if(fab)fab.href=waLink(SHOP.wa,"Здравствуйте! Хочу узнать больше про Red Flag Community");})();
-$("#searchBtn").onclick=function(){rfc.toast("Поиск скоро будет ✦");};
+(function(){var ig=$("#igLink");if(ig)ig.href="https://instagram.com/"+SHOP.ig;var wf=$("#waFoot");if(wf)wf.href=waLink(SHOP.wa,"Здравствуйте! Пишу по поводу Red Flag Community");var ef=$("#emailFoot");if(ef)ef.href="mailto:"+SHOP.email;var le=$("#legalEmail");if(le)le.href="mailto:"+SHOP.email;var fab=$("#waFab");if(fab)fab.href=waLink(SHOP.wa,"Здравствуйте! Хочу узнать больше про Red Flag Community");})();
+$("#searchBtn").onclick=function(){rfc.searchOpen();};
+rfc.searchOpen=function(){var ov=$("#searchOv");ov.classList.add("on");document.body.style.overflow="hidden";setTimeout(function(){var i=$("#searchInp");if(i){i.focus();rfc.searchRun(i.value||"");}},50);if(!state._searchKey){state._searchKey=function(e){if(e.key==="Escape"&&$("#searchOv").classList.contains("on"))rfc.searchClose();};document.addEventListener("keydown",state._searchKey);}};
+rfc.searchClose=function(e){if(e&&e.target!==$("#searchOv"))return;$("#searchOv").classList.remove("on");if(!document.querySelector(".screen.on,.drawer.on"))document.body.style.overflow="";};
+rfc.searchRun=function(q){
+ var res=$("#searchRes");if(!res)return;
+ q=(q||"").trim().toLowerCase();
+ if(!q){res.innerHTML='<div class="sr-hint">Попробуй: <b>кепка</b>, <b>трусы</b>, <b>red</b>, <b>чёрный</b></div>';return;}
+ var typeMap={'кеп':'cap','футбол':'tee','худи':'hoodie','свитш':'sweat','трус':'boxers','боксер':'boxers','sock':'boxers','носк':'boxers'};
+ var typeMatch=null;Object.keys(typeMap).forEach(function(k){if(q.indexOf(k)!==-1)typeMatch=typeMap[k];});
+ var colMatch=null;
+ if(q.indexOf('red')!==-1||q.indexOf('крас')!==-1)colMatch='red';
+ else if(q.indexOf('white')!==-1||q.indexOf('бел')!==-1)colMatch='white';
+ else if(q.indexOf('other')!==-1||q.indexOf('друг')!==-1||q.indexOf('камо')!==-1||q.indexOf('camo')!==-1)colMatch='other';
+ var hits=PRODUCTS.filter(function(p){
+  if(typeMatch&&p.t!==typeMatch)return false;
+  if(colMatch&&p.col!==colMatch)return false;
+  if(!typeMatch&&!colMatch){var hay=(p.name+' '+p.t+' '+p.col+' '+(p.desc||'')).toLowerCase();if(hay.indexOf(q)===-1)return false;}
+  return true;
+ }).slice(0,12);
+ if(!hits.length){res.innerHTML='<div class="sr-empty">Ничего не нашли по «'+q.replace(/[<>&]/g,'')+'»</div>';return;}
+ res.innerHTML=hits.map(function(p){
+  var img=(p.images&&p.images[0])||"";
+  var col=(COLLECTIONS.find(function(c){return c.key===p.col;})||{}).title||"";
+  var soon=isSoon(p.t);
+  var priceHtml=soon?'<span class="sr-price" style="color:#999;font-size:11px;letter-spacing:.1em;text-transform:uppercase">Скоро</span>':'<span class="sr-price">'+fmt(p.price)+'</span>';
+  var thumb=img?'<img src="'+String(img).replace(/"/g,'&quot;')+'" alt="">':'';
+  return '<button class="sr-item" onclick="rfc.searchClose();rfc.openProduct(\''+p.id+'\')"><div class="sr-thumb">'+thumb+'</div><div class="sr-info"><div class="sr-name">'+p.name+'</div><div class="sr-meta">'+col+'</div></div>'+priceHtml+'</button>';
+ }).join("");
+};
 (function(){var c=document.querySelector(".cur");if(c)c.onclick=function(){rfc.toast("Цены и оплата — в тенге ₸");};})();
 $("#guide").onclick=function(e){if(e.target===this)rfc.closeGuide();};
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){rfc.closeCart();rfc.closeMenu();rfc.closeGuide();$$(".screen").forEach(function(s){s.classList.remove("on");});document.body.style.overflow="";}});
