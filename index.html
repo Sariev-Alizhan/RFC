@@ -535,11 +535,27 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .ord-top{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin-bottom:46px}
 .ord-fields{flex:1;min-width:280px;display:flex;flex-direction:column;gap:12px}
 .filled{border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px}
-.ord-h{font-weight:900;font-size:15px;letter-spacing:1px;margin-bottom:22px}
+.ord-h{font-weight:900;font-size:15px;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px}
+.ord-h .ord-count{font-weight:600;color:var(--muted);letter-spacing:.04em}
 .ord-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,2vw,22px)}
-.ocard .oi{background:var(--mist);border-radius:14px;aspect-ratio:1.1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.ostat{font-weight:800;font-size:13px;letter-spacing:.5px;margin-top:13px}
-.ostat.ok{color:#1c8c4a}.ostat.wait{color:#d98a00}.ostat.paid{color:var(--ink)}
+.ocard{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;transition:.2s}
+.ocard:hover{box-shadow:0 6px 22px rgba(0,0,0,.06);transform:translateY(-2px)}
+.ocard .oi{background:var(--mist);aspect-ratio:1.1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ord-more{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;backdrop-filter:blur(6px)}
+.oc-body{padding:16px;display:flex;flex-direction:column;gap:8px}
+.ocode{font-family:'SF Mono','Menlo',monospace;font-size:11px;color:var(--muted);letter-spacing:.05em}
+.oitems{font-size:13px;line-height:1.5;color:#333}
+.ocf{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.ostat{font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:99px}
+.ostat.ok{color:#1c8c4a;background:#e7f5ed}
+.ostat.wait{color:#a96600;background:#fff3df}
+.ostat.paid{color:var(--ink);background:var(--mist)}
+.odate{font-size:11px;color:var(--muted);letter-spacing:.03em}
+.ototal{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--ink);margin-top:6px;letter-spacing:-.01em}
+.ord-empty{text-align:center;padding:80px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;background:#fafafa;border-radius:18px;border:1px dashed var(--line)}
+.ord-empty h3{font-family:var(--serif);font-weight:700;font-size:24px;color:var(--ink)}
+.ord-empty p{font-size:14px;color:var(--muted);max-width:36ch;line-height:1.6}
+.ord-empty .btn{margin-top:14px}
 .odate{font-size:12px;color:var(--muted);margin-top:3px}
 
 /* ---------- success ---------- */
@@ -946,13 +962,13 @@ function productArt(t,scale){
 
 /* ===================== STATE ===================== */
 var state={cart:[],pdp:null,pSize:"M",pQty:1,del:"kz",crmFilter:"all",adminTab:"orders",products:[],productsLoaded:false,productsLoading:false,productsImporting:false,productsError:null,productEditing:null,productEditForm:null,productSaving:false,productSaveError:null,productImageBusy:false,productImageError:null,productCreating:false,productCreateForm:null,productDeleting:false,
- orders:[{t:"hoodie",name:'Худи "Red Flag Community"',status:"ДОСТАВЛЕНО"},
-         {t:"boxers",name:'Трусы "Red Flag Community"',status:"ДОСТАВКА",date:"20 апреля"},
-         {t:"cap",name:'Кепка "RFC Logo"',status:"ОПЛАЧЕНО"}],
- crm:[
-  {id:"RFC-100231",date:"23.05, 14:20",name:"Алмас Қ.",phone:"77011234567",email:"almas@gmail.com",country:"Казахстан",city:"Астана",address:"Бокейхан 30, кв 36",comment:"",delivery:"Доставка по Казахстану (1–2 дня)",items:[{name:'Худи "Red Flag Community"',size:"L",qty:1,price:29000,t:"hoodie"}],total:29000,status:"Новый"},
-  {id:"RFC-100228",date:"22.05, 19:05",name:"Дана С.",phone:"77759876543",email:"dana.s@mail.ru",country:"Казахстан",city:"Алматы",address:"Абая 150",comment:"Позвонить после 18:00",delivery:"Доставка по Казахстану (1–2 дня)",items:[{name:'Футболка "RFC"',size:"M",qty:2,price:29000,t:"tee"}],total:58000,status:"Связались"}
- ]};
+ userOrders:[], customerProfile:null,
+ crm:[]};
+function saveUserOrders(){try{localStorage.setItem("rfc_user_orders",JSON.stringify(state.userOrders));}catch(e){}}
+function loadUserOrders(){try{var d=localStorage.getItem("rfc_user_orders");if(d){var a=JSON.parse(d);if(Array.isArray(a))state.userOrders=a;}}catch(e){}}
+function saveCustomerProfile(p){try{state.customerProfile=p;localStorage.setItem("rfc_customer",JSON.stringify(p));}catch(e){}}
+function loadCustomerProfile(){try{var d=localStorage.getItem("rfc_customer");if(d)state.customerProfile=JSON.parse(d);}catch(e){}}
+loadUserOrders();loadCustomerProfile();
 
 var rfc={};
 
@@ -1285,7 +1301,8 @@ rfc.placeOrder=function(){
  var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal(),status:"Новый"};
  state.lastOrder=order;state.crm.unshift(order);saveCrm();
  if(CLOUD){ try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
- state.cart.forEach(function(i){state.orders.unshift({t:i.t,name:i.name,status:"Оформлен"});});
+ saveCustomerProfile({name:name,phone:phone,email:email,country:val("fCountry"),city:val("fCity"),address:val("fAddr")});
+ state.userOrders.unshift({id:order.id,date:order.date,total:order.total,status:"Оформлен",items:order.items.map(function(i){return {name:i.name,size:i.size,qty:i.qty,t:i.t,color:i.color,img:i.img};})});saveUserOrders();
  window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
  state.cart=[];renderCart();rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
 };
@@ -1293,12 +1310,34 @@ rfc.placeOrder=function(){
 /* ===================== ORDERS ===================== */
 rfc.openOrders=function(){renderOrders();showScreen("#orders");rfc.closeMenu();};
 function renderOrders(){
- var st=function(s){return s==="ДОСТАВЛЕНО"?"ok":s==="ДОСТАВКА"?"wait":"paid";};
- var cards=state.orders.map(function(o){return '<div class="ocard"><div class="oi">'+productArt(o.t,1)+'</div><div class="ostat '+st(o.status)+'">'+o.status+'</div>'+(o.date?'<div class="odate">'+o.date+'</div>':'')+'</div>';}).join("");
+ var stCls=function(s){s=(s||"").toLowerCase();if(s.indexOf("доставлен")!==-1)return "ok";if(s.indexOf("доставк")!==-1||s.indexOf("отправлен")!==-1)return "wait";return "paid";};
+ var stLabel=function(s){var k=(s||"").toLowerCase();if(k==="оформлен"||k==="новый")return "ПРИНЯТ";if(k==="связались")return "ПОДТВЕРЖДЁН";if(k==="оплачен")return "ОПЛАЧЕНО";if(k==="отправлен")return "ДОСТАВКА";if(k==="доставлен")return "ДОСТАВЛЕНО";return (s||"").toUpperCase();};
+ var prof=state.customerProfile;
+ var orders=state.userOrders||[];
+ var profileBlock="";
+ if(prof){
+  var initials=(prof.name||"?").trim().charAt(0).toUpperCase();
+  var addrParts=[prof.city,prof.address].filter(Boolean).join(", ");
+  profileBlock='<div class="ord-top"><div class="acc"><span class="ai"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span><span class="am">'+(prof.email||prof.phone||"—")+'</span></div><div class="ord-fields"><div class="field"><label>Имя</label><div class="filled">'+(prof.name||"—")+'</div></div><div class="field"><label>Адрес</label><div class="filled">'+(addrParts||"—")+'</div></div></div></div>';
+ }
+ var body;
+ if(!orders.length){
+  body='<div class="ord-empty">'+flag(56,"#ddd")+'<h3>Пока нет заказов</h3><p>Когда оформишь первый заказ, он появится здесь. История привязана к этому браузеру — для трекинга всегда есть WhatsApp.</p><button class="btn" onclick="rfc.closeAll()">К покупкам →</button></div>';
+ }else{
+  var cards=orders.map(function(o){
+   var firstItem=(o.items&&o.items[0])||{};
+   var img=firstItem.img||null;
+   var thumb=img?'<img src="'+String(img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:8%;box-sizing:border-box">':productArt(firstItem.t||"tee",1);
+   var itemsLine=(o.items||[]).map(function(i){return i.name+(i.color?" · "+i.color:"")+(i.size?" · "+i.size:"")+" × "+i.qty;}).join("<br>");
+   var moreCount=(o.items||[]).length>1?'<span class="ord-more">+'+((o.items||[]).length-1)+' ещё</span>':"";
+   var lbl=stLabel(o.status);
+   return '<div class="ocard"><div class="oi">'+thumb+moreCount+'</div><div class="oc-body"><div class="ocode">'+(o.id||"")+'</div><div class="oitems">'+itemsLine+'</div><div class="ocf"><div class="ostat '+stCls(lbl)+'">'+lbl+'</div>'+(o.date?'<div class="odate">'+o.date+'</div>':"")+'</div>'+(o.total?'<div class="ototal">'+fmt(o.total)+'</div>':"")+'</div></div>';
+  }).join("");
+  body='<div class="ord-h">МОИ ЗАКАЗЫ <span class="ord-count">·  '+orders.length+'</span></div><div class="ord-grid">'+cards+'</div><button class="btn" style="margin-top:36px" onclick="rfc.closeAll()">К покупкам</button>';
+ }
  $("#orders").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><span style="width:46px"></span></div></div>'+
- '<div class="wrap orders"><div class="ord-top"><div class="acc" style="max-width:380px"><span class="ai"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span><span class="am">Client@gmail.com</span></div><div class="ord-fields"><div class="field"><label>Имя</label><div class="filled">Алмас</div></div><div class="field"><label>Адрес</label><div class="filled">Бокейхан, 30, подъезд 3, этаж 2, кв 36</div></div></div></div>'+
- '<div class="ord-h">МОИ ЗАКАЗЫ</div><div class="ord-grid">'+cards+'</div><button class="btn" style="margin-top:36px" onclick="rfc.closeAll()">К покупкам</button></div>';
+ '<div class="wrap orders">'+profileBlock+body+'</div>';
 }
 
 /* ===================== SUCCESS ===================== */
