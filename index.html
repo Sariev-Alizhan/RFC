@@ -21,6 +21,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://kkvmxtwpgvubwtcalzjm.supabase.co">
 <link rel="dns-prefetch" href="https://kkvmxtwpgvubwtcalzjm.supabase.co">
+<link rel="preload" as="image" href="/img/brand/flag.webp" type="image/webp" fetchpriority="high">
 <link rel="preload" as="image" href="/img/lifestyle/ls_tank.webp" fetchpriority="high">
 <link rel="preload" as="image" href="/img/lifestyle/ls_hoodieRed.webp">
 <link rel="preload" as="image" href="/img/lifestyle/ls_redcap.webp">
@@ -37,6 +38,9 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden;font-feature-settings:"ss01","kern";text-rendering:optimizeLegibility}
 ::selection{background:var(--ink);color:#fff}
+.brand-flag{display:block;height:auto;max-width:100%}
+.brand-flag.white{filter:brightness(0) invert(1)}
+.brand-flag.gray{filter:grayscale(1) opacity(.35)}
 *:focus{outline:none}
 *:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:6px}
 button:focus-visible,a:focus-visible{outline-offset:3px}
@@ -1003,7 +1007,13 @@ function isSoon(t){return t==="hoodie"||t==="sweat"||t==="boxers";}
 var $=function(s,r){return (r||document).querySelector(s);};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
 
-function flag(s,c){c=c||RED;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 100 100" fill="none"><rect x="20" y="13" width="5" height="76" rx="2.5" fill="'+c+'"/><path d="M25 17 C44 8 58 22 80 13 C70 30 80 38 86 50 C64 40 44 50 25 44 Z" fill="'+c+'"/><circle cx="84" cy="84" r="6.5" stroke="'+c+'" stroke-width="1.8"/><text x="84" y="87" font-size="7" text-anchor="middle" fill="'+c+'" font-family="Georgia,serif">c</text></svg>';}
+function flag(s,c){
+ c=c||RED;
+ var cls="brand-flag";
+ if(c==="#fff"||c==="#FFFFFF"||c==="white") cls+=" white";
+ else if(c==="#ddd"||c==="#DDD"||c==="#dddddd") cls+=" gray";
+ return '<picture><source srcset="/img/brand/flag.webp" type="image/webp"><img class="'+cls+'" src="/img/brand/flag.png" alt="Red Flag Community" width="'+s+'" height="'+s+'" loading="lazy" decoding="async"></picture>';
+}
 function garment(t){
  var f="#E2E2E2",f2="#D7D7D7";
  var tee='<path d="M96 62 C109 77 151 77 164 62 L182 57 L219 92 L196 117 L178 103 L178 206 C150 215 110 215 82 206 L82 103 L64 117 L41 92 L78 57 Z" fill="'+f+'"/>';
