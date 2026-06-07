@@ -762,7 +762,7 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
 <main>
 <section class="wrap hero">
   <div class="hero-l">
-    <div class="hero-flag rv"><svg width="58" height="58" viewBox="0 0 58 58" fill="none"><path d="M15 9v40" stroke="#E11236" stroke-width="4.5" stroke-linecap="round"/><path d="M17 11c8 0 9 6 17 6s8-4 12-4v17c-4 1-8 3-12 3-8 0-9-6-17-6V11Z" fill="#E11236"/></svg></div>
+    <div class="hero-flag rv" id="heroFlag"></div>
     <h1 class="hero-h1 rv">We are not perfect.<br>We are <span class="r">honest.</span></h1>
     <div class="hero-actions rv">
       <a class="hero-link" data-scroll="white">Новая коллекция →</a>
@@ -999,7 +999,7 @@ COLLECTIONS.forEach(function(c){TYPES.forEach(function(ty){PRODUCTS.push({id:c.k
 /* ===================== HELPERS / GRAPHICS ===================== */
 function fmt(n){return "₸"+n.toLocaleString("ru-RU").replace(/\u00A0/g," ");}
 function isApp(t){return t==="hoodie"||t==="tee"||t==="sweat";}
-function isSoon(t){return t==="hoodie"||t==="sweat";}
+function isSoon(t){return t==="hoodie"||t==="sweat"||t==="boxers";}
 var $=function(s,r){return (r||document).querySelector(s);};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
 
@@ -1984,7 +1984,7 @@ $("#ordersLink").onclick=rfc.openOrders;
 $("#menuOrders").onclick=rfc.openOrders;
 $("#adminLink").onclick=rfc.openCrm;
 $("#menuAdmin").onclick=rfc.openCrm;
-(function(){var ig=$("#igLink");if(ig)ig.href="https://instagram.com/"+SHOP.ig;var wf=$("#waFoot");if(wf)wf.href=waLink(SHOP.wa,"Здравствуйте! Пишу по поводу Red Flag Community");var ef=$("#emailFoot");if(ef)ef.href="mailto:"+SHOP.email;var le=$("#legalEmail");if(le)le.href="mailto:"+SHOP.email;var fab=$("#waFab");if(fab)fab.href=waLink(SHOP.wa,"Здравствуйте! Хочу узнать больше про Red Flag Community");})();
+(function(){var ig=$("#igLink");if(ig)ig.href="https://instagram.com/"+SHOP.ig;var wf=$("#waFoot");if(wf)wf.href=waLink(SHOP.wa,"Здравствуйте! Пишу по поводу Red Flag Community");var ef=$("#emailFoot");if(ef)ef.href="mailto:"+SHOP.email;var le=$("#legalEmail");if(le)le.href="mailto:"+SHOP.email;var fab=$("#waFab");if(fab)fab.href=waLink(SHOP.wa,"Здравствуйте! Хочу узнать больше про Red Flag Community");var hf=$("#heroFlag");if(hf)hf.innerHTML=flag(58,RED);})();
 $("#searchBtn").onclick=function(){rfc.searchOpen();};
 rfc.searchOpen=function(){var ov=$("#searchOv");ov.classList.add("on");document.body.style.overflow="hidden";setTimeout(function(){var i=$("#searchInp");if(i){i.focus();rfc.searchRun(i.value||"");}},50);if(!state._searchKey){state._searchKey=function(e){if(e.key==="Escape"&&$("#searchOv").classList.contains("on"))rfc.searchClose();};document.addEventListener("keydown",state._searchKey);}};
 rfc.searchClose=function(e){if(e&&e.target!==$("#searchOv"))return;$("#searchOv").classList.remove("on");if(!document.querySelector(".screen.on,.drawer.on"))document.body.style.overflow="";};
