@@ -631,6 +631,14 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .kqr-brand .kqr-pay{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .kqr-amount{font-family:var(--serif);font-weight:700;font-size:42px;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
 .kqr-order{font-family:'SF Mono','Menlo',monospace;font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
+.kqr-items{background:var(--mist);border-radius:14px;padding:14px 16px;margin-bottom:18px;max-height:180px;overflow-y:auto}
+.kqr-items .kqr-i{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #ececec}
+.kqr-items .kqr-i:last-child{border-bottom:none}
+.kqr-items .kqr-i img{width:38px;height:38px;border-radius:8px;object-fit:cover;background:#fff;flex:none}
+.kqr-items .kqr-i .kqr-i-info{flex:1;min-width:0}
+.kqr-items .kqr-i .kqr-i-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kqr-items .kqr-i .kqr-i-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.kqr-items .kqr-i .kqr-i-price{font-family:var(--serif);font-weight:700;font-size:13px;color:var(--ink);flex:none}
 .kqr-qr{width:240px;height:240px;margin:8px auto 22px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center}
 .kqr-qr img{width:100%;height:100%;object-fit:contain;display:block}
 .kqr-qr .kqr-placeholder{text-align:center;color:#999;font-size:12px;line-height:1.6;padding:18px}
@@ -976,6 +984,7 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
       <div class="kqr-amount" id="kqrAmount">₸ 0</div>
       <div class="kqr-order" id="kqrOrder">Заказ —</div>
     </div>
+    <div class="kqr-items" id="kqrItems"></div>
     <div class="kqr-qr" id="kqrQr"></div>
     <ol class="kqr-steps">
       <li>Открой приложение <b>Kaspi.kz</b></li>
@@ -985,7 +994,7 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
       <li>После оплаты нажми кнопку ниже — пришлёшь нам скрин в WhatsApp</li>
     </ol>
     <button class="btn-block wa" onclick="rfc.kqrConfirm()" id="kqrWaBtn">Я оплатил → подтвердить в WhatsApp</button>
-    <p class="kqr-foot">QR ведёт на личный счёт Red Flag Community. После проверки оплаты заказ перейдёт в работу.</p>
+    <p class="kqr-foot">QR ведёт на счёт Red Flag Community. После проверки оплаты в WhatsApp заказ перейдёт в работу.</p>
   </div>
 </div>
 <a class="wa-fab" id="waFab" href="#" target="_blank" rel="noopener" aria-label="Написать в WhatsApp"><svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-.8 2 0 3.2a9 9 0 0 0 3.7 3.2c1.3.6 1.8.6 2.5.5.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1 0 0-.2-.1-.4-.2Z"/></svg></a>
@@ -1478,14 +1487,20 @@ rfc.payKaspi=function(){
  $("#kqrAmount").textContent=fmt(order.total);
  $("#kqrOrder").textContent="Заказ "+order.id;
  $("#kqrOrderCode").textContent=order.id;
+ // Состав заказа
+ var itemsHtml=order.items.map(function(i){
+  var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="">':'';
+  var meta=(i.color?i.color+' · ':'')+i.size+' × '+i.qty;
+  return '<div class="kqr-i">'+thumb+'<div class="kqr-i-info"><div class="kqr-i-name">'+i.name+'</div><div class="kqr-i-meta">'+meta+'</div></div><div class="kqr-i-price">'+fmt(i.price*i.qty)+'</div></div>';
+ }).join("");
+ $("#kqrItems").innerHTML=itemsHtml;
  var qrBox=$("#kqrQr");
- if(SHOP.kaspiQrImg){qrBox.innerHTML='<img src="'+SHOP.kaspiQrImg+'" alt="Kaspi QR" loading="eager">';}
+ if(SHOP.kaspiQrImg){qrBox.innerHTML='<img src="'+SHOP.kaspiQrImg+'" alt="Kaspi QR" loading="eager">';qrBox.style.display="flex";}
  else if(SHOP.kaspiPayLink){
-  // Динамический QR через api.qrserver.com
   var url=SHOP.kaspiPayLink.replace("{amount}",order.total).replace("{order}",encodeURIComponent(order.id));
-  qrBox.innerHTML='<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data='+encodeURIComponent(url)+'" alt="Kaspi QR" loading="eager">';
+  qrBox.innerHTML='<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data='+encodeURIComponent(url)+'" alt="Kaspi QR" loading="eager">';qrBox.style.display="flex";
  }
- else{qrBox.innerHTML='<div class="kqr-placeholder">QR временно недоступен.<br>Нажми кнопку ниже — менеджер пришлёт реквизиты в WhatsApp.</div>';}
+ else{qrBox.style.display="none";}
  ov.classList.add("on");document.body.style.overflow="hidden";
  if(!state._kqrKey){state._kqrKey=function(e){if(e.key==="Escape"&&$("#kqrOv").classList.contains("on"))rfc.kqrClose();};document.addEventListener("keydown",state._kqrKey);}
 };
@@ -1494,20 +1509,31 @@ rfc.kqrConfirm=function(){
  var o=state.kqrOrder;if(!o)return;
  // Сохраняем локально
  state.userOrders.unshift({id:o.id,date:o.date,total:o.total,status:"Ожидает подтверждения оплаты",items:o.items});saveUserOrders();
- // WhatsApp с предзаполненным сообщением
+ // Красивое WhatsApp-сообщение
  var L=[];
- L.push("✅ Я оплатил заказ "+o.id+" через Kaspi QR.");
+ L.push("🚩 RED FLAG COMMUNITY");
+ L.push("━━━━━━━━━━━━━━━━");
+ L.push("✅ Заказ "+o.id+" оплачен через Kaspi QR");
  L.push("");
- L.push("Сумма: "+fmt(o.total));
- L.push("Имя: "+o.name);
- L.push("Телефон: "+o.phone);
- if(o.address)L.push("Адрес: "+(o.city?o.city+", ":"")+o.address);
- if(o.delivery)L.push("Доставка: "+o.delivery);
+ L.push("💰 Сумма: *"+fmt(o.total)+"*");
  L.push("");
- L.push("Состав:");
- (o.items||[]).forEach(function(i){L.push("• "+i.name+(i.color?" ["+i.color+"]":"")+" — "+i.size+" x"+i.qty+" — "+fmt(i.price*i.qty));});
+ L.push("📦 *Состав заказа:*");
+ (o.items||[]).forEach(function(i){
+  L.push("• "+i.name);
+  L.push("   "+(i.color?i.color+" · ":"")+"размер "+i.size+" · "+i.qty+" шт · "+fmt(i.price*i.qty));
+ });
  L.push("");
- L.push("Сейчас отправлю скрин оплаты ⬇️");
+ L.push("👤 *Контакты:*");
+ L.push("• Имя: "+o.name);
+ L.push("• Телефон: "+o.phone);
+ if(o.email) L.push("• Email: "+o.email);
+ L.push("");
+ L.push("🚚 *Доставка:*");
+ if(o.delivery) L.push("• "+o.delivery);
+ if(o.city||o.address) L.push("• "+(o.city?o.city+", ":"")+(o.address||""));
+ if(o.comment) L.push("• Комментарий: "+o.comment);
+ L.push("");
+ L.push("📸 Сейчас отправлю скрин оплаты ⬇️");
  window.open(waLink(SHOP.wa,L.join("\n")),"_blank");
  state.cart=[];renderCart();
  rfc.kqrClose();
