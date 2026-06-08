@@ -1415,8 +1415,8 @@ function renderCheckout(){
  '<div class="field" id="ffName"><label>Имя *</label><input class="inp" id="fName" placeholder="Ваше имя" autocomplete="name"><div class="err-msg">Введите имя</div></div>'+
  '<div class="field" id="ffPhone"><label>Телефон / WhatsApp *</label><input class="inp" id="fPhone" placeholder="+7 700 000 00 00" inputmode="tel" autocomplete="tel"><div class="err-msg">Введите корректный телефон (минимум 10 цифр)</div></div>'+
  '<div class="field" id="ffEmail"><label>Email</label><input class="inp" id="fEmail" placeholder="you@mail.com" inputmode="email" autocomplete="email"><div class="err-msg">Неверный формат email</div></div>'+
- '<div class="two"><div class="field"><label>Страна</label><input class="inp" id="fCountry" value="'+SHOP.country+'" autocomplete="country-name"></div><div class="field"><label>Город</label><input class="inp" id="fCity" value="'+SHOP.city+'" autocomplete="address-level2"></div></div>'+
- '<div class="field"><label>Адрес</label><input class="inp" id="fAddr" placeholder="Улица, дом, квартира" autocomplete="street-address"></div>'+
+ '<div class="two"><div class="field" id="ffCountry"><label>Страна *</label><input class="inp" id="fCountry" value="'+SHOP.country+'" autocomplete="country-name"><div class="err-msg">Укажите страну</div></div><div class="field" id="ffCity"><label>Город *</label><input class="inp" id="fCity" value="'+SHOP.city+'" autocomplete="address-level2"><div class="err-msg">Укажите город</div></div></div>'+
+ '<div class="field" id="ffAddr"><label>Адрес *</label><input class="inp" id="fAddr" placeholder="Улица, дом, квартира" autocomplete="street-address"><div class="err-msg">Укажите адрес доставки</div></div>'+
  '<div class="field"><label>Комментарий</label><input class="inp" id="fComment" placeholder="Необязательно"></div>'+
  '<div class="sec-h">Доставка</div><div class="opts">'+delOpts+'</div>'+
  '<label class="consent" id="ffConsent"><input type="checkbox" id="fConsent"><span>Я согласен с обработкой персональных данных и принимаю <a data-scroll="legal">условия оферты</a> и <a data-scroll="legal">политику конфиденциальности</a>.</span></label>'+
@@ -1446,18 +1446,21 @@ function shopMessage(o){
 function saveCrm(){try{localStorage.setItem("rfc_crm",JSON.stringify(state.crm));}catch(e){}}
 function loadCrm(){try{var d=localStorage.getItem("rfc_crm");if(d){var a=JSON.parse(d);if(a&&a.length)state.crm=a;}}catch(e){}}
 function validateCheckout(){
- var name=val("fName"),phone=val("fPhone"),email=val("fEmail");
+ var name=val("fName"),phone=val("fPhone"),email=val("fEmail"),country=val("fCountry"),city=val("fCity"),address=val("fAddr");
  var errors=[];
  $$("#checkout .field").forEach(function(f){f.classList.remove("has-error");});
  if(!name){$("#ffName").classList.add("has-error");errors.push("имя");}
  var phoneDigits=phone.replace(/\D/g,"");
  if(phoneDigits.length<10){$("#ffPhone").classList.add("has-error");errors.push("телефон");}
  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$("#ffEmail").classList.add("has-error");errors.push("email");}
+ if(!country){$("#ffCountry").classList.add("has-error");errors.push("страну");}
+ if(!city){$("#ffCity").classList.add("has-error");errors.push("город");}
+ if(!address||address.length<5){$("#ffAddr").classList.add("has-error");errors.push("адрес");}
  var consentBox=$("#fConsent");
  if(!consentBox||!consentBox.checked){var c=$("#ffConsent");if(c)c.style.color="var(--red)";rfc.toast("Подтвердите согласие на обработку данных");return null;}
- if(errors.length){rfc.toast("Проверьте: "+errors.join(", "));return null;}
+ if(errors.length){rfc.toast("Заполните: "+errors.join(", "));return null;}
  var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
- return {name:name,phone:phone,email:email,country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal()};
+ return {name:name,phone:phone,email:email,country:country,city:city,address:address,comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal()};
 }
 function loadCpWidget(){
  return new Promise(function(resolve,reject){
