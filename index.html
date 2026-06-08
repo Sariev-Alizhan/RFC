@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RFC — Red Flag Community</title>
 <meta name="description" content="RFC — Red Flag Community. Локальный бренд одежды из Казахстана: худи, футболки, свитшоты, кепки. Заказ через сайт, доставка по Казахстану и миру.">
+<link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48-v3.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-v3.png">
@@ -788,6 +789,17 @@ body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 .info-contact span{color:#8a8a8a}
 .info-contact a{color:var(--ink);font-weight:600;border-bottom:2px solid var(--red);padding-bottom:2px;cursor:pointer;text-decoration:none}
 @media(max-width:860px){.info-grid{grid-template-columns:1fr 1fr;gap:12px}.info-card{padding:18px 16px;border-radius:14px}}
+.lookbook{padding-block:clamp(48px,7vw,96px) clamp(24px,4vw,48px);background:#fafafa}
+.lookbook .sec-head{margin-bottom:clamp(20px,3vw,32px)}
+.lb-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 2fr;grid-auto-rows:38vh;gap:4px;padding-inline:4px}
+.lb-tile{position:relative;overflow:hidden;display:block;text-decoration:none;background:#eee}
+.lb-tile img{width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
+.lb-tile:hover img{transform:scale(1.06)}
+.lb-tile.lb-big{grid-row:span 2}
+.lb-cap{position:absolute;left:18px;bottom:16px;color:#fff;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.5);z-index:2}
+.lb-tile::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),transparent 50%);opacity:0;transition:.3s}
+.lb-tile:hover::after{opacity:1}
+@media(max-width:860px){.lb-grid{grid-template-columns:1fr 1fr;grid-auto-rows:32vh}.lb-tile.lb-big{grid-column:span 2;grid-row:span 1}}
 .legal{padding-block:clamp(40px,5vw,72px)}
 .legal-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .legal-card{border:1px solid #ececec;border-radius:18px;padding:32px 30px;background:#fff}
@@ -802,8 +814,14 @@ body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 .card .soon-badge{position:absolute;top:12px;left:12px;background:var(--ink);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:6px 11px;border-radius:20px;z-index:2}
 .card.soon .ph{opacity:.9}
 .pr-soon{color:#9a9a9a;font-size:12.5px;font-weight:600;letter-spacing:.02em}
-.soon-note{background:#f6f6f6;border:1px solid #ececec;border-radius:14px;padding:16px 18px;font-size:14px;line-height:1.5;color:#444;margin:6px 0 16px}
-.btn-block.soon-btn{text-decoration:none;text-align:center;display:block}
+.soon-note{background:#f6f6f6;border:1px solid #ececec;border-radius:14px;padding:16px 18px;font-size:14px;line-height:1.5;color:#444;margin:6px 0 12px}
+.btn-block.soon-btn{text-decoration:none;text-align:center;display:flex}
+.wl-row{display:flex;gap:8px;align-items:stretch}
+.wl-row input{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:14px;outline:none;background:#fff;transition:.2s}
+.wl-row input:focus{border-color:var(--ink)}
+.wl-row button{background:var(--ink);color:#fff;border:none;border-radius:12px;padding:0 22px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.2s;white-space:nowrap}
+.wl-row button:hover{background:var(--red)}
+.wl-row button:disabled{opacity:.55;cursor:not-allowed}
 /* ====== Кликабельность: курсор-рука + запрет выделения на кнопках ====== */
 a,button,select,label.opt,.cur,.gd,.cover-go,.chip,.act,.x,
 [data-scroll],[data-open],[data-quick],[data-home],
@@ -906,6 +924,17 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
     </article>
   </div>
 </section>
+<section class="lookbook" id="lookbook">
+  <div class="wrap"><div class="sec-head rv"><h2>Лукбук</h2><span class="ln"></span><span class="cnt">FW2026</span></div></div>
+  <div class="lb-grid">
+    <a class="lb-tile lb-big rv" href="#red" data-scroll="red"><img src="/img/lifestyle/ls_tank.webp" alt="" loading="lazy"><span class="lb-cap">RED COLLECTION</span></a>
+    <a class="lb-tile rv" href="#red" data-scroll="red"><img src="/img/lifestyle/ls_hoodieRed.webp" alt="" loading="lazy"><span class="lb-cap">HOODIE · RED</span></a>
+    <a class="lb-tile rv" href="#white" data-scroll="white"><img src="/img/lifestyle/ls_manTee.webp" alt="" loading="lazy"><span class="lb-cap">TEE · WHITE</span></a>
+    <a class="lb-tile rv" href="#other" data-scroll="other"><img src="/img/lifestyle/ls_redcap.webp" alt="" loading="lazy"><span class="lb-cap">CAP · BLACK WASHED</span></a>
+    <a class="lb-tile rv" href="#other" data-scroll="other"><img src="/img/lifestyle/ls_beanie.webp" alt="" loading="lazy"><span class="lb-cap">CAMO</span></a>
+    <a class="lb-tile lb-big rv" href="#red" data-scroll="red"><img src="/img/lifestyle/ls_manCapSun.webp" alt="" loading="lazy"><span class="lb-cap">STREET · ASTANA</span></a>
+  </div>
+</section>
 <section class="wrap legal" id="legal">
   <div class="sec-head rv"><h2>Условия и политика</h2><span class="ln"></span><span class="cnt">оферта · конфиденциальность</span></div>
   <div class="legal-grid">
@@ -954,7 +983,7 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
     <div>
       <h4>Будь в курсе</h4>
       <p style="color:#9a9a9a;font-size:13px;line-height:1.6;margin-bottom:6px">Дропы первыми. Без спама.</p>
-      <div class="news"><input placeholder="email@example.com" aria-label="Email для рассылки"><button onclick="rfc.toast('Спасибо! Вы подписаны')" aria-label="Подписаться">→</button></div>
+      <div class="news"><input id="newsEmail" type="email" placeholder="email@example.com" aria-label="Email для рассылки" autocomplete="email"><button onclick="rfc.subscribe()" id="newsBtn" aria-label="Подписаться">→</button></div>
       <div class="foot-soc">
         <a id="igLink" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2 0 1.8.3 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c0 1.2-.3 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2 0-1.8-.3-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c0-1.2.3-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zM12 0C8.7 0 8.3 0 7.1.1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.7-2.2 1.4S.9 3.3.6 4.1c-.3.8-.5 1.7-.5 3C0 8.3 0 8.7 0 12s0 3.7.1 4.9c0 1.3.2 2.2.5 3 .3.8.7 1.5 1.4 2.2s1.4 1.1 2.2 1.4c.8.3 1.7.5 3 .5C8.3 24 8.7 24 12 24s3.7 0 4.9-.1c1.3 0 2.2-.2 3-.5.8-.3 1.5-.7 2.2-1.4s1.1-1.4 1.4-2.2c.3-.8.5-1.7.5-3 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c0-1.3-.2-2.2-.5-3-.3-.8-.7-1.5-1.4-2.2S20.7.9 19.9.6c-.8-.3-1.7-.5-3-.5C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 12 5.8zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z"/></svg></a>
         <a id="waFoot" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm4.4 12c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-.8 2 0 3.2a9 9 0 0 0 3.7 3.2c1.3.6 1.8.6 2.5.5.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1 0 0-.2-.1-.4-.2Z"/></svg></a>
@@ -1067,10 +1096,45 @@ var SHOP={
   email:"raimzhan1907@gmail.com",   // почта магазина (заказы также приходят сюда автоматически)
   ig:"redflagseverywear",           // инстаграм
   city:"Астана", country:"Казахстан",
+  // === Аналитика — вставьте ваши ID когда зарегистрируетесь ===
+  ga4:"",        // Google Analytics: например "G-XXXXXXXXXX"  (https://analytics.google.com)
+  pixel:"",      // Meta (Facebook) Pixel: например "1234567890"  (https://business.facebook.com)
+  clarity:"",    // Microsoft Clarity: например "abc123xyz"  (https://clarity.microsoft.com)
   // === Kaspi оплата (ИП VIVID) ===
   kaspiQrImg:"/img/brand/kaspi-qr.webp",          // статичный QR для десктопа
   kaspiPayLink:"https://pay.kaspi.kz/pay/yszmgt89", // прямая ссылка для мобилы
 };
+/* === АНАЛИТИКА — грузится только если ID указан в SHOP === */
+(function(){
+ // Google Analytics 4
+ if(SHOP.ga4){
+  var s=document.createElement("script");s.async=true;
+  s.src="https://www.googletagmanager.com/gtag/js?id="+SHOP.ga4;
+  document.head.appendChild(s);
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=function(){window.dataLayer.push(arguments);};
+  gtag("js",new Date());gtag("config",SHOP.ga4,{anonymize_ip:true});
+ }
+ // Meta (Facebook) Pixel
+ if(SHOP.pixel){
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");
+  fbq("init",SHOP.pixel);fbq("track","PageView");
+ }
+ // Microsoft Clarity (heatmaps + session recordings)
+ if(SHOP.clarity){
+  (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script",SHOP.clarity);
+ }
+})();
+// Helper: трекаем ключевые события (Add to cart / Begin checkout / Purchase)
+function track(name,params){
+ try{
+  if(window.gtag) gtag("event",name,params||{});
+  if(window.fbq){
+   var fbMap={add_to_cart:"AddToCart",begin_checkout:"InitiateCheckout",purchase:"Purchase",view_item:"ViewContent"};
+   if(fbMap[name]) fbq("track",fbMap[name],params||{});
+  }
+ }catch(e){}
+}
 /* === SUPABASE (облачная CRM). Заполни ПОСЛЕ создания проекта (оба ключа публичные/клиентские) === */
 var SB_URL="https://kkvmxtwpgvubwtcalzjm.supabase.co";   // Supabase → Project Settings → API → Project URL
 var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrdm14dHdwZ3Z1Ynd0Y2FsemptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjcyMjgsImV4cCI6MjA5MTUwMzIyOH0.91wBtkzhQTZ5iIeXHpOTUSsMsuooKq4Z3bf-yZTj24E";   // там же: anon public key
@@ -1307,6 +1371,7 @@ rfc.add=function(p,size,qty,variant){
  var ex=state.cart.filter(function(i){return i.key===key;})[0];
  if(ex){ex.qty+=qty;}else{state.cart.push({key:key,id:p.id,t:p.t,name:p.name,price:p.price,size:size,qty:qty,color:variant?variant.name:null,colorKey:vKey||null,img:img});}
  renderCart();rfc.toast("Добавлено в корзину",true);
+ track("add_to_cart",{currency:"KZT",value:p.price*qty,items:[{item_id:p.id,item_name:p.name,price:p.price,quantity:qty,item_variant:(variant&&variant.name)||null}]});
 };
 
 /* ===================== DRAWER / SCRIM ===================== */
@@ -1339,7 +1404,7 @@ rfc.openProduct=function(id){
   swatchBlock='<div class="lbl">Цвет:</div><div class="swatch-name">Выбрано: <b id="pdpColorName">'+activeVar.name+'</b></div><div class="swatch-row">'+swatches+'</div>';
  }
  var buyBlock = soon
-  ? '<div class="soon-note">⚑ Скоро в продаже. Следи за стартом дропа в Instagram.</div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank">Узнать о старте — Instagram</a>'
+  ? '<div class="soon-note">⚑ Скоро в продаже. Оставь email — пришлём как только товар появится.</div><div class="wl-row"><input id="wlEmail" type="email" placeholder="email@example.com" autocomplete="email"><button onclick="rfc.waitlist(\''+p.id+'\',\''+String(p.name).replace(/\x27/g,"\\\x27")+'\')" id="wlBtn">Сообщить</button></div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank" style="margin-top:10px">Или следи в Instagram</a>'
   : swatchBlock+stockBlock(p)+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  state.pdpImgIdx=0;
  var displayP=activeVar?Object.assign({},p,{images:activeVar.images}):p;
@@ -1353,6 +1418,7 @@ rfc.openProduct=function(id){
  if(!soon&&ap){state.pSize="M";$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
  else{state.pSize="ONE SIZE";}
  showScreen("#pdp");
+ track("view_item",{currency:"KZT",value:p.price,items:[{item_id:p.id,item_name:p.name,price:p.price,item_category:p.t}]});
  attachGalSwipe();
  attachLightbox();
  if(!soon){
@@ -1468,6 +1534,7 @@ function careIcons(){
 /* ===================== CHECKOUT ===================== */
 rfc.checkout=function(){
  if(!state.cart.length){rfc.toast("Корзина пуста");return;}
+ track("begin_checkout",{currency:"KZT",value:subtotal(),items:state.cart.map(function(i){return {item_id:i.id,item_name:i.name,price:i.price,quantity:i.qty};})});
  rfc.closeCart();renderCheckout();showScreen("#checkout");
 };
 function renderCheckout(){
@@ -1550,6 +1617,38 @@ function validateCheckout(){
  var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
  return {name:name,phone:phone,email:email,country:country,city:city,address:address,comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal()};
 }
+rfc.waitlist=function(productId,productName){
+ var inp=$("#wlEmail"),btn=$("#wlBtn");
+ if(!inp)return;
+ var email=(inp.value||"").trim();
+ if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){rfc.toast("Введите корректный email");inp.focus();return;}
+ if(btn){btn.disabled=true;btn.textContent="…";}
+ fetch("/api/waitlist",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,productId:productId,productName:productName})})
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
+  .then(function(res){
+   if(btn){btn.disabled=false;btn.textContent="Сообщить";}
+   if(!res.ok){rfc.toast(res.body.error||"Ошибка");return;}
+   inp.value="";rfc.toast("Сообщим как только товар появится 🚩");
+   track("generate_lead",{value:0,product_id:productId});
+  })
+  .catch(function(){if(btn){btn.disabled=false;btn.textContent="Сообщить";}rfc.toast("Ошибка соединения");});
+};
+rfc.subscribe=function(){
+ var inp=$("#newsEmail"),btn=$("#newsBtn");
+ if(!inp)return;
+ var email=(inp.value||"").trim();
+ if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){rfc.toast("Введите корректный email");inp.focus();return;}
+ if(btn){btn.disabled=true;btn.textContent="…";}
+ fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,source:"footer"})})
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
+  .then(function(res){
+   if(btn){btn.disabled=false;btn.textContent="→";}
+   if(!res.ok){rfc.toast(res.body.error||"Ошибка");return;}
+   inp.value="";rfc.toast("Спасибо! Подписка оформлена ✓");
+   track("generate_lead",{currency:"KZT",value:0});
+  })
+  .catch(function(){if(btn){btn.disabled=false;btn.textContent="→";}rfc.toast("Ошибка соединения");});
+};
 function createOrderOnServer(data, paymentMethod){
  var payload=Object.assign({},data,{paymentMethod:paymentMethod});
  return fetch("/api/orders/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
@@ -1645,6 +1744,7 @@ rfc.kqrConfirm=function(){
  L.push("");
  L.push("📸 Сейчас отправлю скрин оплаты ⬇️");
  window.open(waLink(SHOP.wa,L.join("\n")),"_blank");
+ track("purchase",{transaction_id:o.id,currency:"KZT",value:o.total,payment_type:"kaspi_qr",items:(o.items||[]).map(function(i){return {item_id:i.t,item_name:i.name,price:i.price,quantity:i.qty};})});
  state.cart=[];renderCart();
  rfc.kqrClose();
  rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
@@ -1659,6 +1759,7 @@ rfc.placeOrder=function(){
   saveCustomerProfile({name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address});
   state.userOrders.unshift({id:order.id,date:order.date,total:order.total,status:"Оформлен",items:order.items.map(function(i){return {name:i.name,size:i.size,qty:i.qty,t:i.t,color:i.color,img:i.img};})});saveUserOrders();
   window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
+  track("purchase",{transaction_id:order.id,currency:"KZT",value:order.total,payment_type:"whatsapp",items:(order.items||[]).map(function(i){return {item_id:i.t,item_name:i.name,price:i.price,quantity:i.qty};})});
   state.cart=[];renderCart();rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
   restore();
  }).catch(function(e){restore();rfc.toast(e.message||"Ошибка");});
