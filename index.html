@@ -1286,7 +1286,18 @@ function renderCart(){
  }).join("");
  foot.innerHTML='<div class="cart-foot"><div class="sum tot"><span>Итого</span><span>'+fmt(subtotal())+'</span></div><div class="sum" style="font-size:12px;color:#999;margin-top:2px"><span>Доставку рассчитаем при подтверждении</span></div><button class="btn-block" onclick="rfc.checkout()">Оформить заказ</button></div>';
 }
-rfc.q=function(key,d){state.cart=state.cart.map(function(i){return i.key===key?Object.assign({},i,{qty:Math.max(1,i.qty+d)}):i;});renderCart();};
+rfc.q=function(key,d){
+ var item=state.cart.find(function(i){return i.key===key;});
+ if(!item)return;
+ var newQty=item.qty+d;
+ if(newQty<=0){
+  state.cart=state.cart.filter(function(i){return i.key!==key;});
+  rfc.toast("Товар удалён");
+ }else{
+  state.cart=state.cart.map(function(i){return i.key===key?Object.assign({},i,{qty:newQty}):i;});
+ }
+ renderCart();
+};
 rfc.rm=function(key){state.cart=state.cart.filter(function(i){return i.key!==key;});renderCart();};
 rfc.add=function(p,size,qty,variant){
  if(isSoon(p.t)){rfc.toast("Скоро в продаже");return;}
