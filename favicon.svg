@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- pole -->
+  <rect x="62" y="22" width="6" height="60" rx="3" fill="#E11236"/>
+  <!-- wavy flag -->
+  <path d="M65 22 C45 14 32 28 12 22 L12 50 C32 56 45 42 65 50 Z" fill="#E11236"/>
+  <!-- © circle -->
+  <circle cx="84" cy="82" r="6" stroke="#E11236" stroke-width="1.6" fill="none"/>
+  <text x="84" y="85.5" font-size="7" text-anchor="middle" fill="#E11236" font-family="Georgia,serif" font-weight="600">c</text>
+</svg>

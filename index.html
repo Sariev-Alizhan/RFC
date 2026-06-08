@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RFC — Red Flag Community</title>
 <meta name="description" content="RFC — Red Flag Community. Локальный бренд одежды из Казахстана: худи, футболки, свитшоты, кепки. Заказ через сайт, доставка по Казахстану и миру.">
-<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48-v3.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-v3.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192-v3.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512-v3.png">
 <meta name="theme-color" content="#E11236">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Red Flag Community">
@@ -270,7 +271,8 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .cart-foot{border-top:1px solid var(--line);padding:20px 24px}
 .cart-foot .sum{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#555}
 .cart-foot .sum.tot{font-weight:800;font-size:18px;color:var(--ink);margin-top:10px}
-.btn-block{width:100%;background:var(--ink);color:#fff;border-radius:999px;padding:19px;font-weight:700;font-size:13.5px;margin-top:18px;transition:.3s cubic-bezier(.2,.7,.2,1);letter-spacing:.08em;text-transform:uppercase;position:relative;overflow:hidden}
+.btn-block{width:100%;background:var(--ink);color:#fff;border-radius:999px;padding:19px;font-weight:700;font-size:13.5px;margin-top:18px;transition:.3s cubic-bezier(.2,.7,.2,1);letter-spacing:.08em;text-transform:uppercase;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px;line-height:1}
+.btn-block svg{flex:none}
 .btn-block:hover{background:var(--red);transform:translateY(-2px);box-shadow:0 16px 34px rgba(225,18,54,.28)}
 .btn-block::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.18),transparent);transform:translateX(-100%);transition:transform .6s}
 .btn-block:hover::before{transform:translateX(100%)}
@@ -1420,7 +1422,7 @@ function renderCheckout(){
  '<div class="field"><label>Комментарий</label><input class="inp" id="fComment" placeholder="Необязательно"></div>'+
  '<div class="sec-h">Доставка</div><div class="opts">'+delOpts+'</div>'+
  '<label class="consent" id="ffConsent"><input type="checkbox" id="fConsent"><span>Я согласен с обработкой персональных данных и принимаю <a data-scroll="legal">условия оферты</a> и <a data-scroll="legal">политику конфиденциальности</a>.</span></label>'+
- '<button class="btn-block kaspi" onclick="rfc.payKaspi()" id="payKaspiBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:8px;vertical-align:-4px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg>Оплатить Kaspi QR · '+fmt(subtotal())+'</button>'+
+ '<button class="btn-block kaspi" onclick="rfc.payKaspi()" id="payKaspiBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg><span>Оплатить Kaspi QR · '+fmt(subtotal())+'</span></button>'+
  '<div class="pay-sep"><span>или</span></div>'+
  '<button class="btn-block wa" onclick="rfc.placeOrder()">'+waIcon(18)+'Оформить через WhatsApp</button>'+
  '<p class="note">Kaspi QR — отсканируй и оплати с любого устройства за 10 секунд. WhatsApp — менеджер свяжется и подтвердит детали.</p>'+
@@ -1485,7 +1487,7 @@ function createOrderOnServer(data, paymentMethod){
 rfc.payKaspi=function(){
  var data=validateCheckout();if(!data)return;
  var btn=$("#payKaspiBtn");if(btn){btn.disabled=true;btn.style.opacity=".7";btn.textContent="Создаём заказ…";}
- var restore=function(){if(btn){btn.disabled=false;btn.style.opacity="";btn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:8px;vertical-align:-4px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg>Оплатить Kaspi QR · '+fmt(subtotal());}};
+ var restore=function(){if(btn){btn.disabled=false;btn.style.opacity="";btn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg><span>Оплатить Kaspi QR · '+fmt(subtotal())+'</span>';}};
  createOrderOnServer(data,"kaspi").then(function(saved){
   var order={id:saved.id,date:nowStr(),name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address,comment:data.comment,delivery:data.delivery,items:data.items,total:data.total,status:"Ожидает Kaspi QR"};
   state.lastOrder=order;state.kqrOrder=order;
