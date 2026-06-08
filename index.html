@@ -514,6 +514,10 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .field .err-msg{color:var(--red);font-size:12px;font-weight:600;margin-top:6px;display:none}
 .field.has-error .inp{border-color:var(--red)}
 .field.has-error .err-msg{display:block}
+.btn-block.kaspi{background:#F14635;color:#fff}
+.btn-block.kaspi:hover{background:#d63627;box-shadow:0 16px 34px rgba(241,70,53,.32)}
+.pay-sep{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.pay-sep::before,.pay-sep::after{content:"";flex:1;height:1px;background:var(--line)}
 .consent{display:flex;align-items:flex-start;gap:10px;margin:18px 0 8px;cursor:pointer;user-select:none}
 .consent input{flex:none;width:18px;height:18px;margin-top:1px;cursor:pointer;accent-color:var(--red)}
 .consent span{font-size:12.5px;line-height:1.55;color:#555}
@@ -616,6 +620,24 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .pdp-sticky .ps-btn{background:var(--ink);color:#fff;border:none;padding:13px 20px;border-radius:99px;font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
 .pdp-sticky .ps-btn:hover{background:var(--red)}
 @media(max-width:860px){body.pdp-open .pdp-sticky{display:flex}}
+.kqr-ov{position:fixed;inset:0;background:rgba(11,11,11,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:130;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.kqr-ov.on{opacity:1;pointer-events:auto}
+.kqr-box{background:#fff;width:min(440px,100%);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:34px 28px 28px;position:relative;max-height:96vh;overflow-y:auto}
+.kqr-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;color:var(--ink);transition:.2s}
+.kqr-close:hover{background:var(--ink);color:#fff}
+.kqr-head{text-align:center;margin-bottom:20px}
+.kqr-brand{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:14px}
+.kqr-brand .kqr-logo{font-weight:900;font-size:13px;letter-spacing:.04em;color:#F14635;background:#fff;border:1.5px solid #F14635;padding:3px 7px;border-radius:5px}
+.kqr-brand .kqr-pay{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.kqr-amount{font-family:var(--serif);font-weight:700;font-size:42px;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
+.kqr-order{font-family:'SF Mono','Menlo',monospace;font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
+.kqr-qr{width:240px;height:240px;margin:8px auto 22px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center}
+.kqr-qr img{width:100%;height:100%;object-fit:contain;display:block}
+.kqr-qr .kqr-placeholder{text-align:center;color:#999;font-size:12px;line-height:1.6;padding:18px}
+.kqr-steps{padding-left:22px;margin-bottom:22px;display:flex;flex-direction:column;gap:9px}
+.kqr-steps li{font-size:13.5px;line-height:1.6;color:#333}
+.kqr-steps code{background:var(--mist);padding:2px 8px;border-radius:5px;font-size:12.5px;font-family:'SF Mono','Menlo',monospace;color:var(--ink);font-weight:700}
+.kqr-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;margin-top:12px}
 .search-ov{position:fixed;inset:0;background:rgba(11,11,11,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;opacity:0;pointer-events:none;transition:opacity .25s}
 .search-ov.on{opacity:1;pointer-events:auto}
 .search-box{background:#fff;width:min(680px,calc(100% - 32px));border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;max-height:70vh}
@@ -946,6 +968,26 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
   <img id="lbImg" alt="" onclick="event.stopPropagation();rfc.lbStep(1)">
   <div class="lb-count" id="lbCount"></div>
 </div>
+<div class="kqr-ov" id="kqrOv" onclick="rfc.kqrClose(event)">
+  <div class="kqr-box" onclick="event.stopPropagation()">
+    <button class="kqr-close" onclick="rfc.kqrClose()" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button>
+    <div class="kqr-head">
+      <div class="kqr-brand"><span class="kqr-logo">Kaspi.kz</span><span class="kqr-pay">QR Pay</span></div>
+      <div class="kqr-amount" id="kqrAmount">₸ 0</div>
+      <div class="kqr-order" id="kqrOrder">Заказ —</div>
+    </div>
+    <div class="kqr-qr" id="kqrQr"></div>
+    <ol class="kqr-steps">
+      <li>Открой приложение <b>Kaspi.kz</b></li>
+      <li>Нажми <b>«Платежи» → «Оплата по QR»</b></li>
+      <li>Отсканируй QR выше</li>
+      <li>В назначении укажи номер заказа <code id="kqrOrderCode">—</code></li>
+      <li>После оплаты нажми кнопку ниже — пришлёшь нам скрин в WhatsApp</li>
+    </ol>
+    <button class="btn-block wa" onclick="rfc.kqrConfirm()" id="kqrWaBtn">Я оплатил → подтвердить в WhatsApp</button>
+    <p class="kqr-foot">QR ведёт на личный счёт Red Flag Community. После проверки оплаты заказ перейдёт в работу.</p>
+  </div>
+</div>
 <a class="wa-fab" id="waFab" href="#" target="_blank" rel="noopener" aria-label="Написать в WhatsApp"><svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-.8 2 0 3.2a9 9 0 0 0 3.7 3.2c1.3.6 1.8.6 2.5.5.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1 0 0-.2-.1-.4-.2Z"/></svg></a>
 <div class="toast" id="toast"><span class="d"></span><span id="toastTxt"></span><button id="toastAction" class="toast-act" onclick="rfc.openCart()">Открыть корзину</button></div>
 
@@ -958,7 +1000,12 @@ var SHOP={
   wa:"77774961358",                 // WhatsApp магазина: код страны + номер, без + и пробелов. Пример: 77011234567
   email:"raimzhan1907@gmail.com",   // почта магазина (заказы также приходят сюда автоматически)
   ig:"redflagseverywear",           // инстаграм
-  city:"Астана", country:"Казахстан"
+  city:"Астана", country:"Казахстан",
+  // === Kaspi QR оплата (временно, пока не подключим Kaspi Бизнес) ===
+  // Вариант 1: статическая картинка QR — положи свой QR в /img/brand/kaspi-qr.png
+  kaspiQrImg:"",  // например: "/img/brand/kaspi-qr.png"
+  // Вариант 2: динамическая kaspi-ссылка с шаблонами {amount} и {order} (используется если kaspiQrImg пустой)
+  kaspiPayLink:"" // например: "https://kaspi.kz/pay/redflag?amount={amount}&comment={order}"
 };
 /* === SUPABASE (облачная CRM). Заполни ПОСЛЕ создания проекта (оба ключа публичные/клиентские) === */
 var SB_URL="https://kkvmxtwpgvubwtcalzjm.supabase.co";   // Supabase → Project Settings → API → Project URL
@@ -1365,8 +1412,10 @@ function renderCheckout(){
  '<div class="field"><label>Комментарий</label><input class="inp" id="fComment" placeholder="Необязательно"></div>'+
  '<div class="sec-h">Доставка</div><div class="opts">'+delOpts+'</div>'+
  '<label class="consent" id="ffConsent"><input type="checkbox" id="fConsent"><span>Я согласен с обработкой персональных данных и принимаю <a data-scroll="legal">условия оферты</a> и <a data-scroll="legal">политику конфиденциальности</a>.</span></label>'+
+ '<button class="btn-block kaspi" onclick="rfc.payKaspi()" id="payKaspiBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:8px;vertical-align:-4px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg>Оплатить Kaspi QR · '+fmt(subtotal())+'</button>'+
+ '<div class="pay-sep"><span>или</span></div>'+
  '<button class="btn-block wa" onclick="rfc.placeOrder()">'+waIcon(18)+'Оформить через WhatsApp</button>'+
- '<p class="note">Заказ откроется в WhatsApp — отправьте нам сообщение, и мы свяжемся с вами. Доставка по КЗ 1–2 дня · по миру от недели.</p>'+
+ '<p class="note">Kaspi QR — отсканируй и оплати с любого устройства за 10 секунд. WhatsApp — менеджер свяжется и подтвердит детали.</p>'+
  '</div></div>';
 }
 rfc.setDel=function(k){state.del=k;$$("#checkout .opt").forEach(function(o){o.classList.toggle("on",o.getAttribute("data-k")===k);});};
@@ -1388,6 +1437,82 @@ function shopMessage(o){
 }
 function saveCrm(){try{localStorage.setItem("rfc_crm",JSON.stringify(state.crm));}catch(e){}}
 function loadCrm(){try{var d=localStorage.getItem("rfc_crm");if(d){var a=JSON.parse(d);if(a&&a.length)state.crm=a;}}catch(e){}}
+function validateCheckout(){
+ var name=val("fName"),phone=val("fPhone"),email=val("fEmail");
+ var errors=[];
+ $$("#checkout .field").forEach(function(f){f.classList.remove("has-error");});
+ if(!name){$("#ffName").classList.add("has-error");errors.push("имя");}
+ var phoneDigits=phone.replace(/\D/g,"");
+ if(phoneDigits.length<10){$("#ffPhone").classList.add("has-error");errors.push("телефон");}
+ if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$("#ffEmail").classList.add("has-error");errors.push("email");}
+ var consentBox=$("#fConsent");
+ if(!consentBox||!consentBox.checked){var c=$("#ffConsent");if(c)c.style.color="var(--red)";rfc.toast("Подтвердите согласие на обработку данных");return null;}
+ if(errors.length){rfc.toast("Проверьте: "+errors.join(", "));return null;}
+ var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
+ return {name:name,phone:phone,email:email,country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal()};
+}
+function loadCpWidget(){
+ return new Promise(function(resolve,reject){
+  if(window.cp&&window.cp.CloudPayments){resolve();return;}
+  var s=document.createElement("script");
+  s.src="https://widget.cloudpayments.kz/bundles/cloudpayments.js";
+  s.async=true;
+  s.onload=function(){resolve();};
+  s.onerror=function(){reject(new Error("Не удалось загрузить виджет CloudPayments"));};
+  document.head.appendChild(s);
+ });
+}
+rfc.payKaspi=function(){
+ var data=validateCheckout();if(!data)return;
+ var orderId="RFC-"+String(Date.now()).slice(-6);
+ var order={id:orderId,date:nowStr(),name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address,comment:data.comment,delivery:data.delivery,items:data.items,total:data.total,status:"Ожидает Kaspi QR"};
+ // Сохраняем заказ заранее в Supabase + локально — менеджер увидит в CRM
+ if(typeof sb!=="undefined"&&sb){
+  try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Ожидает Kaspi QR"}).then(function(){}); }catch(e){}
+ }
+ state.lastOrder=order;
+ state.kqrOrder=order;
+ saveCustomerProfile({name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address});
+ // Открываем модалку
+ var ov=$("#kqrOv");
+ $("#kqrAmount").textContent=fmt(order.total);
+ $("#kqrOrder").textContent="Заказ "+order.id;
+ $("#kqrOrderCode").textContent=order.id;
+ var qrBox=$("#kqrQr");
+ if(SHOP.kaspiQrImg){qrBox.innerHTML='<img src="'+SHOP.kaspiQrImg+'" alt="Kaspi QR" loading="eager">';}
+ else if(SHOP.kaspiPayLink){
+  // Динамический QR через api.qrserver.com
+  var url=SHOP.kaspiPayLink.replace("{amount}",order.total).replace("{order}",encodeURIComponent(order.id));
+  qrBox.innerHTML='<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data='+encodeURIComponent(url)+'" alt="Kaspi QR" loading="eager">';
+ }
+ else{qrBox.innerHTML='<div class="kqr-placeholder">QR временно недоступен.<br>Нажми кнопку ниже — менеджер пришлёт реквизиты в WhatsApp.</div>';}
+ ov.classList.add("on");document.body.style.overflow="hidden";
+ if(!state._kqrKey){state._kqrKey=function(e){if(e.key==="Escape"&&$("#kqrOv").classList.contains("on"))rfc.kqrClose();};document.addEventListener("keydown",state._kqrKey);}
+};
+rfc.kqrClose=function(e){if(e&&e.target!==$("#kqrOv"))return;$("#kqrOv").classList.remove("on");if(!document.querySelector(".screen.on,.drawer.on"))document.body.style.overflow="";};
+rfc.kqrConfirm=function(){
+ var o=state.kqrOrder;if(!o)return;
+ // Сохраняем локально
+ state.userOrders.unshift({id:o.id,date:o.date,total:o.total,status:"Ожидает подтверждения оплаты",items:o.items});saveUserOrders();
+ // WhatsApp с предзаполненным сообщением
+ var L=[];
+ L.push("✅ Я оплатил заказ "+o.id+" через Kaspi QR.");
+ L.push("");
+ L.push("Сумма: "+fmt(o.total));
+ L.push("Имя: "+o.name);
+ L.push("Телефон: "+o.phone);
+ if(o.address)L.push("Адрес: "+(o.city?o.city+", ":"")+o.address);
+ if(o.delivery)L.push("Доставка: "+o.delivery);
+ L.push("");
+ L.push("Состав:");
+ (o.items||[]).forEach(function(i){L.push("• "+i.name+(i.color?" ["+i.color+"]":"")+" — "+i.size+" x"+i.qty+" — "+fmt(i.price*i.qty));});
+ L.push("");
+ L.push("Сейчас отправлю скрин оплаты ⬇️");
+ window.open(waLink(SHOP.wa,L.join("\n")),"_blank");
+ state.cart=[];renderCart();
+ rfc.kqrClose();
+ rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
+};
 rfc.placeOrder=function(){
  var name=val("fName"),phone=val("fPhone"),email=val("fEmail");
  var errors=[];
