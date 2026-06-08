@@ -1471,17 +1471,28 @@ function loadCpWidget(){
   document.head.appendChild(s);
  });
 }
+function createOrderOnServer(data, paymentMethod){
+ var payload=Object.assign({},data,{paymentMethod:paymentMethod});
+ return fetch("/api/orders/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
+  .then(function(res){
+   if(!res.ok)throw new Error(res.body.error||"Не удалось сохранить заказ");
+   return res.body.order;
+  });
+}
 rfc.payKaspi=function(){
  var data=validateCheckout();if(!data)return;
- var orderId="RFC-"+String(Date.now()).slice(-6);
- var order={id:orderId,date:nowStr(),name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address,comment:data.comment,delivery:data.delivery,items:data.items,total:data.total,status:"Ожидает Kaspi QR"};
- // Сохраняем заказ заранее в Supabase + локально — менеджер увидит в CRM
- if(typeof sb!=="undefined"&&sb){
-  try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Ожидает Kaspi QR"}).then(function(){}); }catch(e){}
- }
- state.lastOrder=order;
- state.kqrOrder=order;
- saveCustomerProfile({name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address});
+ var btn=$("#payKaspiBtn");if(btn){btn.disabled=true;btn.style.opacity=".7";btn.textContent="Создаём заказ…";}
+ var restore=function(){if(btn){btn.disabled=false;btn.style.opacity="";btn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:8px;vertical-align:-4px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg>Оплатить Kaspi QR · '+fmt(subtotal());}};
+ createOrderOnServer(data,"kaspi").then(function(saved){
+  var order={id:saved.id,date:nowStr(),name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address,comment:data.comment,delivery:data.delivery,items:data.items,total:data.total,status:"Ожидает Kaspi QR"};
+  state.lastOrder=order;state.kqrOrder=order;
+  saveCustomerProfile({name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address});
+  restore();
+  rfc.kqrOpenModal(order);
+ }).catch(function(e){restore();rfc.toast(e.message||"Ошибка при сохранении заказа");});
+};
+rfc.kqrOpenModal=function(order){
  // Открываем модалку
  var ov=$("#kqrOv");
  $("#kqrAmount").textContent=fmt(order.total);
@@ -1540,24 +1551,18 @@ rfc.kqrConfirm=function(){
  rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
 };
 rfc.placeOrder=function(){
- var name=val("fName"),phone=val("fPhone"),email=val("fEmail");
- var errors=[];
- $$("#checkout .field").forEach(function(f){f.classList.remove("has-error");});
- if(!name){$("#ffName").classList.add("has-error");errors.push("имя");}
- var phoneDigits=phone.replace(/\D/g,"");
- if(phoneDigits.length<10){$("#ffPhone").classList.add("has-error");errors.push("телефон");}
- if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$("#ffEmail").classList.add("has-error");errors.push("email");}
- var consentBox=$("#fConsent");
- if(!consentBox||!consentBox.checked){var c=$("#ffConsent");if(c)c.style.color="var(--red)";rfc.toast("Подтвердите согласие на обработку данных");return;}
- if(errors.length){rfc.toast("Проверьте: "+errors.join(", "));return;}
- var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
- var order={id:"RFC-"+String(Date.now()).slice(-6),date:nowStr(),name:name,phone:phone,email:val("fEmail"),country:val("fCountry"),city:val("fCity"),address:val("fAddr"),comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal(),status:"Новый"};
- state.lastOrder=order;state.crm.unshift(order);saveCrm();
- if(CLOUD){ try{ sb.from("rfc_orders").insert({id:order.id,name:order.name,phone:order.phone,email:order.email,country:order.country,city:order.city,address:order.address,comment:order.comment,delivery:order.delivery,items:order.items,total:order.total,status:"Новый"}).then(function(r){ if(r&&r.error)console.warn("Supabase insert:",r.error.message); }); }catch(e){} }
- saveCustomerProfile({name:name,phone:phone,email:email,country:val("fCountry"),city:val("fCity"),address:val("fAddr")});
- state.userOrders.unshift({id:order.id,date:order.date,total:order.total,status:"Оформлен",items:order.items.map(function(i){return {name:i.name,size:i.size,qty:i.qty,t:i.t,color:i.color,img:i.img};})});saveUserOrders();
- window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
- state.cart=[];renderCart();rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
+ var data=validateCheckout();if(!data)return;
+ var btn=document.querySelector(".btn-block.wa");if(btn){btn.disabled=true;btn.style.opacity=".7";var origHtml=btn.innerHTML;btn.textContent="Создаём заказ…";}
+ var restore=function(){if(btn){btn.disabled=false;btn.style.opacity="";btn.innerHTML=origHtml;}};
+ createOrderOnServer(data,"whatsapp").then(function(saved){
+  var order={id:saved.id,date:nowStr(),name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address,comment:data.comment,delivery:data.delivery,items:data.items,total:data.total,status:"Новый"};
+  state.lastOrder=order;
+  saveCustomerProfile({name:data.name,phone:data.phone,email:data.email,country:data.country,city:data.city,address:data.address});
+  state.userOrders.unshift({id:order.id,date:order.date,total:order.total,status:"Оформлен",items:order.items.map(function(i){return {name:i.name,size:i.size,qty:i.qty,t:i.t,color:i.color,img:i.img};})});saveUserOrders();
+  window.open(waLink(SHOP.wa,shopMessage(order)),"_blank");
+  state.cart=[];renderCart();rfc.closeScreen("#checkout");renderSuccess();showScreen("#success");
+  restore();
+ }).catch(function(e){restore();rfc.toast(e.message||"Ошибка");});
 };
 
 /* ===================== ORDERS ===================== */
