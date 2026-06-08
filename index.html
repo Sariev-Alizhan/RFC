@@ -622,6 +622,17 @@ body:has(.lb.on) .wa-fab,
 body:has(.kqr-ov.on) .wa-fab,
 body:has(.search-ov.on) .wa-fab,
 body:has(.modal-bg.on) .wa-fab{opacity:0;pointer-events:none;transform:scale(.7)}
+/* PDP sticky-bar тоже прячется когда что-то поверх него открыто */
+body:has(.drawer.on) .pdp-sticky,
+body:has(.menu.on) .pdp-sticky,
+body:has(.lb.on) .pdp-sticky,
+body:has(.kqr-ov.on) .pdp-sticky,
+body:has(.search-ov.on) .pdp-sticky{display:none !important}
+/* Toast тоже не показываем когда открыта корзина или модалка (информация дублируется) */
+body:has(.drawer.on) .toast,
+body:has(.kqr-ov.on) .toast,
+body:has(.search-ov.on) .toast,
+body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 .pdp-sticky{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;z-index:75;box-shadow:0 -6px 24px rgba(0,0,0,.06);transform:translateY(100%);transition:.3s cubic-bezier(.2,.7,.2,1)}
 .pdp-sticky.on{transform:translateY(0)}
 .pdp-sticky .ps-info{flex:1;min-width:0}
