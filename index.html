@@ -528,8 +528,9 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .success .ord-id-cap{font-size:11px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:24px;display:block}
 .field{margin-bottom:12px}
 .field label{display:block;font-size:11px;color:var(--muted);margin:0 0 5px 16px}
-.inp,.sel{width:100%;border:1px solid var(--line);border-radius:14px;padding:15px 16px;font-size:14px;outline:none;transition:.2s;background:#fff}
+.inp,.sel{width:100%;border:1px solid var(--line);border-radius:14px;padding:15px 16px;font-size:16px;outline:none;transition:.2s;background:#fff;-webkit-appearance:none;appearance:none}
 .inp:focus{border-color:var(--ink)}
+@media(min-width:768px){.inp,.sel{font-size:14px}}
 .sel{display:flex;justify-content:space-between;align-items:center}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .opts{border:1px solid var(--line);border-radius:16px;overflow:hidden}
@@ -641,6 +642,22 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .kqr-items .kqr-i .kqr-i-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kqr-items .kqr-i .kqr-i-meta{font-size:11px;color:var(--muted);margin-top:2px}
 .kqr-items .kqr-i .kqr-i-price{font-family:var(--serif);font-weight:700;font-size:13px;color:var(--ink);flex:none}
+.kqr-desktop-only{display:block}
+.kqr-mobile-only{display:none}
+@media(max-width:640px),(pointer:coarse){
+  .kqr-desktop-only{display:none}
+  .kqr-mobile-only{display:block}
+}
+.kqr-copy-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kqr-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--mist);border:1.5px solid transparent;border-radius:14px;padding:12px 14px;cursor:pointer;transition:.2s;text-align:left;position:relative}
+.kqr-copy:hover,.kqr-copy:active{border-color:var(--ink);background:#eee}
+.kqr-copy.copied{border-color:#22c55e;background:#e7f8ee}
+.kqr-copy .kqr-copy-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kqr-copy .kqr-copy-val{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);letter-spacing:-.01em;line-height:1.1;margin-top:2px}
+.kqr-copy .kqr-copy-ico{position:absolute;top:10px;right:12px;font-size:13px;opacity:.5;transition:.2s}
+.kqr-copy:hover .kqr-copy-ico{opacity:1}
+.kqr-copy.copied .kqr-copy-ico::after{content:" ✓";color:#22c55e;font-weight:700}
+.kqr-qr-wrap{display:flex;flex-direction:column;align-items:center}
 .kqr-qr{width:240px;height:240px;margin:8px auto 22px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center}
 .kqr-qr img{width:100%;height:100%;object-fit:contain;display:block}
 .kqr-qr .kqr-placeholder{text-align:center;color:#999;font-size:12px;line-height:1.6;padding:18px}
@@ -982,21 +999,40 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
   <div class="kqr-box" onclick="event.stopPropagation()">
     <button class="kqr-close" onclick="rfc.kqrClose()" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button>
     <div class="kqr-head">
-      <div class="kqr-brand"><span class="kqr-logo">Kaspi.kz</span><span class="kqr-pay">QR Pay</span></div>
+      <div class="kqr-brand"><span class="kqr-logo">Kaspi.kz</span><span class="kqr-pay">Pay</span></div>
       <div class="kqr-amount" id="kqrAmount">₸ 0</div>
       <div class="kqr-order" id="kqrOrder">Заказ —</div>
     </div>
     <div class="kqr-items" id="kqrItems"></div>
-    <div class="kqr-qr" id="kqrQr"></div>
-    <ol class="kqr-steps">
-      <li>Открой приложение <b>Kaspi.kz</b></li>
-      <li>Нажми <b>«Платежи» → «Оплата по QR»</b></li>
-      <li>Отсканируй QR выше</li>
-      <li>В назначении укажи номер заказа <code id="kqrOrderCode">—</code></li>
-      <li>После оплаты нажми кнопку ниже — пришлёшь нам скрин в WhatsApp</li>
-    </ol>
-    <button class="btn-block wa" onclick="rfc.kqrConfirm()" id="kqrWaBtn">Я оплатил → подтвердить в WhatsApp</button>
-    <p class="kqr-foot">QR ведёт на счёт Red Flag Community. После проверки оплаты в WhatsApp заказ перейдёт в работу.</p>
+
+    <!-- Desktop / Tablet — QR -->
+    <div class="kqr-qr-wrap kqr-desktop-only">
+      <div class="kqr-qr" id="kqrQr"></div>
+      <ol class="kqr-steps">
+        <li>Открой <b>Kaspi.kz</b> на телефоне</li>
+        <li>Нажми <b>«Платежи» → «Оплата по QR»</b></li>
+        <li>Отсканируй QR выше</li>
+        <li>В назначении укажи <code id="kqrOrderCode">—</code></li>
+      </ol>
+    </div>
+
+    <!-- Mobile — без QR, прямые кнопки -->
+    <div class="kqr-mobile-only">
+      <div class="kqr-copy-row">
+        <button class="kqr-copy" onclick="rfc.kqrCopy('amount')"><span class="kqr-copy-lbl">Сумма</span><span class="kqr-copy-val" id="kqrCopyAmount">—</span><span class="kqr-copy-ico">📋</span></button>
+        <button class="kqr-copy" onclick="rfc.kqrCopy('order')"><span class="kqr-copy-lbl">Номер заказа</span><span class="kqr-copy-val" id="kqrCopyOrder">—</span><span class="kqr-copy-ico">📋</span></button>
+      </div>
+      <a class="btn-block kaspi" id="kqrOpenKaspi" href="https://kaspi.kz" target="_blank" rel="noopener" style="margin-top:14px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg><span>Открыть Kaspi и оплатить</span></a>
+      <ol class="kqr-steps">
+        <li>В Kaspi выбери <b>«Переводы по номеру»</b></li>
+        <li>Введи номер: <code>+7 747 857 0067</code></li>
+        <li>Сумма и номер заказа — скопированы выше</li>
+        <li>Отправь и пришли скрин в WhatsApp</li>
+      </ol>
+    </div>
+
+    <button class="btn-block wa" onclick="rfc.kqrConfirm()" id="kqrWaBtn"><span>Я оплатил → подтвердить в WhatsApp</span></button>
+    <p class="kqr-foot">QR ведёт на счёт Red Flag Community · ИП VIVID. После проверки оплаты заказ перейдёт в работу.</p>
   </div>
 </div>
 <a class="wa-fab" id="waFab" href="#" target="_blank" rel="noopener" aria-label="Написать в WhatsApp"><svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-.8 2 0 3.2a9 9 0 0 0 3.7 3.2c1.3.6 1.8.6 2.5.5.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1 0 0-.2-.1-.4-.2Z"/></svg></a>
@@ -1012,10 +1048,9 @@ var SHOP={
   email:"raimzhan1907@gmail.com",   // почта магазина (заказы также приходят сюда автоматически)
   ig:"redflagseverywear",           // инстаграм
   city:"Астана", country:"Казахстан",
-  // === Kaspi QR оплата (временно, пока не подключим Kaspi Бизнес) ===
-  // QR ИП VIVID / Red Flag Community
-  kaspiQrImg:"/img/brand/kaspi-qr.webp",
-  kaspiPayLink:""
+  // === Kaspi оплата (ИП VIVID) ===
+  kaspiQrImg:"/img/brand/kaspi-qr.webp",          // статичный QR для десктопа
+  kaspiPayLink:"https://pay.kaspi.kz/pay/yszmgt89", // прямая ссылка для мобилы
 };
 /* === SUPABASE (облачная CRM). Заполни ПОСЛЕ создания проекта (оба ключа публичные/клиентские) === */
 var SB_URL="https://kkvmxtwpgvubwtcalzjm.supabase.co";   // Supabase → Project Settings → API → Project URL
@@ -1497,11 +1532,12 @@ rfc.payKaspi=function(){
  }).catch(function(e){restore();rfc.toast(e.message||"Ошибка при сохранении заказа");});
 };
 rfc.kqrOpenModal=function(order){
- // Открываем модалку
  var ov=$("#kqrOv");
  $("#kqrAmount").textContent=fmt(order.total);
  $("#kqrOrder").textContent="Заказ "+order.id;
- $("#kqrOrderCode").textContent=order.id;
+ var oc=$("#kqrOrderCode");if(oc)oc.textContent=order.id;
+ var ca=$("#kqrCopyAmount");if(ca)ca.textContent=fmt(order.total);
+ var co=$("#kqrCopyOrder");if(co)co.textContent=order.id;
  // Состав заказа
  var itemsHtml=order.items.map(function(i){
   var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="">':'';
@@ -1509,15 +1545,34 @@ rfc.kqrOpenModal=function(order){
   return '<div class="kqr-i">'+thumb+'<div class="kqr-i-info"><div class="kqr-i-name">'+i.name+'</div><div class="kqr-i-meta">'+meta+'</div></div><div class="kqr-i-price">'+fmt(i.price*i.qty)+'</div></div>';
  }).join("");
  $("#kqrItems").innerHTML=itemsHtml;
+ // QR для десктопа
  var qrBox=$("#kqrQr");
- if(SHOP.kaspiQrImg){qrBox.innerHTML='<img src="'+SHOP.kaspiQrImg+'" alt="Kaspi QR" loading="eager">';qrBox.style.display="flex";}
- else if(SHOP.kaspiPayLink){
-  var url=SHOP.kaspiPayLink.replace("{amount}",order.total).replace("{order}",encodeURIComponent(order.id));
-  qrBox.innerHTML='<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data='+encodeURIComponent(url)+'" alt="Kaspi QR" loading="eager">';qrBox.style.display="flex";
+ if(qrBox){
+  if(SHOP.kaspiQrImg){qrBox.innerHTML='<img src="'+SHOP.kaspiQrImg+'" alt="Kaspi QR" loading="eager">';}
+  else if(SHOP.kaspiPayLink){
+   qrBox.innerHTML='<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data='+encodeURIComponent(SHOP.kaspiPayLink)+'" alt="Kaspi QR" loading="eager">';
+  }
  }
- else{qrBox.style.display="none";}
+ // Прямая ссылка для мобилы
+ var kBtn=$("#kqrOpenKaspi");
+ if(kBtn && SHOP.kaspiPayLink){kBtn.href=SHOP.kaspiPayLink;}
+ // Сохраняем для функции copy
+ state.kqrCopyData={amount:String(order.total),order:order.id};
  ov.classList.add("on");document.body.style.overflow="hidden";
  if(!state._kqrKey){state._kqrKey=function(e){if(e.key==="Escape"&&$("#kqrOv").classList.contains("on"))rfc.kqrClose();};document.addEventListener("keydown",state._kqrKey);}
+};
+rfc.kqrCopy=function(what){
+ var data=state.kqrCopyData;if(!data)return;
+ var text=data[what];if(!text)return;
+ var btn=event&&event.currentTarget;
+ var done=function(){if(btn){btn.classList.add("copied");setTimeout(function(){btn.classList.remove("copied");},1500);}rfc.toast(what==="amount"?"Сумма скопирована":"Номер заказа скопирован");};
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(text).then(done,function(){rfc.toast("Не удалось скопировать");});
+ }else{
+  var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");done();}catch(e){rfc.toast("Не удалось скопировать");}
+  document.body.removeChild(ta);
+ }
 };
 rfc.kqrClose=function(e){if(e&&e.target!==$("#kqrOv"))return;$("#kqrOv").classList.remove("on");if(!document.querySelector(".screen.on,.drawer.on"))document.body.style.overflow="";};
 rfc.kqrConfirm=function(){
