@@ -270,6 +270,22 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .crow .del{color:#999;padding:6px;border-radius:8px}.crow .del:hover{color:var(--red);background:#fbeaed}
 .cart-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:var(--muted);text-align:center;padding:40px}
 .cart-foot{border-top:1px solid var(--line);padding:20px 24px calc(20px + env(safe-area-inset-bottom))}
+.ship-bar{margin-bottom:14px;padding:12px 14px;background:var(--mist);border-radius:12px}
+.ship-bar.achieved{background:#e7f8ee}
+.ship-bar-msg{font-size:13px;color:var(--ink);font-weight:600;margin-bottom:8px}
+.ship-bar-msg b{color:var(--red)}
+.ship-bar.achieved .ship-bar-msg{margin-bottom:0;color:#1c8c4a}
+.ship-bar-track{height:4px;background:#e0e0e0;border-radius:2px;overflow:hidden}
+.ship-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red-d));border-radius:2px;transition:width .4s ease}
+.cart-sug{border-top:1px solid var(--line);padding:18px 24px 6px;background:#fafafa}
+.cart-sug-lbl{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.cart-sug-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:6px;padding-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cart-sug-row::-webkit-scrollbar{display:none}
+.cart-sug-i{flex:none;width:120px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 8px 10px;text-align:left;cursor:pointer;transition:.22s;display:flex;flex-direction:column;gap:6px}
+.cart-sug-i:hover{border-color:var(--ink);transform:translateY(-2px)}
+.cart-sug-i img{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;background:var(--mist)}
+.cart-sug-n{font-size:11.5px;font-weight:500;color:#333;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cart-sug-p{font-family:var(--serif);font-weight:700;font-size:13px;color:var(--ink)}
 .cart-foot .sum{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#555}
 .cart-foot .sum.tot{font-weight:800;font-size:18px;color:var(--ink);margin-top:10px}
 .btn-block{width:100%;background:var(--ink);color:#fff;border-radius:999px;padding:19px;font-weight:700;font-size:13.5px;margin-top:18px;transition:.3s cubic-bezier(.2,.7,.2,1);letter-spacing:.08em;text-transform:uppercase;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px;line-height:1}
@@ -622,6 +638,7 @@ body:has(.menu.on) .wa-fab,
 body:has(.lb.on) .wa-fab,
 body:has(.kqr-ov.on) .wa-fab,
 body:has(.search-ov.on) .wa-fab,
+body:has(.qv-ov.on) .wa-fab,
 body:has(.modal-bg.on) .wa-fab{opacity:0;pointer-events:none;transform:scale(.7)}
 /* PDP sticky-bar тоже прячется когда что-то поверх него открыто */
 body:has(.drawer.on) .pdp-sticky,
@@ -642,6 +659,27 @@ body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 .pdp-sticky .ps-btn{background:var(--ink);color:#fff;border:none;padding:13px 20px;border-radius:99px;font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
 .pdp-sticky .ps-btn:hover{background:var(--red)}
 @media(max-width:860px){body.pdp-open .pdp-sticky{display:flex}}
+/* Quick View modal */
+.qv-ov{position:fixed;inset:0;background:rgba(11,11,11,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:125;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.qv-ov.on{opacity:1;pointer-events:auto}
+.qv-box{background:#fff;width:min(880px,100%);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.35);position:relative;max-height:92vh;overflow:hidden;display:flex}
+.qv-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;color:var(--ink);transition:.2s;z-index:3;backdrop-filter:blur(6px)}
+.qv-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
+.qv-grid{display:grid;grid-template-columns:1.1fr .9fr;width:100%;max-height:92vh}
+.qv-media{background:var(--mist);aspect-ratio:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.qv-media img{width:100%;height:100%;object-fit:cover;display:block}
+.qv-info{padding:36px 32px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.qv-info .pdp-coll{align-self:flex-start;margin-bottom:2px}
+.qv-title{font-weight:900;font-size:26px;text-transform:uppercase;line-height:1.05;letter-spacing:-.01em;color:var(--ink);margin:0}
+.qv-price{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--red);letter-spacing:-.01em}
+.qv-block{margin-top:6px}
+.qv-block .lbl{margin-top:0;margin-bottom:8px}
+.qv-actions{margin-top:auto;padding-top:18px;display:flex;flex-direction:column;gap:10px}
+.qv-actions .btn-block{margin-top:0}
+.qv-link{text-align:center;font-size:13px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:.2s}
+.qv-link:hover{color:var(--ink)}
+@media(max-width:760px){.qv-grid{grid-template-columns:1fr;grid-template-rows:auto 1fr;max-height:none}.qv-media{aspect-ratio:1}.qv-info{padding:24px 22px}.qv-title{font-size:22px}}
+
 .kqr-ov{position:fixed;inset:0;background:rgba(11,11,11,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:130;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
 .kqr-ov.on{opacity:1;pointer-events:auto}
 .kqr-box{background:#fff;width:min(440px,100%);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:34px 28px 28px;position:relative;max-height:96vh;overflow-y:auto}
@@ -747,6 +785,10 @@ body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 @keyframes stockPulse{50%{opacity:.5}}
 .stock-low{color:#a16207;font-weight:600}
 .card .hot-badge{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px;border-radius:99px;z-index:2}
+.card .qv-btn{position:absolute;top:10px;right:54px;width:34px;height:34px;border-radius:50%;background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transform:scale(.7);transition:.25s;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:2}
+.card:hover .qv-btn{opacity:1;transform:scale(1)}
+.card .qv-btn:hover{background:var(--ink);color:#fff}
+@media(max-width:860px){.card .qv-btn{display:none}}
 
 /* ---------- responsive ---------- */
 @media(max-width:1024px){
@@ -789,6 +831,19 @@ body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 .info-contact span{color:#8a8a8a}
 .info-contact a{color:var(--ink);font-weight:600;border-bottom:2px solid var(--red);padding-bottom:2px;cursor:pointer;text-decoration:none}
 @media(max-width:860px){.info-grid{grid-template-columns:1fr 1fr;gap:12px}.info-card{padding:18px 16px;border-radius:14px}}
+.manifesto{padding-block:clamp(48px,7vw,96px)}
+.mf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.5vw,32px);margin-bottom:clamp(40px,5vw,72px)}
+.mf-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:clamp(28px,3vw,44px) clamp(24px,2.5vw,32px);transition:.3s cubic-bezier(.2,.7,.2,1);position:relative;overflow:hidden}
+.mf-card:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(0,0,0,.06);border-color:#ddd}
+.mf-card .mf-num{font-family:var(--serif);font-weight:700;font-size:22px;color:var(--red);margin-bottom:18px;letter-spacing:.04em}
+.mf-card h3{font-weight:900;font-size:clamp(17px,1.7vw,22px);text-transform:uppercase;letter-spacing:-.005em;line-height:1.15;margin-bottom:14px;color:var(--ink)}
+.mf-card p{font-size:14.5px;line-height:1.7;color:#555;margin:0}
+.mf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,28px);background:var(--ink);color:#fff;border-radius:22px;padding:clamp(28px,4vw,48px) clamp(24px,3vw,40px);text-align:center}
+.mf-stats > div{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.mf-stats .mf-num-big{font-family:var(--serif);font-weight:700;font-size:clamp(28px,3.6vw,46px);line-height:1;letter-spacing:-.02em;color:var(--red)}
+.mf-stats .mf-lbl{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#888}
+@media(max-width:760px){.mf-grid{grid-template-columns:1fr;gap:12px}.mf-stats{grid-template-columns:1fr 1fr;padding:28px 20px}}
+
 .lookbook{padding-block:clamp(48px,7vw,96px) clamp(48px,7vw,96px);background:#fafafa}
 .lookbook .sec-head{margin-bottom:clamp(24px,3vw,40px)}
 .lb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1vw,12px);max-width:var(--maxw);margin:0 auto;padding-inline:var(--pad)}
@@ -881,6 +936,34 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
     <h2>Мы не идеальны.<br><em>Мы честны.</em></h2>
     <p>RFC — Red Flag Community. Локальный бренд из Казахстана о принятии своих «красных флагов». Чистый крой, честные материалы, никакого лишнего шума.</p>
     <button class="btn" style="background:#fff;color:var(--ink);margin-top:26px" data-scroll="white">Смотреть дроп</button>
+  </div>
+</section>
+
+<section class="wrap manifesto" id="manifesto">
+  <div class="sec-head rv"><h2>Манифест</h2><span class="ln"></span><span class="cnt">философия</span></div>
+  <div class="mf-grid">
+    <article class="mf-card rv">
+      <div class="mf-num">01</div>
+      <h3>Принимай свои красные флаги</h3>
+      <p>Каждый из нас несовершенен. Red Flag — не клеймо, а честность с самим собой. Носить красный флаг — значит не прятать то, что делает тебя собой.</p>
+    </article>
+    <article class="mf-card rv">
+      <div class="mf-num">02</div>
+      <h3>Качество, а не количество</h3>
+      <p>Минимум дропов в году. Тщательная подборка тканей, плотные ткани, аккуратная вышивка. Покупай реже, носи дольше.</p>
+    </article>
+    <article class="mf-card rv">
+      <div class="mf-num">03</div>
+      <h3>Сделано в Казахстане</h3>
+      <p>Производство в Алматы и Астане. Каждая вещь проходит ручной контроль. Поддержка локальной промышленности — наш принцип, не маркетинг.</p>
+    </article>
+  </div>
+
+  <div class="mf-stats rv">
+    <div><span class="mf-num-big">2025</span><span class="mf-lbl">Год основания</span></div>
+    <div><span class="mf-num-big">100%</span><span class="mf-lbl">KZ производство</span></div>
+    <div><span class="mf-num-big">4</span><span class="mf-lbl">Дропа в году</span></div>
+    <div><span class="mf-num-big">∞</span><span class="mf-lbl">Историй</span></div>
   </div>
 </section>
 </main>
@@ -1044,6 +1127,25 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
   <img id="lbImg" alt="" onclick="event.stopPropagation();rfc.lbStep(1)">
   <div class="lb-count" id="lbCount"></div>
 </div>
+<div class="qv-ov" id="qvOv" onclick="rfc.qvClose(event)">
+  <div class="qv-box" onclick="event.stopPropagation()">
+    <button class="qv-close" onclick="rfc.qvClose()" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button>
+    <div class="qv-grid">
+      <div class="qv-media" id="qvMedia"></div>
+      <div class="qv-info">
+        <span class="pdp-coll" id="qvColl"></span>
+        <h2 class="qv-title" id="qvTitle">—</h2>
+        <div class="qv-price" id="qvPrice">—</div>
+        <div id="qvSwatches" class="qv-block"></div>
+        <div id="qvSizes" class="qv-block"></div>
+        <div class="qv-actions">
+          <button class="btn-block" onclick="rfc.qvAddToCart()" id="qvAdd"><span>В корзину</span></button>
+          <a class="qv-link" id="qvFull">Подробнее →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="kqr-ov" id="kqrOv" onclick="rfc.kqrClose(event)">
   <div class="kqr-box" onclick="event.stopPropagation()">
     <button class="kqr-close" onclick="rfc.kqrClose()" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button>
@@ -1097,6 +1199,8 @@ var SHOP={
   email:"raimzhan1907@gmail.com",   // почта магазина (заказы также приходят сюда автоматически)
   ig:"redflagseverywear",           // инстаграм
   city:"Астана", country:"Казахстан",
+  // === Доставка ===
+  freeShipKZT:0,  // порог бесплатной доставки в ₸ (0 = отключено). Включи когда определишь политику.
   // === Аналитика — вставьте ваши ID когда зарегистрируетесь ===
   ga4:"",        // Google Analytics: например "G-XXXXXXXXXX"  (https://analytics.google.com)
   pixel:"",      // Meta (Facebook) Pixel: например "1234567890"  (https://business.facebook.com)
@@ -1263,7 +1367,7 @@ function renderCollections(){
     thumb=productArt(p.t,1);
    }
    html+='<div class="card rv'+(soon?' soon':'')+(hasPhoto?' card-real':'')+'" data-open="'+p.id+'"><div class="ph">'+thumb+
-   (soon?'<span class="soon-badge">Coming soon</span>':((isHot(p.id)?'<span class="hot-badge">Хит</span>':'')+'<button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button>'))+'</div>'+
+   (soon?'<span class="soon-badge">Coming soon</span>':((isHot(p.id)?'<span class="hot-badge">Хит</span>':'')+'<button class="qv-btn" onclick="event.stopPropagation();rfc.qvOpen(\''+p.id+'\')" aria-label="Быстрый просмотр"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="add" data-quick="'+p.id+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button>'))+'</div>'+
    '<div class="card-base"><span class="nm">'+p.name+'</span><div class="pr">'+(soon?'<span class="pr-soon">Скоро в продаже</span>':fmt(p.price))+'</div></div></div>';
   });
   // lifestyle banner
@@ -1349,7 +1453,28 @@ function renderCart(){
   var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6%;box-sizing:border-box">':productArt(i.t,.7);
   return '<div class="crow"><div class="ci">'+thumb+'</div><div class="cd"><div class="cn">'+i.name+'</div><div class="cs">'+meta+'</div><div class="crb"><div class="qty"><button onclick="rfc.q(\''+i.key+'\',-1)">−</button><span>'+i.qty+'</span><button onclick="rfc.q(\''+i.key+'\',1)">+</button></div><div style="display:flex;align-items:center;gap:10px"><b style="font-size:13px">'+fmt(i.price*i.qty)+'</b><button class="del" onclick="rfc.rm(\''+i.key+'\')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div></div></div>';
  }).join("");
- foot.innerHTML='<div class="cart-foot"><div class="sum tot"><span>Итого</span><span>'+fmt(subtotal())+'</span></div><div class="sum" style="font-size:12px;color:#999;margin-top:2px"><span>Доставку рассчитаем при подтверждении</span></div><button class="btn-block" onclick="rfc.checkout()">Оформить заказ</button></div>';
+ // free shipping progress bar (если включено в SHOP.freeShipKZT)
+ var shipBar="";
+ if(SHOP.freeShipKZT>0){
+  var sub=subtotal();
+  var diff=SHOP.freeShipKZT-sub;
+  if(diff>0){
+   var pct=Math.min(100,Math.round(sub/SHOP.freeShipKZT*100));
+   shipBar='<div class="ship-bar"><div class="ship-bar-msg">Ещё <b>'+fmt(diff)+'</b> до бесплатной доставки по КЗ</div><div class="ship-bar-track"><div class="ship-bar-fill" style="width:'+pct+'%"></div></div></div>';
+  }else{
+   shipBar='<div class="ship-bar achieved"><div class="ship-bar-msg">✓ Бесплатная доставка по Казахстану</div></div>';
+  }
+ }
+ // Suggested items (товары других типов)
+ var cartTypes={};state.cart.forEach(function(i){cartTypes[i.t]=1;});
+ var suggested=PRODUCTS.filter(function(p){return !isSoon(p.t) && !cartTypes[p.t] && p.images && p.images[0];}).slice(0,3);
+ var sugBlock="";
+ if(suggested.length){
+  sugBlock='<div class="cart-sug"><div class="cart-sug-lbl">С этим часто покупают</div><div class="cart-sug-row">'+
+   suggested.map(function(p){return '<button class="cart-sug-i" onclick="rfc.qvOpen(\''+p.id+'\')"><img src="'+String(p.images[0]).replace(/"/g,'&quot;')+'" alt=""><span class="cart-sug-n">'+p.name+'</span><span class="cart-sug-p">'+fmt(p.price)+'</span></button>';}).join("")+
+   '</div></div>';
+ }
+ foot.innerHTML=sugBlock+'<div class="cart-foot">'+shipBar+'<div class="sum tot"><span>Итого</span><span>'+fmt(subtotal())+'</span></div><div class="sum" style="font-size:12px;color:#999;margin-top:2px"><span>Доставку рассчитаем при подтверждении</span></div><button class="btn-block" onclick="rfc.checkout()">Оформить заказ</button></div>';
 }
 rfc.q=function(key,d){
  var item=state.cart.find(function(i){return i.key===key;});
@@ -1618,6 +1743,55 @@ function validateCheckout(){
  var d=DELIVERY.filter(function(x){return x.k===state.del;})[0];
  return {name:name,phone:phone,email:email,country:country,city:city,address:address,comment:val("fComment"),delivery:d?d.name+(d.sub?" ("+d.sub+")":""):"",items:state.cart.map(function(i){return {name:i.name,size:i.size,qty:i.qty,price:i.price,t:i.t,color:i.color||null,colorKey:i.colorKey||null,img:i.img||null};}),total:subtotal()};
 }
+rfc.qvOpen=function(id){
+ var p=PRODUCTS.find(function(x){return x.id===id;});if(!p)return;
+ if(isSoon(p.t)){rfc.openProduct(id);return;}
+ var vlist=VARIANTS[p.t]||[];
+ var pImgs=p.images||[];
+ var activeVar=null;
+ if(vlist.length){activeVar=vlist.find(function(v){return v.images.some(function(im){return pImgs.indexOf(im)!==-1;});})||vlist[0];}
+ state.qvProduct=p;
+ state.qvVariant=activeVar;
+ state.qvSize=isApp(p.t)?"M":"ONE SIZE";
+ var img=activeVar?activeVar.images[0]:(pImgs[0]||"");
+ var col=COLLECTIONS.find(function(c){return c.key===p.col;});
+ $("#qvMedia").innerHTML=img?'<img src="'+String(img).replace(/"/g,'&quot;')+'" alt="'+String(p.name).replace(/"/g,'&quot;')+'">':'';
+ $("#qvColl").className="pdp-coll col-"+(col?col.key:'');
+ $("#qvColl").textContent=col?col.title:'';
+ $("#qvTitle").textContent=p.name;
+ $("#qvPrice").textContent=fmt(p.price);
+ if(activeVar){
+  var swHtml=vlist.map(function(v){return '<button class="swatch'+(v.key===activeVar.key?" on":"")+'" data-key="'+v.key+'" style="background:'+v.swatch+'" onclick="rfc.qvSetVariant(\''+v.key+'\')" title="'+v.name+'"></button>';}).join("");
+  $("#qvSwatches").innerHTML='<div class="lbl">Цвет: <span id="qvColorName">'+activeVar.name+'</span></div><div class="swatch-row">'+swHtml+'</div>';
+ }else{$("#qvSwatches").innerHTML="";}
+ var ap=isApp(p.t);
+ var sizesBtns=SIZES.map(function(s){return '<button data-size="'+s+'" class="'+(s==="M"?"on":"")+'" onclick="rfc.qvSetSize(\''+s+'\',this)">'+s+'</button>';}).join("");
+ $("#qvSizes").innerHTML='<div class="lbl">Размер:</div><div class="size-row"><div class="sizes">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div></div>';
+ $("#qvAdd").innerHTML='<span>В корзину · '+fmt(p.price)+'</span>';
+ $("#qvFull").onclick=function(){rfc.qvClose();rfc.openProduct(p.id);};
+ var ov=$("#qvOv");ov.classList.add("on");document.body.style.overflow="hidden";
+ if(!state._qvKey){state._qvKey=function(e){if(e.key==="Escape"&&$("#qvOv").classList.contains("on"))rfc.qvClose();};document.addEventListener("keydown",state._qvKey);}
+ track("view_item",{currency:"KZT",value:p.price,items:[{item_id:p.id,item_name:p.name,price:p.price,item_category:p.t,quick_view:true}]});
+};
+rfc.qvSetVariant=function(key){
+ var p=state.qvProduct;if(!p)return;
+ var vlist=VARIANTS[p.t]||[];var v=vlist.find(function(x){return x.key===key;});if(!v)return;
+ state.qvVariant=v;
+ $("#qvMedia").innerHTML='<img src="'+String(v.images[0]).replace(/"/g,'&quot;')+'" alt="">';
+ document.querySelectorAll("#qvSwatches .swatch").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-key")===key);});
+ var cn=$("#qvColorName");if(cn)cn.textContent=v.name;
+};
+rfc.qvSetSize=function(size,btn){
+ state.qvSize=size;
+ document.querySelectorAll("#qvSizes .sizes button").forEach(function(b){b.classList.remove("on");});
+ if(btn)btn.classList.add("on");
+};
+rfc.qvAddToCart=function(){
+ var p=state.qvProduct;if(!p)return;
+ rfc.add(p,state.qvSize||"M",1,state.qvVariant);
+ rfc.qvClose();
+};
+rfc.qvClose=function(e){if(e&&e.target!==$("#qvOv"))return;$("#qvOv").classList.remove("on");if(!document.querySelector(".screen.on,.drawer.on"))document.body.style.overflow="";};
 rfc.waitlist=function(productId,productName){
  var inp=$("#wlEmail"),btn=$("#wlBtn");
  if(!inp)return;
