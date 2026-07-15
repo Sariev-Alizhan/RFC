@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RFC — Red Flag Community</title>
 <meta name="description" content="RFC — Red Flag Community. Локальный бренд одежды из Казахстана: худи, футболки, свитшоты, кепки. Заказ через сайт, доставка по Казахстану и миру.">
+<link rel="canonical" href="https://redflag.kz/">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48-v3.png">
@@ -23,6 +24,7 @@
 <meta name="twitter:title" content="RFC — Red Flag Community">
 <meta name="twitter:description" content="Локальный бренд одежды из Казахстана. Доставка по КЗ и миру.">
 <meta name="twitter:image" content="https://redflag.kz/og.jpg">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Red Flag Community","alternateName":"RFC","url":"https://redflag.kz/","logo":"https://redflag.kz/icon-512-v3.png","email":"raimzhan1907@gmail.com","address":{"@type":"PostalAddress","addressLocality":"Астана","addressCountry":"KZ"},"sameAs":["https://instagram.com/redflagseverywear"]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://kkvmxtwpgvubwtcalzjm.supabase.co">
@@ -920,9 +922,9 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
     </div>
   </div>
   <div class="collage rv">
-    <div class="cc a"><img class="cc-img" src="" data-img="ls_tank" alt=""></div>
-    <div class="cc b"><img class="cc-img" src="" data-img="ls_hoodieRed" alt=""></div>
-    <div class="cc c"><img class="cc-img" src="" data-img="ls_redcap" alt=""></div>
+    <div class="cc a"><img class="cc-img" src="" data-img="ls_tank" alt="Red Flag Community — майка из коллекции"></div>
+    <div class="cc b"><img class="cc-img" src="" data-img="ls_hoodieRed" alt="Red Flag Community — красное худи"></div>
+    <div class="cc c"><img class="cc-img" src="" data-img="ls_redcap" alt="Red Flag Community — красная кепка"></div>
   </div>
 </section>
 
@@ -1507,7 +1509,7 @@ rfc.openCart=function(){renderCart();$("#cart").classList.add("on");openScrim();
 rfc.closeCart=function(){$("#cart").classList.remove("on");maybeCloseScrim();};
 rfc.openMenu=function(){$("#menu").classList.add("on");openScrim();};
 rfc.closeMenu=function(){$("#menu").classList.remove("on");maybeCloseScrim();};
-rfc.closeAll=function(){$$(".screen").forEach(function(s){s.classList.remove("on");});rfc.closeCart();rfc.closeMenu();$("#guide").classList.remove("on");document.body.style.overflow="";document.body.classList.remove("pdp-open");var sb=document.getElementById("pdpSticky");if(sb)sb.classList.remove("on");rfc.lbClose();};
+rfc.closeAll=function(){$$(".screen").forEach(function(s){s.classList.remove("on");});rfc.closeCart();rfc.closeMenu();$("#guide").classList.remove("on");document.body.style.overflow="";document.body.classList.remove("pdp-open");var psb=document.getElementById("pdpSticky");if(psb)psb.classList.remove("on");rfc.lbClose();};
 
 /* ===================== PDP ===================== */
 rfc.openProduct=function(id){
@@ -1552,7 +1554,7 @@ rfc.openProduct=function(id){
   var psn=document.getElementById("psName"),psp=document.getElementById("psPrice");
   if(psn) psn.textContent=p.name;
   if(psp) psp.textContent=fmt(p.price);
-  setTimeout(function(){var sb=document.getElementById("pdpSticky");if(sb)sb.classList.add("on");},80);
+  setTimeout(function(){var psb=document.getElementById("pdpSticky");if(psb)psb.classList.add("on");},80);
  }else{document.body.classList.remove("pdp-open");}
 };
 function stockSeed(id){var h=0;for(var i=0;i<id.length;i++){h=((h<<5)-h+id.charCodeAt(i))|0;}return Math.abs(h);}
@@ -2536,8 +2538,8 @@ rfc.searchClose=function(e){if(e&&e.target!==$("#searchOv"))return;$("#searchOv"
 rfc.searchRun=function(q){
  var res=$("#searchRes");if(!res)return;
  q=(q||"").trim().toLowerCase();
- if(!q){res.innerHTML='<div class="sr-hint">Попробуй: <b>кепка</b>, <b>трусы</b>, <b>red</b>, <b>чёрный</b></div>';return;}
- var typeMap={'кеп':'cap','футбол':'tee','худи':'hoodie','свитш':'sweat','трус':'boxers','боксер':'boxers','sock':'boxers','носк':'boxers'};
+ if(!q){res.innerHTML='<div class="sr-hint">Попробуй: <b>кепка</b>, <b>футболка</b>, <b>худи</b>, <b>red</b>, <b>белый</b></div>';return;}
+ var typeMap={'кеп':'cap','футбол':'tee','худи':'hoodie','свитш':'sweat','трус':'boxers','боксер':'boxers','sock':'socks','носк':'socks'};
  var typeMatch=null;Object.keys(typeMap).forEach(function(k){if(q.indexOf(k)!==-1)typeMatch=typeMap[k];});
  var colMatch=null;
  if(q.indexOf('red')!==-1||q.indexOf('крас')!==-1)colMatch='red';

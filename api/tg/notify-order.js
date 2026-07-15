@@ -108,15 +108,15 @@ export default async function handler(req, res) {
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (WEBHOOK_SECRET) {
-    const auth = req.headers.authorization || req.headers.Authorization || '';
-    const token = String(auth).replace(/^Bearer\s+/i, '').trim();
-    if (token !== WEBHOOK_SECRET) {
-      console.warn('notify-order: invalid/missing auth header');
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  } else {
-    console.warn('notify-order: SUPABASE_WEBHOOK_SECRET not set — endpoint is PUBLIC.');
+  if (!WEBHOOK_SECRET) {
+    console.error('notify-order: SUPABASE_WEBHOOK_SECRET not set — rejecting request');
+    return res.status(500).json({ error: 'Webhook secret not configured' });
+  }
+  const auth = req.headers.authorization || req.headers.Authorization || '';
+  const token = String(auth).replace(/^Bearer\s+/i, '').trim();
+  if (token !== WEBHOOK_SECRET) {
+    console.warn('notify-order: invalid/missing auth header');
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });

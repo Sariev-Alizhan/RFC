@@ -929,6 +929,13 @@ export default async function handler(req, res) {
     console.error('TELEGRAM_BOT_TOKEN not configured');
     return res.status(200).send('OK');
   }
+  // Optional hardening: if TELEGRAM_WEBHOOK_SECRET is set, require Telegram's
+  // secret-token header (set via setWebhook secret_token=...). No env → no check.
+  const whSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (whSecret && req.headers['x-telegram-bot-api-secret-token'] !== whSecret) {
+    console.warn('tg/webhook: secret token mismatch — rejected');
+    return res.status(401).send('unauthorized');
+  }
   const update = req.body || {};
 
   // ── CALLBACK QUERY ────────────────────────────────────────────────
