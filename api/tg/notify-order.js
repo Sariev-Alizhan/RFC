@@ -109,6 +109,26 @@ function formatLead(b) {
   return { text: lines.join('\n'), phone };
 }
 
+// Логирование сообщения WhatsApp в CRM (таблица wa_messages)
+async function handleWaMsg(req, res) {
+  if (!sb) return res.status(200).json({ skipped: true, reason: 'no supabase' });
+  const b = req.body || {};
+  const row = {
+    jid: String(b.jid || '').slice(0, 120),
+    phone: String(b.phone || '').replace(/[^\d]/g, '').slice(0, 20) || null,
+    name: b.name ? String(b.name).slice(0, 120) : null,
+    sender: ['customer', 'bot', 'manager'].includes(b.sender) ? b.sender : 'customer',
+    text: b.text ? String(b.text).slice(0, 4000) : null,
+  };
+  if (!row.jid) return res.status(400).json({ error: 'jid required' });
+  const { error } = await sb.from('wa_messages').insert(row);
+  if (error) {
+    console.error('wa_messages insert failed:', error.message);
+    return res.status(200).json({ ok: false, error: error.message });
+  }
+  return res.status(200).json({ ok: true });
+}
+
 async function handleWaLead(req, res) {
   const b = req.body || {};
   const { text, phone } = formatLead(b);
@@ -149,11 +169,13 @@ export default async function handler(req, res) {
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Ветка WA-бота: лид (заказ/менеджер) с авторизацией WA_BOT_SECRET
+  // Ветки WA-бота с авторизацией WA_BOT_SECRET
   const rawAuth = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-  if ((req.body?.kind === 'order' || req.body?.kind === 'handoff')) {
-    if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
+  const waKind = req.body?.kind;
+  if (waKind === 'order' || waKind === 'handoff' || waKind === 'wa_msg') {
     if (!WA_BOT_SECRET || rawAuth !== WA_BOT_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+    if (waKind === 'wa_msg') return handleWaMsg(req, res);
+    if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
     return handleWaLead(req, res);
   }
 

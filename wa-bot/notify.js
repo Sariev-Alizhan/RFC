@@ -6,16 +6,12 @@ const SECRET = process.env.WA_BOT_SECRET || "";
 
 export const NOTIFY_ENABLED = Boolean(SECRET);
 
-// payload: { kind:'order'|'handoff', name, phone, product, size, city, total, text }
-export async function notifyManagers(payload) {
+async function post(payload) {
   if (!NOTIFY_ENABLED) return false;
   try {
     const r = await fetch(URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${SECRET}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${SECRET}` },
       body: JSON.stringify(payload),
     });
     if (!r.ok) {
@@ -27,4 +23,14 @@ export async function notifyManagers(payload) {
     console.error("[notify] ошибка:", e?.message || e);
     return false;
   }
+}
+
+// payload: { kind:'order'|'handoff', name, phone, product, size, city, total, text }
+export async function notifyManagers(payload) {
+  return post(payload);
+}
+
+// Лог сообщения в CRM. { jid, phone, name, sender:'customer'|'bot'|'manager', text }
+export async function logMessage(payload) {
+  return post({ kind: "wa_msg", ...payload });
 }

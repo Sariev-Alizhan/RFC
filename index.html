@@ -371,6 +371,31 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .admin-tab .tab-c{font-size:10px;color:#999;font-weight:700;font-feature-settings:"tnum" 1;background:#ededed;padding:1px 6px;border-radius:5px;margin-left:2px}
 .admin-tab.on .tab-c{background:var(--ink);color:#fff}
 @media(max-width:520px){.admin-tab{padding:8px 11px;font-size:12px}.admin-tab .tab-c{display:none}}
+/* WhatsApp чаты в CRM */
+.wa-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
+.wa-list{display:flex;flex-direction:column;gap:8px}
+.wa-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fafafa;border:1px solid #eee;border-radius:14px;padding:12px 14px;cursor:pointer;font-family:inherit;transition:.15s}
+.wa-item:hover{background:#fff;border-color:#ddd;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.wa-av{width:40px;height:40px;flex:none;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center}
+.wa-item-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.wa-item-mid b{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-item-mid span{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-item-time{font-size:11px;color:#aaa;flex:none}
+.wa-chat{border:1px solid #eee;border-radius:16px;overflow:hidden;background:#fff}
+.wa-chat-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid #eee;background:#fafafa}
+.wa-chat-who{flex:1;text-align:center;display:flex;flex-direction:column;gap:1px}
+.wa-chat-who b{font-size:14px;color:var(--ink)}
+.wa-chat-who span{font-size:11px;color:#999}
+.wa-thread{padding:18px 14px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;background:#f7f7f5}
+.wa-msg{display:flex;flex-direction:column;max-width:78%}
+.wa-msg.in{align-self:flex-start;align-items:flex-start}
+.wa-msg.out{align-self:flex-end;align-items:flex-end}
+.wa-bubble{padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.4;word-break:break-word;white-space:normal}
+.wa-msg.in .wa-bubble{background:#fff;border:1px solid #eaeaea;border-bottom-left-radius:4px;color:var(--ink)}
+.wa-msg.out .wa-bubble{background:#d9fdd3;border-bottom-right-radius:4px;color:#0b1f10}
+.wa-tag{font-size:10px;font-weight:700;margin-bottom:3px;letter-spacing:.01em}
+.wa-tag.bot{color:#0a7d2e}.wa-tag.mgr{color:#b8860b}
+.wa-time{font-size:10px;color:#aaa;margin-top:3px}
 .ai-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
 .ai-form-col{display:flex;flex-direction:column;gap:10px}
 .ai-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:700;margin-top:4px}
@@ -2051,11 +2076,42 @@ function renderCrm(){
    '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
  }).join(""):(state.crm.length===0?'<div class="crm-empty"><span class="empty-em">📭</span><b>Пока нет заказов</b><span class="empty-sub">Когда покупатели оформят заказ через сайт, он появится здесь сразу же.</span></div>':'<div class="crm-empty"><span class="empty-em">🔍</span><b>Ничего не найдено</b><span class="empty-sub">Попробуй сбросить фильтры или изменить запрос.</span></div>');
  var tab=state.adminTab||"orders";
- var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">📋</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">📦</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">🎨</span>AI Студия</button></div>';
+ var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">📋</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">💬</span>WhatsApp</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">📦</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">🎨</span>AI Студия</button></div>';
  var ordersBlock='<div class="crm-stats"><div class="stat"><span class="stat-em">📊</span><b>'+total+'</b><span>Всего заказов</span></div><div class="stat kpi-red"><span class="stat-em">🆕</span><b>'+fresh+'</b><span>Новых</span></div><div class="stat kpi-amber"><span class="stat-em">⏳</span><b>'+inProgress+'</b><span>В работе</span></div><div class="stat"><span class="stat-em">💰</span><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+searchBar+'<div class="crm-chips">'+chips+'</div><div class="crm-list">'+rows+'</div>';
  $("#crm").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
- '<div class="wrap crm">'+tabBar+(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock))+'</div>';
+ '<div class="wrap crm">'+tabBar+(tab==="wa"?renderWaBlock():(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock)))+'</div>';
+}
+function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function renderWaBlock(){
+ if(state.waLoading)return '<div class="wrap" style="padding:50px 0;text-align:center;color:#999">Загрузка чатов…</div>';
+ if(state.waError)return '<div class="crm-empty"><span class="empty-em">⚠️</span><b>Не удалось загрузить</b><span class="empty-sub">'+waEsc(state.waError)+'</span></div>';
+ var msgs=state.waMsgs||[];
+ if(!msgs.length)return '<div class="crm-empty"><span class="empty-em">💬</span><b>Пока нет переписок</b><span class="empty-sub">Как только клиент напишет боту в WhatsApp, диалог появится здесь.</span></div><div style="text-align:center;margin-top:16px"><button class="act" onclick="rfc.waLoad()">Обновить</button></div>';
+ // Группируем по чату (jid)
+ var chats={};
+ msgs.forEach(function(m){ if(!chats[m.jid])chats[m.jid]={jid:m.jid,phone:m.phone,name:null,last:null,items:[]}; var c=chats[m.jid]; c.items.push(m); if(m.name&&m.sender==="customer")c.name=m.name; if(!c.last||new Date(m.created_at)>new Date(c.last.created_at))c.last=m; });
+ var list=Object.keys(chats).map(function(k){return chats[k];}).sort(function(a,b){return new Date(b.last.created_at)-new Date(a.last.created_at);});
+ var refresh='<div class="wa-head"><span class="ai-lbl">Диалоги · '+list.length+'</span><button class="act" onclick="rfc.waLoad()" style="padding:6px 12px;font-size:11px">Обновить</button></div>';
+ // Открытый чат
+ if(state.waActive&&chats[state.waActive]){
+  var c=chats[state.waActive];
+  var thread=c.items.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);}).map(function(m){
+   var who=m.sender==="customer"?"in":"out";
+   var tag=m.sender==="bot"?'<span class="wa-tag bot">🤖 Бот</span>':(m.sender==="manager"?'<span class="wa-tag mgr">👤 Менеджер</span>':'');
+   return '<div class="wa-msg '+who+'">'+tag+'<div class="wa-bubble">'+waEsc(m.text).replace(/\n/g,"<br>")+'</div><span class="wa-time">'+fmtDate(m.created_at)+'</span></div>';
+  }).join("");
+  var title=c.name||("+"+(c.phone||""));
+  var waHref=c.phone?'https://wa.me/'+c.phone:'#';
+  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span></div><a class="act wa" href="'+waHref+'" target="_blank">'+waIcon(15)+'Ответить</a></div><div class="wa-thread">'+thread+'</div></div>';
+ }
+ // Список диалогов
+ var rows=list.map(function(c){
+  var title=c.name||("+"+(c.phone||""));
+  var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?"🤖 ":"👤 "))+waEsc((c.last.text||"").slice(0,60));
+  return '<button class="wa-item" onclick="rfc.waOpen(\''+c.jid+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span></div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
+ }).join("");
+ return refresh+'<div class="wa-list">'+rows+'</div>';
 }
 function renderAiBlock(){
  var els=[{name:"rfc-navy-cap",label:"Navy кепка"},{name:"rfc-flag-tee",label:"Чёрная футболка"},{name:"rfc-camo-cap",label:"Камо-кепка"}];
@@ -2109,7 +2165,19 @@ function copyText(s){try{navigator.clipboard.writeText(s);rfc.toast("Скопи�
 rfc.crmSetSearch=function(v){state.crmSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('crmSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 rfc.crmSetSort=function(v){state.crmSort=v;renderCrm();};
 rfc.crmCopy=function(i){var o=state.crm[i];if(!o)return;var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");var t=o.name+"\n"+o.phone+(o.email?"\n"+o.email:"")+"\nДоставка: "+(o.delivery||"")+"\nАдрес: "+addr+(o.comment?"\nКоммент: "+o.comment:"")+"\nИтого: "+fmt(o.total)+"\nЗаказ: "+o.id;copyText(t);};
-rfc.adminTab=function(t){state.adminTab=t;renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}if(t==="catalog"&&!state.productsLoaded&&!state.productsLoading){rfc.loadProducts();}};
+rfc.adminTab=function(t){state.adminTab=t;renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}if(t==="catalog"&&!state.productsLoaded&&!state.productsLoading){rfc.loadProducts();}if(t==="wa"&&!state.waLoaded&&!state.waLoading){rfc.waLoad();}};
+rfc.waLoad=function(){
+ if(!sb){state.waError="Supabase не подключён";state.waLoaded=true;renderCrm();return;}
+ state.waLoading=true;state.waError=null;if(state.adminTab==="wa")renderCrm();
+ sb.from("wa_messages").select("*").order("created_at",{ascending:false}).limit(1000).then(function(r){
+  state.waLoading=false;state.waLoaded=true;
+  if(r.error){state.waError=r.error.message;}
+  else{state.waMsgs=r.data||[];}
+  if(state.adminTab==="wa")renderCrm();
+ });
+};
+rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
+rfc.waBack=function(){state.waActive=null;renderCrm();};
 rfc.loadProducts=function(){
  if(!sb){state.productsLoaded=true;state.productsError="Supabase не подключён";renderCrm();return;}
  state.productsLoading=true;state.productsError=null;renderCrm();

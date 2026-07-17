@@ -20,7 +20,7 @@ const QR_PNG = path.join(__dirname, "qr.png");
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, logMessage, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -116,15 +116,24 @@ async function start() {
       // Игнорим группы, каналы, статусы
       if (jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) continue;
 
+      const phone = jid.split("@")[0].replace(/[^\d]/g, "");
+      const pushName = msg.pushName || null;
+
       // Если владелец сам написал в чат (fromMe) — авто-пауза, не мешаем живому диалогу
       if (msg.key.fromMe) {
         const own = extractText(msg).trim();
-        if (own) muted.set(jid, Date.now() + MUTE_MS);
+        if (own) {
+          muted.set(jid, Date.now() + MUTE_MS);
+          logMessage({ jid, phone, sender: "manager", text: own }).catch(() => {});
+        }
         continue;
       }
 
       const text = extractText(msg).trim();
       if (!text) continue;
+
+      // Лог входящего сообщения клиента в CRM
+      logMessage({ jid, phone, name: pushName, sender: "customer", text }).catch(() => {});
 
       // Ручное снятие паузы владельцем не нужно клиенту; клиент может позвать «менеджера» сам
       if (isMuted(jid)) continue;
@@ -135,8 +144,7 @@ async function start() {
 
         // Уведомление менеджерам в Telegram (заказ / запрос менеджера)
         if (notify) {
-          const phone = jid.split("@")[0].replace(/[^\d]/g, "");
-          notifyManagers({ ...notify, phone }).catch(() => {});
+          notifyManagers({ ...notify, name: notify.name || pushName, phone }).catch(() => {});
         }
 
         // Немного «живости»: показать «печатает…»
@@ -146,6 +154,9 @@ async function start() {
         await sock.sendPresenceUpdate("paused", jid).catch(() => {});
 
         await sock.sendMessage(jid, { text: reply });
+
+        // Лог ответа бота в CRM
+        logMessage({ jid, phone, sender: "bot", text: reply }).catch(() => {});
 
         if (mute) muted.set(jid, Date.now() + mute * 60 * 1000);
       } catch (e) {
