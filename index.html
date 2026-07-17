@@ -901,7 +901,7 @@ body:has(.lb.on) .toast{opacity:0 !important;pointer-events:none}
 .pr-soon{color:#9a9a9a;font-size:12.5px;font-weight:600;letter-spacing:.02em}
 .card .soon-badge.pre{background:#E11236}
 .pr-pre{color:#E11236;font-size:11px;font-weight:600;letter-spacing:.01em;text-transform:uppercase}
-.preorder-note{background:#fff5f6;border:1px solid #f6d5da;border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.45;color:#8a1a2b;margin:0 0 14px;display:flex;gap:8px;align-items:flex-start}
+.preorder-note{background:#fff5f6;border:1px solid #f6d5da;border-left:3px solid #E11236;border-radius:10px;padding:11px 14px;font-size:13px;line-height:1.45;color:#8a1a2b;margin:0 0 14px}
 .soon-note{background:#f6f6f6;border:1px solid #ececec;border-radius:14px;padding:16px 18px;font-size:14px;line-height:1.5;color:#444;margin:6px 0 12px}
 .btn-block.soon-btn{text-decoration:none;text-align:center;display:flex}
 .wl-row{display:flex;gap:8px;align-items:stretch}
@@ -1567,7 +1567,7 @@ rfc.openProduct=function(id){
  }
  var buyBlock = soon
   ? '<div class="soon-note">⚑ Скоро в продаже. Оставь email — пришлём как только товар появится.</div><div class="wl-row"><input id="wlEmail" type="email" placeholder="email@example.com" autocomplete="email"><button onclick="rfc.waitlist(\''+p.id+'\',\''+String(p.name).replace(/\x27/g,"\\\x27")+'\')" id="wlBtn">Сообщить</button></div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank" style="margin-top:10px">Или следи в Instagram</a>'
-  : (pre?'<div class="preorder-note">🧵<span>Шьём под заказ — 1–2 дня. Оформи сейчас, менеджер подтвердит в WhatsApp. Оплата Kaspi (QR или перевод).</span></div>':'')+swatchBlock+stockBlock(p)+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
+  : (pre?'<div class="preorder-note"><span>Шьём под заказ — 1–2 дня. Оформи сейчас, менеджер подтвердит в WhatsApp. Оплата Kaspi — QR или перевод.</span></div>':'')+swatchBlock+stockBlock(p)+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  state.pdpImgIdx=0;
  var displayP=activeVar?Object.assign({},p,{images:activeVar.images}):p;
  var pPhoto=pdpGallery(displayP,ap);
@@ -2176,7 +2176,7 @@ function copyText(s){try{navigator.clipboard.writeText(s);rfc.toast("Скопи�
 rfc.crmSetSearch=function(v){state.crmSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('crmSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 rfc.crmSetSort=function(v){state.crmSort=v;renderCrm();};
 rfc.crmCopy=function(i){var o=state.crm[i];if(!o)return;var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");var t=o.name+"\n"+o.phone+(o.email?"\n"+o.email:"")+"\nДоставка: "+(o.delivery||"")+"\nАдрес: "+addr+(o.comment?"\nКоммент: "+o.comment:"")+"\nИтого: "+fmt(o.total)+"\nЗаказ: "+o.id;copyText(t);};
-rfc.adminTab=function(t){state.adminTab=t;renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}if(t==="catalog"&&!state.productsLoaded&&!state.productsLoading){rfc.loadProducts();}if(t==="wa"&&!state.waLoaded&&!state.waLoading){rfc.waLoad();}};
+rfc.adminTab=function(t){state.adminTab=t;renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}if(t==="catalog"&&!state.productsLoaded&&!state.productsLoading){rfc.loadProducts();}if(t==="wa"&&!state.waLoaded&&!state.waLoading){rfc.waLoad();}waAutoRefresh(t==="wa");};
 rfc.waLoad=function(){
  if(!sb){state.waError="Supabase не подключён";state.waLoaded=true;renderCrm();return;}
  state.waLoading=true;state.waError=null;if(state.adminTab==="wa")renderCrm();
@@ -2189,6 +2189,19 @@ rfc.waLoad=function(){
 };
 rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
 rfc.waBack=function(){state.waActive=null;renderCrm();};
+var waTimer=null;
+function waAutoRefresh(on){
+ if(waTimer){clearInterval(waTimer);waTimer=null;}
+ if(!on)return;
+ waTimer=setInterval(function(){
+  var crm=document.getElementById('crm');
+  if(state.adminTab!=='wa'||!crm||crm.offsetParent===null){waAutoRefresh(false);return;}
+  if(state.waActive||!sb)return; // не мешаем открытому чату
+  sb.from("wa_messages").select("*").order("created_at",{ascending:false}).limit(1000).then(function(r){
+   if(!r.error&&state.adminTab==='wa'&&!state.waActive){state.waMsgs=r.data||[];state.waLoaded=true;renderCrm();}
+  });
+ },20000);
+}
 rfc.loadProducts=function(){
  if(!sb){state.productsLoaded=true;state.productsError="Supabase не подключён";renderCrm();return;}
  state.productsLoading=true;state.productsError=null;renderCrm();

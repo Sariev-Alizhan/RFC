@@ -2,7 +2,9 @@
 // Токен бота НЕ хранится тут — только общий секрет. Секрет и URL берутся из .env.
 
 const URL = process.env.NOTIFY_URL || "https://redflag.kz/api/tg/notify-order";
+const ORDER_URL = process.env.ORDER_URL || "https://redflag.kz/api/orders/create";
 const SECRET = process.env.WA_BOT_SECRET || "";
+const SITE = "https://redflag.kz";
 
 export const NOTIFY_ENABLED = Boolean(SECRET);
 
@@ -35,4 +37,25 @@ export async function notifyManagers(payload) {
 // Лог сообщения в CRM (не критично, без ретраев). { jid, phone, name, sender, text }
 export async function logMessage(payload) {
   return post({ kind: "wa_msg", ...payload });
+}
+
+// Создаёт реальный заказ в CRM (rfc_orders) + триггерит уведомление менеджерам.
+// order: { name, phone, city, delivery, items:[{name,size,qty,price,t}], total, comment }
+// Возвращает { id } или null.
+export async function createOrder(order) {
+  try {
+    const r = await fetch(ORDER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await r.json().catch(() => null);
+    if (r.ok && data?.order?.id) return { id: data.order.id };
+    console.error("[order] не создан:", r.status, data?.error || "");
+    return null;
+  } catch (e) {
+    console.error("[order] ошибка:", e?.message || e);
+    return null;
+  }
 }

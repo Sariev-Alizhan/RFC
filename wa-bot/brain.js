@@ -85,16 +85,16 @@ function orderFlow(session, text, presetProduct) {
       `• Сумма: *${fmt(o.product.price)}*\n\n` +
       `Менеджер подтвердит наличие и пришлёт Kaspi для оплаты:\n${SHOP.kaspiLink}\n\n` +
       `Спасибо, что выбрал RFC ❤️`;
-    // Сигнал менеджерам в Telegram
-    const notify = {
-      kind: "order",
-      name: o.name,
-      product: o.product.name,
+    // Данные для создания реального заказа в CRM (rfc_orders)
+    const order = {
+      productName: o.product.name,
+      type: o.product.key,
       size: o.size,
+      name: o.name,
       city: o.city,
-      total: fmt(o.product.price),
+      price: o.product.price,
     };
-    return { reply, notify };
+    return { reply, order };
   }
   return { reply: T.fallbackNoAI };
 }

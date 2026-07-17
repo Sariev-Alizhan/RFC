@@ -20,7 +20,7 @@ const QR_PNG = path.join(__dirname, "qr.png");
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, logMessage, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, logMessage, createOrder, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -194,14 +194,34 @@ async function start() {
 
     try {
       const session = getSession(jid);
-      const { reply, mute, notify } = await think(session, text);
+      const { reply, mute, notify, order } = await think(session, text);
 
+      // Запрос менеджера — уведомляем в Telegram
       if (notify) {
         notifyManagers({ ...notify, name: notify.name || pushName, phone }).catch(() => {});
       }
 
       await sendReply(jid, reply);
       logMessage({ jid, phone, sender: "bot", text: reply }).catch(() => {});
+
+      // Оформленный заказ — создаём реальный заказ в CRM + follow-up с номером
+      if (order) {
+        const items = [{ name: order.productName, size: order.size, qty: 1, price: order.price, t: order.type }];
+        createOrder({
+          name: order.name,
+          phone,
+          city: order.city,
+          delivery: /самовывоз/i.test(order.city || "") ? "Самовывоз" : "Доставка",
+          items,
+          total: order.price,
+          comment: "Заказ через WhatsApp-бота",
+        }).then((res) => {
+          if (res?.id) {
+            const t = `Номер твоего заказа: *${res.id}* — менеджер свяжется для подтверждения и оплаты.`;
+            sendReply(jid, t).then(() => logMessage({ jid, phone, sender: "bot", text: t }).catch(() => {})).catch(() => {});
+          }
+        }).catch(() => {});
+      }
 
       if (mute) muted.set(jid, Date.now() + mute * 60 * 1000);
     } catch (e) {
