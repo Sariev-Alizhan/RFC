@@ -427,6 +427,9 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .catalog-empty{text-align:center;padding:60px 20px;border:1px dashed var(--line);border-radius:16px;background:#fafafa;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;margin-top:24px}
 .catalog-head{display:flex;align-items:center;justify-content:space-between;margin:24px 0 16px;gap:12px;flex-wrap:wrap}
 .catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.cat-section{margin-bottom:28px}
+.cat-section-h{font-family:Unbounded;font-weight:600;font-size:14px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.cat-section-h span{font-size:11px;font-weight:600;color:#fff;background:var(--red);border-radius:20px;padding:2px 9px;line-height:1.5;font-family:inherit}
 .cat-card{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:.15s}
 .cat-card:hover{border-color:var(--ink);transform:translateY(-2px)}
 .cat-thumb{aspect-ratio:1/1;background:#fafafa;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -2514,12 +2517,23 @@ function renderCatalogBlock(){
    '</div>'+
    '<button class="cat-edit" onclick="rfc.productEdit(\''+p.id+'\')" title="Редактировать">✏️</button>'+
   '</div>';
- }).join('');
+ }); // cards — массив HTML, параллельный products (для группировки по коллекциям)
+ var COLS=[{key:'white',title:'White Collection'},{key:'red',title:'Red Collection'},{key:'other',title:'Другие'}];
+ var sections='';
+ COLS.forEach(function(c){
+  var idxs=[];products.forEach(function(p,i){if(p.collection===c.key)idxs.push(i);});
+  if(!idxs.length)return;
+  sections+='<div class="cat-section"><div class="cat-section-h">'+c.title+'<span>'+idxs.length+'</span></div><div class="catalog-grid">'+idxs.map(function(i){return cards[i];}).join('')+'</div></div>';
+ });
+ var known=COLS.map(function(c){return c.key;});
+ var restIdx=[];products.forEach(function(p,i){if(known.indexOf(p.collection)===-1)restIdx.push(i);});
+ if(restIdx.length){sections+='<div class="cat-section"><div class="cat-section-h">Прочее<span>'+restIdx.length+'</span></div><div class="catalog-grid">'+restIdx.map(function(i){return cards[i];}).join('')+'</div></div>';}
  return '<div class="catalog-head">'+
   '<div><b style="font-family:Unbounded;font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ ✏️ ДЛЯ ПРАВКИ</span></div>'+
   '<div style="display:flex;gap:8px"><button class="act cat-add-btn" onclick="rfc.productCreate()" '+(state.productCreating||state.productEditing?"disabled":"")+'>+ Добавить</button><button class="act" onclick="rfc.loadProducts()">🔄 Обновить</button></div>'+
  '</div>'+
- '<div class="catalog-grid">'+createCard+cards+'</div>';
+ (createCard?'<div class="catalog-grid" style="margin-bottom:22px">'+createCard+'</div>':'')+
+ sections;
 }
 rfc.aiToggleEl=function(name){var s=(state.aiElements||[]).slice();var i=s.indexOf(name);if(i>=0)s.splice(i,1);else s.push(name);state.aiElements=s;renderCrm();};
 rfc.aiCopyUrl=function(){if(state.aiResult)copyText(state.aiResult);};
