@@ -4,6 +4,7 @@ import { T, SHOP, SIZES, fmt, findProduct, PRODUCTS } from "./shop.js";
 import { aiReply, AI_ENABLED } from "./ai.js";
 
 const has = (t, ...words) => words.some((w) => t.includes(w));
+const asObj = (x) => (typeof x === "string" ? { reply: x } : x);
 
 // Определяем намерение по сценарию. Возвращает ключ или null.
 function intent(t) {
@@ -73,7 +74,7 @@ function orderFlow(session, text, presetProduct) {
   if (o.step === "city") {
     o.city = text.trim().slice(0, 120);
     session.order = null; // заказ собран, сбрасываем машину
-    return (
+    const reply =
       `✅ *Заказ принят!*\n\n` +
       `• Товар: ${o.product.name}\n` +
       `• Размер: ${o.size}\n` +
@@ -81,10 +82,19 @@ function orderFlow(session, text, presetProduct) {
       `• Куда: ${o.city}\n` +
       `• Сумма: *${fmt(o.product.price)}*\n\n` +
       `Менеджер подтвердит наличие и пришлёт Kaspi для оплаты:\n${SHOP.kaspiLink}\n\n` +
-      `Спасибо, что выбрал RFC ❤️`
-    );
+      `Спасибо, что выбрал RFC ❤️`;
+    // Сигнал менеджерам в Telegram
+    const notify = {
+      kind: "order",
+      name: o.name,
+      product: o.product.name,
+      size: o.size,
+      city: o.city,
+      total: fmt(o.product.price),
+    };
+    return { reply, notify };
   }
-  return T.fallbackNoAI;
+  return { reply: T.fallbackNoAI };
 }
 
 // Главный обработчик. session — объект состояния этого чата.
@@ -100,9 +110,9 @@ export async function think(session, text) {
     }
     if (intent(t) === "human") {
       session.order = null;
-      return { reply: T.human, mute: 30 };
+      return { reply: T.human, mute: 30, notify: { kind: "handoff", text } };
     }
-    return { reply: orderFlow(session, text) };
+    return asObj(orderFlow(session, text));
   }
 
   const key = intent(t);
@@ -114,17 +124,17 @@ export async function think(session, text) {
     case "payment":  return { reply: T.payment };
     case "socials":  return { reply: T.socials };
     case "thanks":   return { reply: "Всегда пожалуйста 🙌 Обращайся!" };
-    case "human":    return { reply: T.human, mute: 30 };
+    case "human":    return { reply: T.human, mute: 30, notify: { kind: "handoff", text } };
     case "order": {
       session.order = { step: "product" };
       const preset = findProduct(t); // вдруг сразу написал «хочу худи»
-      return { reply: orderFlow(session, text, preset) };
+      return asObj(orderFlow(session, text, preset));
     }
     default: {
       // Назвал товар без явного «хочу» и AI выключен → предложим оформить
       if (!AI_ENABLED && findProduct(t)) {
         session.order = { step: "product" };
-        return { reply: orderFlow(session, text, findProduct(t)) };
+        return asObj(orderFlow(session, text, findProduct(t)));
       }
       // Свободный вопрос → AI, если включён
       if (AI_ENABLED) {

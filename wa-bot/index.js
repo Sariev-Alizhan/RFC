@@ -14,6 +14,7 @@ import pino from "pino";
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
+import { notifyManagers, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -79,6 +80,7 @@ async function start() {
     if (connection === "open") {
       console.log("\n✅ Подключено! Бот RFC на связи.");
       console.log(`🤖 AI-режим: ${AI_ENABLED ? "включён (Claude)" : "выключен — только сценарии"}`);
+      console.log(`📨 Уведомления менеджерам в Telegram: ${NOTIFY_ENABLED ? "включены" : "выключены (нет WA_BOT_SECRET)"}`);
       console.log("💬 Отвечаю на входящие сообщения. Не закрывай это окно.\n");
     }
 
@@ -119,7 +121,13 @@ async function start() {
 
       try {
         const session = getSession(jid);
-        const { reply, mute } = await think(session, text);
+        const { reply, mute, notify } = await think(session, text);
+
+        // Уведомление менеджерам в Telegram (заказ / запрос менеджера)
+        if (notify) {
+          const phone = jid.split("@")[0].replace(/[^\d]/g, "");
+          notifyManagers({ ...notify, phone }).catch(() => {});
+        }
 
         // Немного «живости»: показать «печатает…»
         await sock.presenceSubscribe(jid).catch(() => {});
