@@ -1,4 +1,12 @@
 import { sb } from '../_lib/supabase.js';
+import crypto from 'crypto';
+
+// Постоянное по времени сравнение секретов (без утечки длины/префикса)
+function safeEq(a, b) {
+  const ba = Buffer.from(String(a || ''));
+  const bb = Buffer.from(String(b || ''));
+  return ba.length === bb.length && ba.length > 0 && crypto.timingSafeEqual(ba, bb);
+}
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPER_ADMINS = (process.env.TELEGRAM_ADMIN_IDS || '')
@@ -124,7 +132,7 @@ async function handleWaMsg(req, res) {
   const { error } = await sb.from('wa_messages').insert(row);
   if (error) {
     console.error('wa_messages insert failed:', error.message);
-    return res.status(200).json({ ok: false, error: error.message });
+    return res.status(200).json({ ok: false, reason: 'insert_failed' });
   }
   return res.status(200).json({ ok: true });
 }
@@ -173,7 +181,7 @@ export default async function handler(req, res) {
   const rawAuth = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   const waKind = req.body?.kind;
   if (waKind === 'order' || waKind === 'handoff' || waKind === 'wa_msg') {
-    if (!WA_BOT_SECRET || rawAuth !== WA_BOT_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+    if (!safeEq(rawAuth, WA_BOT_SECRET)) return res.status(401).json({ error: 'Unauthorized' });
     if (waKind === 'wa_msg') return handleWaMsg(req, res);
     if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
     return handleWaLead(req, res);
@@ -185,7 +193,7 @@ export default async function handler(req, res) {
   }
   const auth = req.headers.authorization || req.headers.Authorization || '';
   const token = String(auth).replace(/^Bearer\s+/i, '').trim();
-  if (token !== WEBHOOK_SECRET) {
+  if (!safeEq(token, WEBHOOK_SECRET)) {
     console.warn('notify-order: invalid/missing auth header');
     return res.status(401).json({ error: 'Unauthorized' });
   }

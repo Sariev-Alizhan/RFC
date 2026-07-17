@@ -28,12 +28,19 @@ const logger = pino({ level: "silent" });
 const sessions = new Map();
 // Паузы бота по чатам: jid -> timestamp (мс), до которого молчим
 const muted = new Map();
+// Очереди обработки по чату (сериализация — без гонок над session.order)
+const queues = new Map();
+// id недавно отправленных ботом сообщений (чтобы не мутить себя своими же эхо)
+const botSentIds = new Set();
 
 const MUTE_MS = 30 * 60 * 1000; // авто-пауза 30 мин, когда пишет живой человек
+const SESSION_TTL = 6 * 60 * 60 * 1000; // чистим неактивные сессии через 6 ч
 
 function getSession(jid) {
-  if (!sessions.has(jid)) sessions.set(jid, { history: [], order: null });
-  return sessions.get(jid);
+  let s = sessions.get(jid);
+  if (!s) { s = { history: [], order: null }; sessions.set(jid, s); }
+  s.lastSeen = Date.now();
+  return s;
 }
 
 function isMuted(jid) {
@@ -45,6 +52,28 @@ function isMuted(jid) {
   }
   return true;
 }
+
+// Запоминаем id отправленного ботом сообщения (кап ~300)
+function rememberBotMsg(id) {
+  if (!id) return;
+  botSentIds.add(id);
+  if (botSentIds.size > 300) botSentIds.delete(botSentIds.values().next().value);
+}
+
+// Сериализация обработки по чату — сообщения одного jid идут строго по очереди
+function enqueue(jid, task) {
+  const prev = queues.get(jid) || Promise.resolve();
+  const next = prev.then(task, task);
+  queues.set(jid, next.finally(() => { if (queues.get(jid) === next) queues.delete(jid); }));
+  return next;
+}
+
+// Периодическая чистка памяти
+setInterval(() => {
+  const now = Date.now();
+  for (const [jid, s] of sessions) if (now - (s.lastSeen || 0) > SESSION_TTL) sessions.delete(jid);
+  for (const [jid, until] of muted) if (now > until) muted.delete(jid);
+}, 30 * 60 * 1000).unref?.();
 
 // Достаём текст из разных типов сообщений WhatsApp
 function extractText(msg) {
@@ -59,6 +88,16 @@ function extractText(msg) {
     m.listResponseMessage?.title ||
     ""
   );
+}
+
+let reconnectScheduled = false;
+function scheduleReconnect(sock, delay = 2500) {
+  if (reconnectScheduled) return;
+  reconnectScheduled = true;
+  try { sock.ev.removeAllListeners(); } catch {}
+  try { sock.ws?.close?.(); } catch {}
+  console.log("🔄 Переподключаюсь…");
+  setTimeout(() => { reconnectScheduled = false; start().catch((e) => console.error("Ошибка реконнекта:", e?.message || e)); }, delay);
 }
 
 async function start() {
@@ -101,67 +140,81 @@ async function start() {
       if (loggedOut) {
         console.log("🔒 Сессия разлогинена. Удали папку ./auth и запусти заново для нового QR.");
       } else {
-        console.log("🔄 Переподключаюсь...");
-        start();
+        scheduleReconnect(sock);
       }
     }
   });
 
-  sock.ev.on("messages.upsert", async ({ messages, type }) => {
+  // Отправка ответа клиенту + лог + запоминание id (чтобы не мутить себя)
+  async function sendReply(jid, text) {
+    await sock.presenceSubscribe(jid).catch(() => {});
+    await sock.sendPresenceUpdate("composing", jid).catch(() => {});
+    await new Promise((r) => setTimeout(r, Math.min(1500, 400 + text.length * 12)));
+    await sock.sendPresenceUpdate("paused", jid).catch(() => {});
+    const sent = await sock.sendMessage(jid, { text });
+    rememberBotMsg(sent?.key?.id);
+    return sent;
+  }
+
+  async function handle(msg) {
+    const jid = msg.key.remoteJid || "";
+    if (jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) return;
+
+    const phone = jid.split("@")[0].replace(/[^\d]/g, "");
+    const pushName = msg.pushName || null;
+
+    // Исходящее (fromMe): либо эхо самого бота (игнор), либо ручной ответ менеджера (мут+лог)
+    if (msg.key.fromMe) {
+      const id = msg.key.id;
+      if (id && botSentIds.has(id)) { botSentIds.delete(id); return; } // своё же сообщение
+      const own = extractText(msg).trim();
+      if (own) {
+        muted.set(jid, Date.now() + MUTE_MS);
+        logMessage({ jid, phone, sender: "manager", text: own }).catch(() => {});
+      }
+      return;
+    }
+
+    const text = extractText(msg).trim();
+
+    // Пустое/медиа без текста
+    if (!text) {
+      const s = sessions.get(jid);
+      if (s && s.order && !isMuted(jid)) {
+        await sendReply(jid, "Пришли, пожалуйста, ответ текстом 🙏 (голосовые и фото я пока не читаю).").catch(() => {});
+      }
+      return;
+    }
+
+    // Лог входящего сообщения клиента в CRM
+    logMessage({ jid, phone, name: pushName, sender: "customer", text }).catch(() => {});
+
+    // На паузе (менеджер ведёт диалог) — молчим
+    if (isMuted(jid)) return;
+
+    try {
+      const session = getSession(jid);
+      const { reply, mute, notify } = await think(session, text);
+
+      if (notify) {
+        notifyManagers({ ...notify, name: notify.name || pushName, phone }).catch(() => {});
+      }
+
+      await sendReply(jid, reply);
+      logMessage({ jid, phone, sender: "bot", text: reply }).catch(() => {});
+
+      if (mute) muted.set(jid, Date.now() + mute * 60 * 1000);
+    } catch (e) {
+      console.error("[msg] ошибка обработки:", e?.message || e);
+    }
+  }
+
+  sock.ev.on("messages.upsert", ({ messages, type }) => {
     if (type !== "notify") return;
-
     for (const msg of messages) {
-      const jid = msg.key.remoteJid || "";
-
-      // Игнорим группы, каналы, статусы
-      if (jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) continue;
-
-      const phone = jid.split("@")[0].replace(/[^\d]/g, "");
-      const pushName = msg.pushName || null;
-
-      // Если владелец сам написал в чат (fromMe) — авто-пауза, не мешаем живому диалогу
-      if (msg.key.fromMe) {
-        const own = extractText(msg).trim();
-        if (own) {
-          muted.set(jid, Date.now() + MUTE_MS);
-          logMessage({ jid, phone, sender: "manager", text: own }).catch(() => {});
-        }
-        continue;
-      }
-
-      const text = extractText(msg).trim();
-      if (!text) continue;
-
-      // Лог входящего сообщения клиента в CRM
-      logMessage({ jid, phone, name: pushName, sender: "customer", text }).catch(() => {});
-
-      // Ручное снятие паузы владельцем не нужно клиенту; клиент может позвать «менеджера» сам
-      if (isMuted(jid)) continue;
-
-      try {
-        const session = getSession(jid);
-        const { reply, mute, notify } = await think(session, text);
-
-        // Уведомление менеджерам в Telegram (заказ / запрос менеджера)
-        if (notify) {
-          notifyManagers({ ...notify, name: notify.name || pushName, phone }).catch(() => {});
-        }
-
-        // Немного «живости»: показать «печатает…»
-        await sock.presenceSubscribe(jid).catch(() => {});
-        await sock.sendPresenceUpdate("composing", jid).catch(() => {});
-        await new Promise((r) => setTimeout(r, Math.min(1500, 400 + reply.length * 12)));
-        await sock.sendPresenceUpdate("paused", jid).catch(() => {});
-
-        await sock.sendMessage(jid, { text: reply });
-
-        // Лог ответа бота в CRM
-        logMessage({ jid, phone, sender: "bot", text: reply }).catch(() => {});
-
-        if (mute) muted.set(jid, Date.now() + mute * 60 * 1000);
-      } catch (e) {
-        console.error("[msg] ошибка обработки:", e?.message || e);
-      }
+      const jid = msg.key?.remoteJid || "";
+      if (!jid) continue;
+      enqueue(jid, () => handle(msg)); // строго по очереди в рамках одного чата
     }
   });
 }

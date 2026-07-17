@@ -53,10 +53,12 @@ function orderFlow(session, text, presetProduct) {
     return `Отлично, *${p.name}* — ${fmt(p.price)} 🔥 (универсальный размер)\nНа какое имя оформляем?`;
   }
 
-  // Шаг: размер
+  // Шаг: размер (сначала точное совпадение, затем от длинных к коротким — чтобы XL/XXL не путались с L)
   if (o.step === "size") {
-    const s = SIZES.find((s) => text.toUpperCase().replace(/\s/g, "").includes(s) && text.trim().length <= 4)
-      || SIZES.find((s) => new RegExp(`\\b${s}\\b`, "i").test(text));
+    const up = text.toUpperCase().replace(/[^A-Z]/g, "");
+    const s = SIZES.includes(up)
+      ? up
+      : [...SIZES].sort((a, b) => b.length - a.length).find((sz) => new RegExp(`\\b${sz}\\b`).test(text.toUpperCase()));
     if (!s) return `Не понял размер 🤔 Напиши один из: ${SIZES.join(", ")}.`;
     o.size = s;
     o.step = "name";

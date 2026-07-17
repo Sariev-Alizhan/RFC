@@ -6,31 +6,33 @@ const SECRET = process.env.WA_BOT_SECRET || "";
 
 export const NOTIFY_ENABLED = Boolean(SECRET);
 
-async function post(payload) {
+async function post(payload, { retries = 0 } = {}) {
   if (!NOTIFY_ENABLED) return false;
-  try {
-    const r = await fetch(URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${SECRET}` },
-      body: JSON.stringify(payload),
-    });
-    if (!r.ok) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const r = await fetch(URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SECRET}` },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) return true;
       console.error("[notify] ответ", r.status);
-      return false;
+    } catch (e) {
+      console.error("[notify] ошибка:", e?.message || e);
     }
-    return true;
-  } catch (e) {
-    console.error("[notify] ошибка:", e?.message || e);
-    return false;
+    if (attempt < retries) await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
   }
+  return false;
 }
 
+// Уведомление менеджерам — критично, с ретраями.
 // payload: { kind:'order'|'handoff', name, phone, product, size, city, total, text }
 export async function notifyManagers(payload) {
-  return post(payload);
+  return post(payload, { retries: 2 });
 }
 
-// Лог сообщения в CRM. { jid, phone, name, sender:'customer'|'bot'|'manager', text }
+// Лог сообщения в CRM (не критично, без ретраев). { jid, phone, name, sender, text }
 export async function logMessage(payload) {
   return post({ kind: "wa_msg", ...payload });
 }

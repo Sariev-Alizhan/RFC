@@ -34,13 +34,20 @@ ${PRODUCTS.map((p) => `- ${p.name} — ${fmt(p.price)}${p.sized ? " (разме�
 // history: массив {role:'user'|'assistant', content:'...'}
 export async function aiReply(history) {
   if (!AI_ENABLED) return null;
+  // API требует, чтобы первым шёл user — срезаем ведущие assistant после обрезки истории
+  let msgs = Array.isArray(history) ? history.slice() : [];
+  while (msgs.length && msgs[0].role !== "user") msgs = msgs.slice(1);
+  if (!msgs.length) return null;
   try {
-    const res = await client.messages.create({
-      model: MODEL,
-      max_tokens: 400,
-      system: SYSTEM,
-      messages: history,
-    });
+    const res = await client.messages.create(
+      {
+        model: MODEL,
+        max_tokens: 400,
+        system: SYSTEM,
+        messages: msgs,
+      },
+      { timeout: 15000 }
+    );
     const text = (res.content || [])
       .filter((b) => b.type === "text")
       .map((b) => b.text)

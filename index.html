@@ -2089,7 +2089,9 @@ function renderCrm(){
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
  '<div class="wrap crm">'+tabBar+(tab==="wa"?renderWaBlock():(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock)))+'</div>';
 }
-function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
+function waJid(j){return String(j==null?"":j).replace(/[^a-zA-Z0-9@._-]/g,"");}
 function renderWaBlock(){
  if(state.waLoading)return '<div class="wrap" style="padding:50px 0;text-align:center;color:#999">Загрузка чатов…</div>';
  if(state.waError)return '<div class="crm-empty"><span class="empty-em">⚠️</span><b>Не удалось загрузить</b><span class="empty-sub">'+waEsc(state.waError)+'</span></div>';
@@ -2109,14 +2111,14 @@ function renderWaBlock(){
    return '<div class="wa-msg '+who+'">'+tag+'<div class="wa-bubble">'+waEsc(m.text).replace(/\n/g,"<br>")+'</div><span class="wa-time">'+fmtDate(m.created_at)+'</span></div>';
   }).join("");
   var title=c.name||("+"+(c.phone||""));
-  var waHref=c.phone?'https://wa.me/'+c.phone:'#';
+  var waHref=waPhone(c.phone)?'https://wa.me/'+waPhone(c.phone):'#';
   return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span></div><a class="act wa" href="'+waHref+'" target="_blank">'+waIcon(15)+'Ответить</a></div><div class="wa-thread">'+thread+'</div></div>';
  }
  // Список диалогов
  var rows=list.map(function(c){
   var title=c.name||("+"+(c.phone||""));
   var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?"🤖 ":"👤 "))+waEsc((c.last.text||"").slice(0,60));
-  return '<button class="wa-item" onclick="rfc.waOpen(\''+c.jid+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span></div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
+  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span></div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
  }).join("");
  return refresh+'<div class="wa-list">'+rows+'</div>';
 }
