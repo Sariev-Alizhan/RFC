@@ -77,14 +77,14 @@ function orderFlow(session, text, presetProduct) {
     o.city = text.trim().slice(0, 120);
     session.order = null; // заказ собран, сбрасываем машину
     const reply =
-      `✅ *Заказ принят!*\n\n` +
+      `Красава, заказ собран! 🚩\n\n` +
       `• Товар: ${o.product.name}\n` +
       `• Размер: ${o.size}\n` +
       `• Имя: ${o.name}\n` +
       `• Куда: ${o.city}\n` +
       `• Сумма: *${fmt(o.product.price)}*\n\n` +
-      `Менеджер подтвердит наличие и пришлёт Kaspi для оплаты:\n${SHOP.kaspiLink}\n\n` +
-      `Спасибо, что выбрал RFC ❤️`;
+      `Менеджер щас подтвердит наличие и пришлёт Kaspi для оплаты:\n${SHOP.kaspiLink}\n\n` +
+      `Добро пожаловать в комьюнити 🔥`;
     // Данные для создания реального заказа в CRM (rfc_orders)
     const order = {
       productName: o.product.name,
@@ -94,7 +94,7 @@ function orderFlow(session, text, presetProduct) {
       city: o.city,
       price: o.product.price,
     };
-    return { reply, order };
+    return { reply, order, sticker: true };
   }
   return { reply: T.fallbackNoAI };
 }
@@ -119,7 +119,7 @@ export async function think(session, text) {
 
   const key = intent(t);
   switch (key) {
-    case "welcome":  return { reply: T.welcome };
+    case "welcome":  return { reply: T.welcome, sticker: true };
     case "catalog":  return { reply: T.catalog };
     case "sizes":    return { reply: T.sizes };
     case "delivery": return { reply: T.delivery };

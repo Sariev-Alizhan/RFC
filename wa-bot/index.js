@@ -12,11 +12,16 @@ import { Boom } from "@hapi/boom";
 import qrcode from "qrcode-terminal";
 import QRCode from "qrcode";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import pino from "pino";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const QR_PNG = path.join(__dirname, "qr.png");
+
+// Брендовый стикер «красный флаг» RFC
+let FLAG_STICKER = null;
+try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp")); } catch {}
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
@@ -156,6 +161,15 @@ async function start() {
     return sent;
   }
 
+  // Отправка брендового стикера «красный флаг»
+  async function sendSticker(jid) {
+    if (!FLAG_STICKER) return;
+    try {
+      const s = await sock.sendMessage(jid, { sticker: FLAG_STICKER });
+      rememberBotMsg(s?.key?.id);
+    } catch {}
+  }
+
   async function handle(msg) {
     const jid = msg.key.remoteJid || "";
     if (jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) return;
@@ -194,7 +208,7 @@ async function start() {
 
     try {
       const session = getSession(jid);
-      const { reply, mute, notify, order } = await think(session, text);
+      const { reply, mute, notify, order, sticker } = await think(session, text);
 
       // Запрос менеджера — уведомляем в Telegram
       if (notify) {
@@ -203,6 +217,9 @@ async function start() {
 
       await sendReply(jid, reply);
       logMessage({ jid, phone, sender: "bot", text: reply }).catch(() => {});
+
+      // Брендовый флаг RFC в ключевые моменты (приветствие, оформленный заказ)
+      if (sticker) await sendSticker(jid);
 
       // Оформленный заказ — создаём реальный заказ в CRM + follow-up с номером
       if (order) {
