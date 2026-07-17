@@ -4,6 +4,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPER_ADMINS = (process.env.TELEGRAM_ADMIN_IDS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET;
+const WA_BOT_SECRET = process.env.WA_BOT_SECRET;
 const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function tg(method, payload) {
@@ -85,6 +86,46 @@ function formatOrder(row) {
   return lines.join('\n');
 }
 
+// Лид из WhatsApp-бота (заказ / запрос менеджера)
+function formatLead(b) {
+  const phone = String(b.phone || '').replace(/[^\d]/g, '');
+  const lines = [];
+  if (b.kind === 'order') {
+    lines.push('🛒 <b>Новый заказ из WhatsApp-бота</b>');
+    lines.push('');
+    if (b.name) lines.push(`👤 <b>${escHtml(b.name)}</b>`);
+    if (b.product) lines.push(`📦 ${escHtml(b.product)}${b.size ? ' · размер ' + escHtml(b.size) : ''}`);
+    if (b.total) lines.push(`💰 <b>${escHtml(b.total)}</b>`);
+    if (b.city) lines.push(`🚚 ${escHtml(b.city)}`);
+  } else {
+    lines.push('🙋 <b>Клиент просит менеджера (WhatsApp)</b>');
+    lines.push('');
+    if (b.name) lines.push(`👤 ${escHtml(b.name)}`);
+    if (b.text) lines.push(`💬 «${escHtml(String(b.text).slice(0, 300))}»`);
+  }
+  if (phone) lines.push(`📞 +${escHtml(phone)}`);
+  lines.push('');
+  lines.push('⚡️ Бот на паузе в этом чате — ответь клиенту сам.');
+  return { text: lines.join('\n'), phone };
+}
+
+async function handleWaLead(req, res) {
+  const b = req.body || {};
+  const { text, phone } = formatLead(b);
+  const kb = phone ? [[{ text: '💬 Написать клиенту', url: `https://wa.me/${phone}` }]] : undefined;
+  const adminIds = await getAllAdminChatIds();
+  if (!adminIds.length) return res.status(200).json({ skipped: true, reason: 'no admins' });
+  let sent = 0;
+  for (const chatId of adminIds) {
+    const r = await tg('sendMessage', {
+      chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true,
+      ...(kb ? { reply_markup: { inline_keyboard: kb } } : {})
+    });
+    if (r?.ok) sent++;
+  }
+  return res.status(200).json({ sent, admins: adminIds.length });
+}
+
 async function getAllAdminChatIds() {
   const ids = new Set();
   SUPER_ADMINS.forEach(s => {
@@ -107,6 +148,14 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, service: 'rfc-tg-notify-order', has_secret: !!WEBHOOK_SECRET });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Ветка WA-бота: лид (заказ/менеджер) с авторизацией WA_BOT_SECRET
+  const rawAuth = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+  if ((req.body?.kind === 'order' || req.body?.kind === 'handoff')) {
+    if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
+    if (!WA_BOT_SECRET || rawAuth !== WA_BOT_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+    return handleWaLead(req, res);
+  }
 
   if (!WEBHOOK_SECRET) {
     console.error('notify-order: SUPABASE_WEBHOOK_SECRET not set — rejecting request');
