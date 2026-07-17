@@ -3,3 +3,4 @@ auth/
 .env
 pm2-out.log
 pm2-err.log
+qr.png

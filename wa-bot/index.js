@@ -10,7 +10,13 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import qrcode from "qrcode-terminal";
+import QRCode from "qrcode";
+import path from "path";
+import { fileURLToPath } from "url";
 import pino from "pino";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const QR_PNG = path.join(__dirname, "qr.png");
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
@@ -73,8 +79,12 @@ async function start() {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log("\n📱 Отсканируй этот QR в WhatsApp (Связанные устройства):\n");
+      console.log("\n📱 Отсканируй QR в WhatsApp (Связанные устройства):");
+      console.log(`🖼  Надёжнее — открой картинку: ${QR_PNG}\n`);
       qrcode.generate(qr, { small: true });
+      QRCode.toFile(QR_PNG, qr, { width: 600, margin: 3, errorCorrectionLevel: "M" }, (e) => {
+        if (e) console.error("[qr] не удалось сохранить PNG:", e.message);
+      });
     }
 
     if (connection === "open") {
