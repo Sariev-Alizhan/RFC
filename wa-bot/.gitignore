@@ -1,3 +1,5 @@
 node_modules/
 auth/
 .env
+pm2-out.log
+pm2-err.log
