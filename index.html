@@ -2449,7 +2449,8 @@ function renderCatalogBlock(){
   '</div>';
  }
  var cards=products.map(function(p){
-  var img=p.images&&p.images[0]?'<img src="'+p.images[0]+'" alt="">':productArt(p.t,0.7);
+  var thumbSrc=(p.images&&p.images[0])||(FALLBACK_IMAGES[p.type]&&FALLBACK_IMAGES[p.type][0])||(typeof IMG!=="undefined"?IMG[p.type]:null);
+  var img=thumbSrc?'<img src="'+String(thumbSrc).replace(/"/g,'&quot;')+'" alt="" loading="lazy">':productArt(p.type,0.7);
   var collectionLabel={white:'White',red:'Red',other:'Другие'}[p.collection]||p.collection;
   var typeLabel={cap:'🧢 Кепка',tee:'👕 Футболка',hoodie:'🟫 Худи',sweat:'🟦 Свитшот',socks:'🧦 Носки',boxers:'🩳 Трусы'}[p.type]||p.type;
   // Editing view
