@@ -25,6 +25,7 @@
 <meta name="twitter:description" content="Локальный бренд одежды из Казахстана. Доставка по КЗ и миру.">
 <meta name="twitter:image" content="https://redflag.kz/og.jpg">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Red Flag Community","alternateName":"RFC","url":"https://redflag.kz/","logo":"https://redflag.kz/icon-512-v3.png","email":"raimzhan1907@gmail.com","address":{"@type":"PostalAddress","addressLocality":"Астана","addressCountry":"KZ"},"sameAs":["https://instagram.com/redflagseverywear"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Red Flag Community","alternateName":"RFC","url":"https://redflag.kz/","inLanguage":"ru","publisher":{"@type":"Organization","name":"Red Flag Community"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://kkvmxtwpgvubwtcalzjm.supabase.co">
@@ -33,7 +34,8 @@
 <link rel="preload" as="image" href="/img/lifestyle/ls_tank.webp" fetchpriority="high">
 <link rel="preload" as="image" href="/img/lifestyle/ls_hoodieRed.webp">
 <link rel="preload" as="image" href="/img/lifestyle/ls_redcap.webp">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600&family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600&family=Archivo:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600&family=Archivo:wght@400;500;600;700;800;900&display=swap"><style>.rv{opacity:1 !important;transform:none !important}</style></noscript>
 <style>
 :root{
   --red:#E11236; --red-d:#C40E2D; --ink:#0B0B0B; --paper:#fff;
@@ -140,7 +142,11 @@ nav.main a:hover{color:var(--red)}nav.main a:hover::after{width:100%}
 .feature .fl-go{margin-top:14px;display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:1px}
 
 .card{position:relative;cursor:pointer;border-radius:var(--r);overflow:hidden;transition:.4s cubic-bezier(.2,.7,.2,1)}
-.card:hover{transform:translateY(-3px)}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.08)}
+.card:active{transform:scale(.985);transition:.1s}
+/* Тактильность нажатий — мгновенный отклик на тап (важно на мобиле, где нет hover) */
+.btn:active,.btn-block:active,.act:active,.ps-btn:active,.sizes button:active,.swatch:active,.ibtn:active,.chip:active,.qty button:active,.round:active,.admin-tab:active{transform:scale(.96);transition:transform .08s ease}
+header.scrolled{box-shadow:0 4px 22px rgba(0,0,0,.06)}
 .card .ph{position:relative;background:var(--mist);aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:.5s cubic-bezier(.2,.7,.2,1)}
 .card:hover .ph{background:#eee}
 .card-photo{width:100%;height:100%;object-fit:cover;display:block;transition:.5s cubic-bezier(.2,.7,.2,1)}
@@ -251,7 +257,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .scr-bar{position:sticky;top:0;background:#fff;z-index:5;border-bottom:1px solid var(--line);padding:14px 0}
 .scr-bar .round{width:46px;height:46px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;transition:.22s}
 .scr-bar .round:hover{background:var(--ink);color:#fff;transform:translateX(-2px)}
-@media(prefers-reduced-motion:reduce){.screen,.toast,.gal-track,.card,.btn,.btn-block{transition-duration:.01ms !important;animation:none !important}}
+@media(prefers-reduced-motion:reduce){.screen,.toast,.gal-track,.card,.btn,.btn-block{transition-duration:.01ms !important;animation:none !important}.rv{opacity:1 !important;transform:none !important;transition:none !important}.topbar .track{animation:none !important}html{scroll-behavior:auto !important}}
 .scr-bar{position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:5}
 .scr-bar .in{display:flex;align-items:center;justify-content:space-between;height:64px}
 .round{width:46px;height:46px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;transition:.2s}
@@ -305,7 +311,9 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .crm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 .crm-stats .stat{position:relative;border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;background:#fff;transition:.2s;overflow:hidden}
 .crm-stats .stat:hover{border-color:#d8d8d8;transform:translateY(-1px);box-shadow:0 4px 14px -8px rgba(0,0,0,.08)}
-.crm-stats .stat .stat-em{font-size:18px;line-height:1;margin-bottom:8px;display:block;filter:saturate(1.1)}
+.crm-stats .stat .stat-em{line-height:1;margin-bottom:8px;display:block;color:#9ba0a8}
+.crm-stats .stat.kpi-red .stat-em{color:var(--red)}
+.crm-stats .stat.kpi-amber .stat-em{color:#f59e0b}
 .crm-stats .stat b{font-family:var(--serif);font-size:clamp(22px,2.6vw,30px);display:block;font-feature-settings:"tnum" 1;letter-spacing:-.02em;line-height:1.1}
 .crm-stats .stat span{font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-top:4px;display:block}
 .crm-stats .stat.kpi-red b{color:var(--red)}
@@ -361,7 +369,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .act.del{margin-left:auto;color:#aa2222;border-color:transparent}.act.del:hover{background:#fbeaed;border-color:#fbeaed}
 /* Empty states */
 .crm-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 20px;background:#fafafa;border:1px dashed #e8e8e8;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
-.crm-empty .empty-em{font-size:42px;line-height:1;margin-bottom:6px;filter:saturate(.8)}
+.crm-empty .empty-em{line-height:1;margin-bottom:10px;color:#c4c8cf;display:inline-flex}
 .crm-empty b{font-size:15px;color:var(--ink);font-weight:700;letter-spacing:-.01em}
 .crm-empty .empty-sub{font-size:13px;color:#888;max-width:340px;line-height:1.5}
 /* Pill tabs */
@@ -369,7 +377,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .admin-tab{background:none;border:none;padding:9px 16px;font-size:13px;font-weight:600;color:#777;cursor:pointer;border-radius:10px;transition:.15s;font-family:inherit;letter-spacing:-.005em;display:inline-flex;align-items:center;gap:7px;line-height:1}
 .admin-tab:hover{color:var(--ink);background:#fff}
 .admin-tab.on{color:var(--ink);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.admin-tab .tab-em{font-size:14px;line-height:1}
+.admin-tab .tab-em{line-height:1;display:inline-flex;align-items:center}
 .admin-tab .tab-c{font-size:10px;color:#999;font-weight:700;font-feature-settings:"tnum" 1;background:#ededed;padding:1px 6px;border-radius:5px;margin-left:2px}
 .admin-tab.on .tab-c{background:var(--ink);color:#fff}
 @media(max-width:520px){.admin-tab{padding:8px 11px;font-size:12px}.admin-tab .tab-c{display:none}}
@@ -395,7 +403,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-bubble{padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.4;word-break:break-word;white-space:normal}
 .wa-msg.in .wa-bubble{background:#fff;border:1px solid #eaeaea;border-bottom-left-radius:4px;color:var(--ink)}
 .wa-msg.out .wa-bubble{background:#d9fdd3;border-bottom-right-radius:4px;color:#0b1f10}
-.wa-tag{font-size:10px;font-weight:700;margin-bottom:3px;letter-spacing:.01em}
+.wa-tag{font-size:10px;font-weight:700;margin-bottom:3px;letter-spacing:.01em;display:inline-flex;align-items:center;gap:3px}
 .wa-tag.bot{color:#0a7d2e}.wa-tag.mgr{color:#b8860b}
 .wa-time{font-size:10px;color:#aaa;margin-top:3px}
 .ai-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
@@ -428,7 +436,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .catalog-head{display:flex;align-items:center;justify-content:space-between;margin:24px 0 16px;gap:12px;flex-wrap:wrap}
 .catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .cat-section{margin-bottom:28px}
-.cat-section-h{font-family:Unbounded;font-weight:600;font-size:14px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.cat-section-h{font-family:var(--serif);font-weight:600;font-size:14px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);margin:0 0 14px;display:flex;align-items:center;gap:10px}
 .cat-section-h span{font-size:11px;font-weight:600;color:#fff;background:var(--red);border-radius:20px;padding:2px 9px;line-height:1.5;font-family:inherit}
 .cat-card{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:.15s}
 .cat-card:hover{border-color:var(--ink);transform:translateY(-2px)}
@@ -437,10 +445,10 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .cat-noimg{color:#bbb;font-size:11px;letter-spacing:.05em;text-transform:uppercase}
 .cat-body{padding:14px}
 .cat-meta{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#999;font-weight:600;margin-bottom:6px}
-.cat-name{font-family:Unbounded;font-weight:600;font-size:14px;line-height:1.3;margin-bottom:12px;min-height:36px}
+.cat-name{font-family:var(--serif);font-weight:600;font-size:14px;line-height:1.3;margin-bottom:12px;min-height:36px}
 .cat-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .cat-price{font-weight:700;font-size:14px}
-.cat-badge{font-size:9px;padding:4px 8px;border-radius:6px;font-weight:600;letter-spacing:.04em}
+.cat-badge{font-size:9px;padding:4px 8px;border-radius:6px;font-weight:600;letter-spacing:.04em;display:inline-flex;align-items:center;gap:3px}
 .cat-on{background:#e8f7ed;color:#1a7d35}
 .cat-off{background:#f5f5f5;color:#888}
 .cat-edit{position:absolute;top:10px;right:10px;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;z-index:2}
@@ -1732,6 +1740,30 @@ function sanitizePhone(p){p=(p||"").replace(/\D/g,"");if(p.length===11&&p.charAt
 function waLink(num,text){return "https://wa.me/"+sanitizePhone(num)+"?text="+encodeURIComponent(text);}
 function mailLink(email,subj,body){return "mailto:"+email+"?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(body);}
 function waIcon(s){return '<svg viewBox="0 0 24 24" width="'+(s||18)+'" height="'+(s||18)+'" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-.8 2 0 3.2a9 9 0 0 0 3.7 3.2c1.3.6 1.8.6 2.5.5.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1 0 0-.2-.1-.4-.2Z"/></svg>';}
+/* Современные линейные SVG-иконки (в стиле шапки) — заменяют устаревшие эмодзи */
+var ICONS={
+ orders:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6M9 16h4"/>',
+ chat:'<path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-5A8 8 0 1 1 21 11.5Z"/>',
+ box:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
+ studio:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.1"/><circle cx="12" cy="8" r="1.1"/><circle cx="16" cy="10" r="1.1"/><path d="M12 21c1.4 0 2-1 1.4-2.2-.5-1 .2-2.3 1.4-2.3H16"/>',
+ chart:'<path d="M4 4v16h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+ spark:'<path d="M12 3l1.7 5.1a3 3 0 0 0 2.2 2L21 12l-5.1 1.7a3 3 0 0 0-2 2.2L12 21l-1.7-5.1a3 3 0 0 0-2.2-2L3 12l5.1-1.7a3 3 0 0 0 2-2.2Z"/>',
+ clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+ wallet:'<path d="M4 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M20 10h-4a2 2 0 0 0 0 4h4"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+ hide:'<path d="M3 3l18 18"/><path d="M10.6 6.2A9 9 0 0 1 21 12a9.3 9.3 0 0 1-2.4 3.1M6.2 6.2A9.2 9.2 0 0 0 3 12a9 9 0 0 0 12.5 4.2"/>',
+ pencil:'<path d="M5 19h4L19 9a2 2 0 0 0-3-3L6 15v4Z"/><path d="M14 7l3 3"/>',
+ trash:'<path d="M5 7h14M10 7V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2M7 7v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7"/>',
+ save:'<path d="M6 4h9l3 3v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M8 4v5h6V4M8 21v-6h8v6"/>',
+ refresh:'<path d="M20 11a8 8 0 1 0-1.5 5.5"/><path d="M20 5v6h-6"/>',
+ camera:'<path d="M4 8h3l1.4-2h7.2L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.2"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ bot:'<rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 8V4M8.5 4h7M9 13h.5M14.5 13h.5M2 12v3M22 12v3"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20c.5-3.5 3.5-5.5 7.5-5.5s7 2 7.5 5.5"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>',
+ warn:'<path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v4M12 17.5h.01"/>'
+};
+function ic(name,sz){var s=sz||16;return '<svg class="ic" viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.16em;flex:none">'+(ICONS[name]||'')+'</svg>';}
 function shopMessage(o){
  var L=[];
  L.push("🚩 RED FLAG COMMUNITY");
@@ -2065,7 +2097,7 @@ function renderCrm(){
  var revenue=state.crm.filter(function(o){return o.status!=="Отменён";}).reduce(function(a,o){return a+o.total;},0);
  var chips='<button class="chip '+(state.crmFilter==="all"?"on":"")+'" onclick="rfc.crmFilter(\'all\')">Все<span class="chip-c">'+total+'</span></button>'+
   CRM_STATUSES.map(function(s){var n=state.crm.filter(function(o){return o.status===s;}).length;return '<button class="chip '+(state.crmFilter===s?"on":"")+'" onclick="rfc.crmFilter(\''+s+'\')">'+CRM_STATUS_EMOJI[s]+' '+s+'<span class="chip-c">'+n+'</span></button>';}).join("");
- var searchBar='<div class="crm-search"><input id="crmSearch" type="text" placeholder="🔍  Поиск по ФИО, телефону, email или ID…" value="'+(state.crmSearch||"").replace(/"/g,"&quot;")+'" oninput="rfc.crmSetSearch(this.value)"><select class="crm-sel" onchange="rfc.crmSetSort(this.value)"><option value="new"'+(sort==="new"?" selected":"")+'>Сначала новые</option><option value="old"'+(sort==="old"?" selected":"")+'>Сначала старые</option><option value="high"'+(sort==="high"?" selected":"")+'>По сумме ↓</option></select></div>';
+ var searchBar='<div class="crm-search"><input id="crmSearch" type="text" placeholder="Поиск по ФИО, телефону, email или ID…" value="'+(state.crmSearch||"").replace(/"/g,"&quot;")+'" oninput="rfc.crmSetSearch(this.value)"><select class="crm-sel" onchange="rfc.crmSetSort(this.value)"><option value="new"'+(sort==="new"?" selected":"")+'>Сначала новые</option><option value="old"'+(sort==="old"?" selected":"")+'>Сначала старые</option><option value="high"'+(sort==="high"?" selected":"")+'>По сумме ↓</option></select></div>';
  var rows=list.length?list.map(function(o,idx){
   var realIdx=state.crm.indexOf(o);
   var its=o.items.map(function(i){var meta=i.size+(i.color?' · '+i.color:'')+' ×'+i.qty;var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6%;box-sizing:border-box">':productArt(i.t,.5);return '<div class="ci-line"><div class="ci-mini">'+thumb+'</div><span>'+i.name+' · '+meta+'</span><b>'+fmt(i.price*i.qty)+'</b></div>';}).join("");
@@ -2086,10 +2118,10 @@ function renderCrm(){
    grid+
    '<div class="crm-items">'+its+'<div class="crm-tot"><span>Итого</span><b>'+fmt(o.total)+'</b></div></div>'+
    '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
- }).join(""):(state.crm.length===0?'<div class="crm-empty"><span class="empty-em">📭</span><b>Пока нет заказов</b><span class="empty-sub">Когда покупатели оформят заказ через сайт, он появится здесь сразу же.</span></div>':'<div class="crm-empty"><span class="empty-em">🔍</span><b>Ничего не найдено</b><span class="empty-sub">Попробуй сбросить фильтры или изменить запрос.</span></div>');
+ }).join(""):(state.crm.length===0?'<div class="crm-empty"><span class="empty-em">'+ic("orders",44)+'</span><b>Пока нет заказов</b><span class="empty-sub">Когда покупатели оформят заказ через сайт, он появится здесь сразу же.</span></div>':'<div class="crm-empty"><span class="empty-em">'+ic("search",44)+'</span><b>Ничего не найдено</b><span class="empty-sub">Попробуй сбросить фильтры или изменить запрос.</span></div>');
  var tab=state.adminTab||"orders";
- var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">📋</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">💬</span>WhatsApp</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">📦</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">🎨</span>AI Студия</button></div>';
- var ordersBlock='<div class="crm-stats"><div class="stat"><span class="stat-em">📊</span><b>'+total+'</b><span>Всего заказов</span></div><div class="stat kpi-red"><span class="stat-em">🆕</span><b>'+fresh+'</b><span>Новых</span></div><div class="stat kpi-amber"><span class="stat-em">⏳</span><b>'+inProgress+'</b><span>В работе</span></div><div class="stat"><span class="stat-em">💰</span><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+searchBar+'<div class="crm-chips">'+chips+'</div><div class="crm-list">'+rows+'</div>';
+ var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">'+ic("orders",15)+'</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">'+ic("chat",15)+'</span>WhatsApp</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">'+ic("box",15)+'</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">'+ic("studio",15)+'</span>AI Студия</button></div>';
+ var ordersBlock='<div class="crm-stats"><div class="stat"><span class="stat-em">'+ic("chart",20)+'</span><b>'+total+'</b><span>Всего заказов</span></div><div class="stat kpi-red"><span class="stat-em">'+ic("spark",20)+'</span><b>'+fresh+'</b><span>Новых</span></div><div class="stat kpi-amber"><span class="stat-em">'+ic("clock",20)+'</span><b>'+inProgress+'</b><span>В работе</span></div><div class="stat"><span class="stat-em">'+ic("wallet",20)+'</span><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+searchBar+'<div class="crm-chips">'+chips+'</div><div class="crm-list">'+rows+'</div>';
  $("#crm").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
  '<div class="wrap crm">'+tabBar+(tab==="wa"?renderWaBlock():(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock)))+'</div>';
@@ -2099,9 +2131,9 @@ function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
 function waJid(j){return String(j==null?"":j).replace(/[^a-zA-Z0-9@._-]/g,"");}
 function renderWaBlock(){
  if(state.waLoading)return '<div class="wrap" style="padding:50px 0;text-align:center;color:#999">Загрузка чатов…</div>';
- if(state.waError)return '<div class="crm-empty"><span class="empty-em">⚠️</span><b>Не удалось загрузить</b><span class="empty-sub">'+waEsc(state.waError)+'</span></div>';
+ if(state.waError)return '<div class="crm-empty"><span class="empty-em">'+ic("warn",44)+'</span><b>Не удалось загрузить</b><span class="empty-sub">'+waEsc(state.waError)+'</span></div>';
  var msgs=state.waMsgs||[];
- if(!msgs.length)return '<div class="crm-empty"><span class="empty-em">💬</span><b>Пока нет переписок</b><span class="empty-sub">Как только клиент напишет боту в WhatsApp, диалог появится здесь.</span></div><div style="text-align:center;margin-top:16px"><button class="act" onclick="rfc.waLoad()">Обновить</button></div>';
+ if(!msgs.length)return '<div class="crm-empty"><span class="empty-em">'+ic("chat",44)+'</span><b>Пока нет переписок</b><span class="empty-sub">Как только клиент напишет боту в WhatsApp, диалог появится здесь.</span></div><div style="text-align:center;margin-top:16px"><button class="act" onclick="rfc.waLoad()">Обновить</button></div>';
  // Группируем по чату (jid)
  var chats={};
  msgs.forEach(function(m){ if(!chats[m.jid])chats[m.jid]={jid:m.jid,phone:m.phone,name:null,last:null,items:[]}; var c=chats[m.jid]; c.items.push(m); if(m.name&&m.sender==="customer")c.name=m.name; if(!c.last||new Date(m.created_at)>new Date(c.last.created_at))c.last=m; });
@@ -2112,7 +2144,7 @@ function renderWaBlock(){
   var c=chats[state.waActive];
   var thread=c.items.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);}).map(function(m){
    var who=m.sender==="customer"?"in":"out";
-   var tag=m.sender==="bot"?'<span class="wa-tag bot">🤖 Бот</span>':(m.sender==="manager"?'<span class="wa-tag mgr">👤 Менеджер</span>':'');
+   var tag=m.sender==="bot"?'<span class="wa-tag bot">'+ic("bot",12)+' Бот</span>':(m.sender==="manager"?'<span class="wa-tag mgr">'+ic("user",12)+' Менеджер</span>':'');
    return '<div class="wa-msg '+who+'">'+tag+'<div class="wa-bubble">'+waEsc(m.text).replace(/\n/g,"<br>")+'</div><span class="wa-time">'+fmtDate(m.created_at)+'</span></div>';
   }).join("");
   var title=c.name||("+"+(c.phone||""));
@@ -2122,7 +2154,7 @@ function renderWaBlock(){
  // Список диалогов
  var rows=list.map(function(c){
   var title=c.name||("+"+(c.phone||""));
-  var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?"🤖 ":"👤 "))+waEsc((c.last.text||"").slice(0,60));
+  var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?ic("bot",11)+" ":ic("user",11)+" "))+waEsc((c.last.text||"").slice(0,60));
   return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span></div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
  }).join("");
  return refresh+'<div class="wa-list">'+rows+'</div>';
@@ -2138,7 +2170,7 @@ function renderAiBlock(){
  if(busy)res='<div class="ai-loader"><div class="ai-spinner"></div><div class="ai-loader-text">'+(st==="submitting"?"Отправляю запрос…":"Генерирую… до 60 сек")+'</div></div>';
  else if(st==="done"&&state.aiResult)res='<div class="ai-result"><img src="'+state.aiResult+'" alt="generated"><div class="ai-result-actions"><a class="act" href="'+state.aiResult+'" target="_blank" download>Скачать</a><button class="act" onclick="rfc.aiCopyUrl()">Скопировать ссылку</button><button class="act" onclick="rfc.aiReset()">Новый запрос</button></div></div>';
  else if(st==="error"){var err=state.aiError||"неизвестно";var isCredit=/credit|кредит/i.test(err);res='<div class="ai-empty ai-err">'+(isCredit?'<b style="color:#e11236;font-size:14px">Кончились кредиты Higgsfield Cloud API</b><div style="margin:10px 0 16px;color:#666;font-size:12px;line-height:1.5">Пополни тарифный план или докинь кредитов в Cloud API кошелёк — после этого генерация продолжится без изменений в коде.</div><a class="act" href="https://cloud.higgsfield.ai" target="_blank" style="background:var(--ink);color:#fff;margin-right:8px">Открыть Higgsfield Cloud</a><button class="act" onclick="rfc.aiReset()">Закрыть</button>':'Ошибка: '+err+'<br><button class="act" style="margin-top:14px" onclick="rfc.aiReset()">Попробовать снова</button>')+'</div>';}
- else res='<div class="ai-empty"><span style="font-size:42px;margin-bottom:14px;opacity:.7">🎨</span><b style="color:var(--ink);font-size:14px;letter-spacing:-.01em">Студия готова</b><div style="margin-top:6px;color:#888">Опиши промпт и нажми «Сгенерировать» — результат появится здесь.</div></div>';
+ else res='<div class="ai-empty"><span style="margin-bottom:14px;color:#c4c8cf">'+ic("studio",42)+'</span><b style="color:var(--ink);font-size:14px;letter-spacing:-.01em">Студия готова</b><div style="margin-top:6px;color:#888">Опиши промпт и нажми «Сгенерировать» — результат появится здесь.</div></div>';
  var prompt=(state.aiPrompt||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
  var aspect=state.aiAspect||"4:5",model=state.aiModel||"nano_banana_pro";
  return '<div class="ai-grid"><div class="ai-form-col">'+
@@ -2409,12 +2441,12 @@ rfc.productDelete=function(id){
 };
 function renderCatalogBlock(){
  if(state.productsLoading){var sk='';for(var ii=0;ii<6;ii++){sk+='<div><div class="skel skel-card"></div><div class="skel skel-line"></div><div class="skel skel-line short"></div></div>';}return '<div class="catalog-grid">'+sk+'</div>';}
- if(state.productsError)return '<div class="crm-empty">❌ '+state.productsError+'<br><br><button class="act" onclick="rfc.loadProducts()">Попробовать снова</button></div>';
+ if(state.productsError)return '<div class="crm-empty"><span class="empty-em">'+ic("warn",44)+'</span>'+state.productsError+'<br><br><button class="act" onclick="rfc.loadProducts()">Попробовать снова</button></div>';
  var products=state.products||[];
  if(products.length===0){
   return '<div class="catalog-empty">'+
-   '<div style="font-size:54px;margin-bottom:12px">📦</div>'+
-   '<h3 style="margin:0 0 8px;font-family:Unbounded;font-weight:600;font-size:20px">Каталог пуст</h3>'+
+   '<div style="margin-bottom:12px;color:#ccc">'+ic("box",52)+'</div>'+
+   '<h3 style="margin:0 0 8px;font-family:var(--serif);font-weight:600;font-size:20px">Каталог пуст</h3>'+
    '<p style="margin:0 0 24px;color:#666;font-size:13px;line-height:1.6;max-width:380px">На сайте сейчас '+PRODUCTS.length+' товаров (хардкод). Импортируй их в базу — дальше сможешь править названия, цены, фото прямо отсюда. Сайт продолжит работать как и сейчас.</p>'+
    '<button class="btn-block" style="max-width:380px" '+(state.productsImporting?'disabled':'')+' onclick="rfc.importProducts()">'+
     (state.productsImporting?'Импортирую…':'Импортировать '+PRODUCTS.length+' товаров')+
@@ -2445,7 +2477,7 @@ function renderCatalogBlock(){
     '<label class="cat-edit-toggle"><input type="checkbox" '+(cf.available?"checked":"")+' onchange="rfc.productCreateField(\'available\',this.checked)" '+(saving?"disabled":"")+'> Доступен на сайте сразу</label>'+
     (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
     '<div class="cat-edit-actions">'+
-     '<button class="act cat-save" onclick="rfc.productCreateSave()" '+(saving?"disabled":"")+'>'+(saving?"Создаю…":"💾 Создать")+'</button>'+
+     '<button class="act cat-save" onclick="rfc.productCreateSave()" '+(saving?"disabled":"")+'>'+(saving?"Создаю…":ic("save",14)+" Создать")+'</button>'+
      '<button class="act" onclick="rfc.productCreateCancel()" '+(saving?"disabled":"")+'>Отмена</button>'+
     '</div>'+
    '</div>'+
@@ -2473,13 +2505,13 @@ function renderCatalogBlock(){
      '<div class="cat-photo-actions">'+
       '<button '+(first||imgBusy?"disabled":"")+' onclick="rfc.productImageMove(\''+p.id+'\','+idx+','+(idx-1)+')" title="Сдвинуть влево">←</button>'+
       '<button '+(last||imgBusy?"disabled":"")+' onclick="rfc.productImageMove(\''+p.id+'\','+idx+','+(idx+1)+')" title="Сдвинуть вправо">→</button>'+
-      '<button class="cat-photo-del" '+(imgBusy?"disabled":"")+' onclick="rfc.productImageRemove(\''+p.id+'\',\''+safeUrl+'\')" title="Удалить">🗑</button>'+
+      '<button class="cat-photo-del" '+(imgBusy?"disabled":"")+' onclick="rfc.productImageRemove(\''+p.id+'\',\''+safeUrl+'\')" title="Удалить">'+ic("trash",13)+'</button>'+
      '</div>'+
      (first?'<span class="cat-photo-main">главная</span>':'')+
     '</div>';
    }).join('');
    var addBtn='<button class="cat-photo-add" '+(imgBusy?"disabled":"")+' onclick="rfc.productImageUpload(\''+p.id+'\')">'+
-    (imgBusy?'<span class="ai-spinner" style="width:18px;height:18px;border-width:2px"></span>':(imgs.length===0?'<span>📷<br>Добавить<br>фото</span>':'<span>+<br>Ещё</span>'))+
+    (imgBusy?'<span class="ai-spinner" style="width:18px;height:18px;border-width:2px"></span>':(imgs.length===0?'<span>'+ic("camera",20)+'<br>Добавить<br>фото</span>':'<span>'+ic("plus",18)+'<br>Ещё</span>'))+
    '</button>';
    return '<div class="cat-card cat-editing">'+
     '<div class="cat-thumb">'+(imgs[0]?'<img src="'+imgs[0].replace(/"/g,'&quot;')+'" alt="">':productArt(p.type,0.7))+'</div>'+
@@ -2495,16 +2527,16 @@ function renderCatalogBlock(){
      (imgErr?'<div class="cat-edit-err">📷 '+imgErr+'</div>':'')+
      (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
      '<div class="cat-edit-actions">'+
-      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(saving?"Сохраняю…":"💾 Сохранить")+'</button>'+
+      '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(saving?"Сохраняю…":ic("save",14)+" Сохранить")+'</button>'+
       '<button class="act" onclick="rfc.productEditCancel()" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>Закрыть</button>'+
      '</div>'+
-     '<button class="act cat-del-btn" onclick="rfc.productDelete(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(state.productDeleting?"Удаляю…":"🗑 Удалить товар")+'</button>'+
+     '<button class="act cat-del-btn" onclick="rfc.productDelete(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(state.productDeleting?"Удаляю…":ic("trash",14)+" Удалить товар")+'</button>'+
     '</div>'+
    '</div>';
   }
   // Normal view
   var price="₸"+(Number(p.price)||0).toLocaleString('ru-RU').replace(/\u00A0/g,' ');
-  var availBadge=p.available?'<span class="cat-badge cat-on">✅ В наличии</span>':'<span class="cat-badge cat-off">⛔ Скрыт</span>';
+  var availBadge=p.available?'<span class="cat-badge cat-on">'+ic("check",13)+' В наличии</span>':'<span class="cat-badge cat-off">'+ic("hide",13)+' Скрыт</span>';
   return '<div class="cat-card">'+
    '<div class="cat-thumb">'+img+'</div>'+
    '<div class="cat-body">'+
@@ -2515,7 +2547,7 @@ function renderCatalogBlock(){
      availBadge+
     '</div>'+
    '</div>'+
-   '<button class="cat-edit" onclick="rfc.productEdit(\''+p.id+'\')" title="Редактировать">✏️</button>'+
+   '<button class="cat-edit" onclick="rfc.productEdit(\''+p.id+'\')" title="Редактировать">'+ic("pencil",15)+'</button>'+
   '</div>';
  }); // cards — массив HTML, параллельный products (для группировки по коллекциям)
  var COLS=[{key:'white',title:'White Collection'},{key:'red',title:'Red Collection'},{key:'other',title:'Другие'}];
@@ -2529,8 +2561,8 @@ function renderCatalogBlock(){
  var restIdx=[];products.forEach(function(p,i){if(known.indexOf(p.collection)===-1)restIdx.push(i);});
  if(restIdx.length){sections+='<div class="cat-section"><div class="cat-section-h">Прочее<span>'+restIdx.length+'</span></div><div class="catalog-grid">'+restIdx.map(function(i){return cards[i];}).join('')+'</div></div>';}
  return '<div class="catalog-head">'+
-  '<div><b style="font-family:Unbounded;font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ ✏️ ДЛЯ ПРАВКИ</span></div>'+
-  '<div style="display:flex;gap:8px"><button class="act cat-add-btn" onclick="rfc.productCreate()" '+(state.productCreating||state.productEditing?"disabled":"")+'>+ Добавить</button><button class="act" onclick="rfc.loadProducts()">🔄 Обновить</button></div>'+
+  '<div><b style="font-family:var(--serif);font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ ✏️ ДЛЯ ПРАВКИ</span></div>'+
+  '<div style="display:flex;gap:8px"><button class="act cat-add-btn" onclick="rfc.productCreate()" '+(state.productCreating||state.productEditing?"disabled":"")+'>'+ic("plus",14)+' Добавить</button><button class="act" onclick="rfc.loadProducts()">'+ic("refresh",14)+' Обновить</button></div>'+
  '</div>'+
  (createCard?'<div class="catalog-grid" style="margin-bottom:22px">'+createCard+'</div>':'')+
  sections;
@@ -2603,7 +2635,7 @@ rfc.aiReuse=function(id){
 };
 
 
-function showScreen(sel){$$(".screen").forEach(function(s){s.classList.remove("on");});$(sel).classList.add("on");$(sel).scrollTop=0;document.body.style.overflow="hidden";if(sel!=="#pdp"){document.body.classList.remove("pdp-open");var ps=document.getElementById("pdpSticky");if(ps)ps.classList.remove("on");}}
+function showScreen(sel){var run=function(){$$(".screen").forEach(function(s){s.classList.remove("on");});$(sel).classList.add("on");$(sel).scrollTop=0;document.body.style.overflow="hidden";if(sel!=="#pdp"){document.body.classList.remove("pdp-open");var ps=document.getElementById("pdpSticky");if(ps)ps.classList.remove("on");}};if(document.startViewTransition){try{document.startViewTransition(run);}catch(e){run();}}else{run();}}
 rfc.closeScreen=function(sel){$(sel).classList.remove("on");document.body.style.overflow="";};
 
 /* ===================== SIZE GUIDE ===================== */
@@ -2682,6 +2714,9 @@ if("IntersectionObserver" in window){
 loadCrm();
 renderCart();
 if(location.hash==="#admin"){rfc.openCrm();}
+
+// Тень хедера при скролле — отделяет шапку от контента (современный паттерн)
+(function(){var h=document.querySelector("header");if(!h)return;var tick=false;function upd(){h.classList.toggle("scrolled",window.scrollY>8);tick=false;}window.addEventListener("scroll",function(){if(!tick){tick=true;requestAnimationFrame(upd);}},{passive:true});upd();})();
 
 </script>
 </body>
