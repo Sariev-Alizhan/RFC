@@ -321,7 +321,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 @media(max-width:760px){.crm-stats{grid-template-columns:repeat(2,1fr)}}
 /* Filter chips */
 .crm-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;padding:6px;background:#f7f7f7;border-radius:14px;border:1px solid #ededed}
-.chip{border:1px solid transparent;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:600;color:#666;transition:.15s;background:transparent;cursor:pointer}
+.chip{border:1px solid transparent;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:600;color:#666;transition:.15s;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .chip:hover{color:var(--ink);background:#fff}
 .chip.on{background:#fff;color:var(--ink);border-color:#e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .chip .chip-c{display:inline-block;margin-left:6px;padding:1px 6px;background:#ededed;color:#888;font-size:10px;border-radius:6px;font-weight:700;font-feature-settings:"tnum" 1}
@@ -342,7 +342,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .crm-id{font-weight:800;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;color:var(--ink)}
 .crm-date{font-size:11px;color:var(--muted);margin-left:8px;font-feature-settings:"tnum" 1}
 .crm-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;white-space:nowrap}
-.crm-badge .badge-em{font-size:11px;line-height:1}
+.crm-badge .badge-em{line-height:1;display:inline-flex;align-items:center}
 .s-new{background:#fdeaee;color:var(--red)}
 .s-call{background:#fff3df;color:#c47d00}
 .s-paid{background:#e9f0ff;color:#2b5bd7}
@@ -1213,8 +1213,8 @@ button,.ibtn,.burger,.cnt,.sec-head h2,.band{
     <!-- Mobile — без QR, прямые кнопки -->
     <div class="kqr-mobile-only">
       <div class="kqr-copy-row">
-        <button class="kqr-copy" onclick="rfc.kqrCopy('amount')"><span class="kqr-copy-lbl">Сумма</span><span class="kqr-copy-val" id="kqrCopyAmount">—</span><span class="kqr-copy-ico">📋</span></button>
-        <button class="kqr-copy" onclick="rfc.kqrCopy('order')"><span class="kqr-copy-lbl">Номер заказа</span><span class="kqr-copy-val" id="kqrCopyOrder">—</span><span class="kqr-copy-ico">📋</span></button>
+        <button class="kqr-copy" onclick="rfc.kqrCopy('amount')"><span class="kqr-copy-lbl">Сумма</span><span class="kqr-copy-val" id="kqrCopyAmount">—</span><span class="kqr-copy-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span></button>
+        <button class="kqr-copy" onclick="rfc.kqrCopy('order')"><span class="kqr-copy-lbl">Номер заказа</span><span class="kqr-copy-val" id="kqrCopyOrder">—</span><span class="kqr-copy-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span></button>
       </div>
       <a class="btn-block kaspi" id="kqrOpenKaspi" href="https://kaspi.kz" target="_blank" rel="noopener" style="margin-top:14px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3M14 18v3M18 21h3v-3" stroke-linecap="round"/></svg><span>Открыть Kaspi и оплатить</span></a>
       <ol class="kqr-steps">
@@ -1577,7 +1577,7 @@ rfc.openProduct=function(id){
   swatchBlock='<div class="lbl">Цвет:</div><div class="swatch-name">Выбрано: <b id="pdpColorName">'+activeVar.name+'</b></div><div class="swatch-row">'+swatches+'</div>';
  }
  var buyBlock = soon
-  ? '<div class="soon-note">⚑ Скоро в продаже. Оставь email — пришлём как только товар появится.</div><div class="wl-row"><input id="wlEmail" type="email" placeholder="email@example.com" autocomplete="email"><button onclick="rfc.waitlist(\''+p.id+'\',\''+String(p.name).replace(/\x27/g,"\\\x27")+'\')" id="wlBtn">Сообщить</button></div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank" style="margin-top:10px">Или следи в Instagram</a>'
+  ? '<div class="soon-note">'+ic("clock",14)+' Скоро в продаже. Оставь email — пришлём как только товар появится.</div><div class="wl-row"><input id="wlEmail" type="email" placeholder="email@example.com" autocomplete="email"><button onclick="rfc.waitlist(\''+p.id+'\',\''+String(p.name).replace(/\x27/g,"\\\x27")+'\')" id="wlBtn">Сообщить</button></div><a class="btn-block soon-btn" href="https://instagram.com/redflagseverywear" target="_blank" style="margin-top:10px">Или следи в Instagram</a>'
   : (pre?'<div class="preorder-note"><span>Шьём под заказ — 1–2 дня. Оформи сейчас, менеджер подтвердит в WhatsApp. Оплата Kaspi — QR или перевод.</span></div>':'')+swatchBlock+stockBlock(p)+'<div class="lbl">Выберите размер:</div><div class="size-row"><div class="sizes" id="sizeWrap">'+(ap?sizesBtns:'<button class="on">ONE SIZE</button>')+'</div><button class="size-guide-btn" onclick="rfc.guide()" aria-label="Таблица размеров"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 25 23l-2 2L3 5z"/><path d="M7 6l2 2M10 6l2 2M11 10l2 2M14 14l2 2M15 18l2 2"/><path d="M3 25l1-3.5L21 4.5 24 7.5 7 24.5 3 25z"/></svg></button></div><div class="lbl">Выберите количество:</div><div class="qty lg"><button onclick="rfc.pq(-1)">−</button><span id="pqty">1</span><button onclick="rfc.pq(1)">+</button></div><button class="btn-block" onclick="rfc.addPdp()">Добавить в корзину · '+fmt(p.price)+'</button>';
  state.pdpImgIdx=0;
  var displayP=activeVar?Object.assign({},p,{images:activeVar.images}):p;
@@ -1761,9 +1761,17 @@ var ICONS={
  bot:'<rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 8V4M8.5 4h7M9 13h.5M14.5 13h.5M2 12v3M22 12v3"/>',
  user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20c.5-3.5 3.5-5.5 7.5-5.5s7 2 7.5 5.5"/>',
  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>',
- warn:'<path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v4M12 17.5h.01"/>'
+ warn:'<path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v4M12 17.5h.01"/>',
+ phone:'<path d="M6.5 4h3l1.5 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A16 16 0 0 1 4.5 6.2 2 2 0 0 1 6.5 4Z"/>',
+ truck:'<path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ dot:'<circle cx="12" cy="12" r="5"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+ folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
 };
 function ic(name,sz){var s=sz||16;return '<svg class="ic" viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.16em;flex:none">'+(ICONS[name]||'')+'</svg>';}
+var STATUS_IC={"Новый":"spark","Связались":"phone","Оплачен":"wallet","Отправлен":"truck","Доставлен":"check","Отменён":"x"};
+function statusIcon(s,sz){return ic(STATUS_IC[s]||"dot",sz||13);}
 function shopMessage(o){
  var L=[];
  L.push("🚩 RED FLAG COMMUNITY");
@@ -2096,12 +2104,12 @@ function renderCrm(){
  var inProgress=state.crm.filter(function(o){return o.status==="Связались"||o.status==="Оплачен"||o.status==="Отправлен";}).length;
  var revenue=state.crm.filter(function(o){return o.status!=="Отменён";}).reduce(function(a,o){return a+o.total;},0);
  var chips='<button class="chip '+(state.crmFilter==="all"?"on":"")+'" onclick="rfc.crmFilter(\'all\')">Все<span class="chip-c">'+total+'</span></button>'+
-  CRM_STATUSES.map(function(s){var n=state.crm.filter(function(o){return o.status===s;}).length;return '<button class="chip '+(state.crmFilter===s?"on":"")+'" onclick="rfc.crmFilter(\''+s+'\')">'+CRM_STATUS_EMOJI[s]+' '+s+'<span class="chip-c">'+n+'</span></button>';}).join("");
+  CRM_STATUSES.map(function(s){var n=state.crm.filter(function(o){return o.status===s;}).length;return '<button class="chip '+(state.crmFilter===s?"on":"")+'" onclick="rfc.crmFilter(\''+s+'\')">'+statusIcon(s)+' '+s+'<span class="chip-c">'+n+'</span></button>';}).join("");
  var searchBar='<div class="crm-search"><input id="crmSearch" type="text" placeholder="Поиск по ФИО, телефону, email или ID…" value="'+(state.crmSearch||"").replace(/"/g,"&quot;")+'" oninput="rfc.crmSetSearch(this.value)"><select class="crm-sel" onchange="rfc.crmSetSort(this.value)"><option value="new"'+(sort==="new"?" selected":"")+'>Сначала новые</option><option value="old"'+(sort==="old"?" selected":"")+'>Сначала старые</option><option value="high"'+(sort==="high"?" selected":"")+'>По сумме ↓</option></select></div>';
  var rows=list.length?list.map(function(o,idx){
   var realIdx=state.crm.indexOf(o);
   var its=o.items.map(function(i){var meta=i.size+(i.color?' · '+i.color:'')+' ×'+i.qty;var thumb=i.img?'<img src="'+String(i.img).replace(/"/g,'&quot;')+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6%;box-sizing:border-box">':productArt(i.t,.5);return '<div class="ci-line"><div class="ci-mini">'+thumb+'</div><span>'+i.name+' · '+meta+'</span><b>'+fmt(i.price*i.qty)+'</b></div>';}).join("");
-  var opts=CRM_STATUSES.map(function(s){return '<option '+(o.status===s?"selected":"")+' value="'+s+'">'+CRM_STATUS_EMOJI[s]+' '+s+'</option>';}).join("");
+  var opts=CRM_STATUSES.map(function(s){return '<option '+(o.status===s?"selected":"")+' value="'+s+'">'+s+'</option>';}).join("");
   var greet="Здравствуйте, "+o.name+"! Это Red Flag Community. Спасибо за заказ "+o.id+". ";
   var waBtn='<a class="act wa" href="'+waLink(o.phone,greet)+'" target="_blank">'+waIcon(16)+'WhatsApp</a>';
   var mailBtn=o.email?'<a class="act" href="'+mailLink(o.email,"Ваш заказ "+o.id+" — Red Flag Community",greet)+'">Почта</a>':'';
@@ -2114,7 +2122,7 @@ function renderCrm(){
    '<div class="crm-row crm-row-full"><span class="crm-lbl">Адрес</span><span class="crm-v">'+(addr||"—")+'</span></div>'+
    (o.comment?'<div class="crm-row crm-row-full"><span class="crm-lbl">Комментарий</span><span class="crm-v crm-note">«'+o.comment+'»</span></div>':'')+
   '</div>';
-  return '<div class="crm-card '+crmCardClass(o.status)+'"><div class="crm-h"><div><span class="crm-id">'+o.id+'</span><span class="crm-date">'+(o.date||"")+'</span></div><span class="crm-badge '+crmClass(o.status)+'"><span class="badge-em">'+CRM_STATUS_EMOJI[o.status]+'</span>'+o.status+'</span></div>'+
+  return '<div class="crm-card '+crmCardClass(o.status)+'"><div class="crm-h"><div><span class="crm-id">'+o.id+'</span><span class="crm-date">'+(o.date||"")+'</span></div><span class="crm-badge '+crmClass(o.status)+'"><span class="badge-em">'+statusIcon(o.status)+'</span>'+o.status+'</span></div>'+
    grid+
    '<div class="crm-items">'+its+'<div class="crm-tot"><span>Итого</span><b>'+fmt(o.total)+'</b></div></div>'+
    '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
@@ -2189,7 +2197,7 @@ function renderAiBlock(){
 function renderAiHistory(){
  var h=state.aiHistory||[];
  var head='<div class="ai-hist-h"><span class="ai-lbl">История · последние '+h.length+'</span><button class="act" onclick="rfc.aiLoadHistory()" style="padding:6px 12px;font-size:11px">Обновить</button></div>';
- if(!h.length)return '<div class="ai-history">'+head+'<div class="ai-empty" style="min-height:120px;padding:30px;font-size:12px"><span style="font-size:32px;opacity:.6;margin-bottom:8px">🗂️</span>Пока пусто. Сделай первую генерацию.</div></div>';
+ if(!h.length)return '<div class="ai-history">'+head+'<div class="ai-empty" style="min-height:120px;padding:30px;font-size:12px"><span style="color:#c4c8cf;margin-bottom:8px;display:inline-flex">'+ic("folder",30)+'</span>Пока пусто. Сделай первую генерацию.</div></div>';
  var months=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
  var cards=h.map(function(it){
   var d=new Date(it.created_at);
@@ -2460,8 +2468,8 @@ function renderCatalogBlock(){
   var saving=state.productSaving;
   var err=state.productSaveError;
   var nameEsc=(cf.name||"").replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  var typeOpts=[{v:'cap',l:'🧢 Кепка'},{v:'tee',l:'👕 Футболка'},{v:'hoodie',l:'🟫 Худи'},{v:'sweat',l:'🟦 Свитшот'},{v:'socks',l:'🧦 Носки'},{v:'boxers',l:'🩳 Трусы'}].map(function(o){return '<option value="'+o.v+'"'+(cf.type===o.v?' selected':'')+'>'+o.l+'</option>';}).join('');
-  var colOpts=[{v:'white',l:'⚪ White Collection'},{v:'red',l:'🔴 Red Collection'},{v:'other',l:'⚫ Другие'}].map(function(o){return '<option value="'+o.v+'"'+(cf.collection===o.v?' selected':'')+'>'+o.l+'</option>';}).join('');
+  var typeOpts=[{v:'cap',l:'Кепка'},{v:'tee',l:'Футболка'},{v:'hoodie',l:'Худи'},{v:'sweat',l:'Свитшот'},{v:'socks',l:'Носки'},{v:'boxers',l:'Трусы'}].map(function(o){return '<option value="'+o.v+'"'+(cf.type===o.v?' selected':'')+'>'+o.l+'</option>';}).join('');
+  var colOpts=[{v:'white',l:'White Collection'},{v:'red',l:'Red Collection'},{v:'other',l:'Другие'}].map(function(o){return '<option value="'+o.v+'"'+(cf.collection===o.v?' selected':'')+'>'+o.l+'</option>';}).join('');
   createCard='<div class="cat-card cat-editing cat-new">'+
    '<div class="cat-thumb"><div class="cat-noimg">новый товар</div></div>'+
    '<div class="cat-body">'+
@@ -2475,7 +2483,7 @@ function renderCatalogBlock(){
     '<label class="cat-edit-lbl">Цена, ₸</label>'+
     '<input class="cat-edit-input" type="text" inputmode="numeric" value="'+(cf.price||0)+'" oninput="rfc.productCreateField(\'price\',this.value)" '+(saving?"disabled":"")+'>'+
     '<label class="cat-edit-toggle"><input type="checkbox" '+(cf.available?"checked":"")+' onchange="rfc.productCreateField(\'available\',this.checked)" '+(saving?"disabled":"")+'> Доступен на сайте сразу</label>'+
-    (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
+    (err?'<div class="cat-edit-err">'+ic("warn",13)+' '+err+'</div>':'')+
     '<div class="cat-edit-actions">'+
      '<button class="act cat-save" onclick="rfc.productCreateSave()" '+(saving?"disabled":"")+'>'+(saving?"Создаю…":ic("save",14)+" Создать")+'</button>'+
      '<button class="act" onclick="rfc.productCreateCancel()" '+(saving?"disabled":"")+'>Отмена</button>'+
@@ -2487,7 +2495,7 @@ function renderCatalogBlock(){
   var thumbSrc=(p.images&&p.images[0])||(FALLBACK_IMAGES[p.type]&&FALLBACK_IMAGES[p.type][0])||(typeof IMG!=="undefined"?IMG[p.type]:null);
   var img=thumbSrc?'<img src="'+String(thumbSrc).replace(/"/g,'&quot;')+'" alt="" loading="lazy">':productArt(p.type,0.7);
   var collectionLabel={white:'White',red:'Red',other:'Другие'}[p.collection]||p.collection;
-  var typeLabel={cap:'🧢 Кепка',tee:'👕 Футболка',hoodie:'🟫 Худи',sweat:'🟦 Свитшот',socks:'🧦 Носки',boxers:'🩳 Трусы'}[p.type]||p.type;
+  var typeLabel={cap:'Кепка',tee:'Футболка',hoodie:'Худи',sweat:'Свитшот',socks:'Носки',boxers:'Трусы'}[p.type]||p.type;
   // Editing view
   if(state.productEditing===p.id){
    var f=state.productEditForm||{name:"",price:0,available:true};
@@ -2524,8 +2532,8 @@ function renderCatalogBlock(){
      '<label class="cat-edit-toggle"><input type="checkbox" '+(f.available?"checked":"")+' onchange="rfc.productEditField(\'available\',this.checked)" '+(saving?"disabled":"")+'> Доступен на сайте</label>'+
      '<label class="cat-edit-lbl" style="margin-top:18px">Фотографии<span style="color:#bbb;font-weight:500;text-transform:none;letter-spacing:0;margin-left:8px">сохраняются сразу при загрузке</span></label>'+
      '<div class="cat-photo-grid">'+photoTiles+addBtn+'</div>'+
-     (imgErr?'<div class="cat-edit-err">📷 '+imgErr+'</div>':'')+
-     (err?'<div class="cat-edit-err">❌ '+err+'</div>':'')+
+     (imgErr?'<div class="cat-edit-err">'+ic("camera",13)+' '+imgErr+'</div>':'')+
+     (err?'<div class="cat-edit-err">'+ic("warn",13)+' '+err+'</div>':'')+
      '<div class="cat-edit-actions">'+
       '<button class="act cat-save" onclick="rfc.productSave(\''+p.id+'\')" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>'+(saving?"Сохраняю…":ic("save",14)+" Сохранить")+'</button>'+
       '<button class="act" onclick="rfc.productEditCancel()" '+(saving||imgBusy||state.productDeleting?"disabled":"")+'>Закрыть</button>'+
@@ -2561,7 +2569,7 @@ function renderCatalogBlock(){
  var restIdx=[];products.forEach(function(p,i){if(known.indexOf(p.collection)===-1)restIdx.push(i);});
  if(restIdx.length){sections+='<div class="cat-section"><div class="cat-section-h">Прочее<span>'+restIdx.length+'</span></div><div class="catalog-grid">'+restIdx.map(function(i){return cards[i];}).join('')+'</div></div>';}
  return '<div class="catalog-head">'+
-  '<div><b style="font-family:var(--serif);font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ ✏️ ДЛЯ ПРАВКИ</span></div>'+
+  '<div><b style="font-family:var(--serif);font-size:18px">'+products.length+' товаров</b><span style="color:#999;margin-left:12px;font-size:11px;letter-spacing:.05em">КЛИКНИ '+ic("pencil",13)+' ДЛЯ ПРАВКИ</span></div>'+
   '<div style="display:flex;gap:8px"><button class="act cat-add-btn" onclick="rfc.productCreate()" '+(state.productCreating||state.productEditing?"disabled":"")+'>'+ic("plus",14)+' Добавить</button><button class="act" onclick="rfc.loadProducts()">'+ic("refresh",14)+' Обновить</button></div>'+
  '</div>'+
  (createCard?'<div class="catalog-grid" style="margin-bottom:22px">'+createCard+'</div>':'')+
