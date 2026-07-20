@@ -19,6 +19,10 @@ import pino from "pino";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const QR_PNG = path.join(__dirname, "qr.png");
 
+// Бот не должен падать из-за случайных ошибок (Bad MAC, decrypt и т.п.) — ловим всё
+process.on("uncaughtException", (e) => console.error("[uncaught]", e?.message || e));
+process.on("unhandledRejection", (e) => console.error("[unhandledRejection]", e?.message || e));
+
 // Брендовый стикер «красный флаг» RFC
 let FLAG_STICKER = null;
 try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp")); } catch {}
@@ -96,13 +100,19 @@ function extractText(msg) {
 }
 
 let reconnectScheduled = false;
-function scheduleReconnect(sock, delay = 2500) {
+let reconnectAttempts = 0;
+function scheduleReconnect(sock, delay) {
   if (reconnectScheduled) return;
   reconnectScheduled = true;
-  try { sock.ev.removeAllListeners(); } catch {}
-  try { sock.ws?.close?.(); } catch {}
-  console.log("🔄 Переподключаюсь…");
-  setTimeout(() => { reconnectScheduled = false; start().catch((e) => console.error("Ошибка реконнекта:", e?.message || e)); }, delay);
+  // Экспоненциальный бэкофф (2с → 4с → 8с … макс 60с), если задержка не задана явно
+  if (delay == null) { delay = Math.min(2000 * Math.pow(2, reconnectAttempts), 60000); reconnectAttempts++; }
+  try { sock?.ev?.removeAllListeners?.(); } catch {}
+  try { sock?.ws?.close?.(); } catch {}
+  console.log(`🔄 Переподключаюсь через ${Math.round(delay / 1000)}с…`);
+  setTimeout(() => {
+    reconnectScheduled = false;
+    start().catch((e) => { console.error("Ошибка реконнекта:", e?.message || e); scheduleReconnect(null); });
+  }, delay);
 }
 
 async function start() {
@@ -132,6 +142,7 @@ async function start() {
     }
 
     if (connection === "open") {
+      reconnectAttempts = 0; // успех — сбрасываем бэкофф
       console.log("\n✅ Подключено! Бот RFC на связи.");
       console.log(`🤖 AI-режим: ${AI_ENABLED ? "включён (Claude)" : "выключен — только сценарии"}`);
       console.log(`📨 Уведомления менеджерам в Telegram: ${NOTIFY_ENABLED ? "включены" : "выключены (нет WA_BOT_SECRET)"}`);

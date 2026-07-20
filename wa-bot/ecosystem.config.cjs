@@ -8,8 +8,10 @@ module.exports = {
       script: "index.js",
       cwd: __dirname,
       autorestart: true,
-      max_restarts: 30,
-      restart_delay: 3000,
+      // Экспоненциальный бэкофф — pm2 не «сдаётся» (не переходит в stopped) и не долбит рестартами
+      exp_backoff_restart_delay: 5000,
+      min_uptime: 15000,
+      max_memory_restart: "350M",
       out_file: path.join(__dirname, "pm2-out.log"),
       error_file: path.join(__dirname, "pm2-err.log"),
     },
