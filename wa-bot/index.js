@@ -143,7 +143,9 @@ async function start() {
       const loggedOut = code === DisconnectReason.loggedOut;
       console.log(`⚠️  Соединение закрыто (код ${code}).`);
       if (loggedOut) {
-        console.log("🔒 Сессия разлогинена. Удали папку ./auth и запусти заново для нового QR.");
+        console.log("🔒 WhatsApp отвязал устройство. Сбрасываю сессию и показываю новый QR для повторной привязки…");
+        try { fs.rmSync(path.join(__dirname, "auth"), { recursive: true, force: true }); } catch {}
+        scheduleReconnect(sock, 3000); // перезапуск с чистой auth → новый QR (процесс ждёт скан, не крашлупит)
       } else {
         scheduleReconnect(sock);
       }
