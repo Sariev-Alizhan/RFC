@@ -13,6 +13,7 @@ import qrcode from "qrcode-terminal";
 import QRCode from "qrcode";
 import path from "path";
 import fs from "fs";
+import http from "http";
 import { fileURLToPath } from "url";
 import pino from "pino";
 
@@ -22,6 +23,33 @@ const QR_PNG = path.join(__dirname, "qr.png");
 // Бот не должен падать из-за случайных ошибок (Bad MAC, decrypt и т.п.) — ловим всё
 process.on("uncaughtException", (e) => console.error("[uncaught]", e?.message || e));
 process.on("unhandledRejection", (e) => console.error("[unhandledRejection]", e?.message || e));
+
+// Живой QR в браузере — авто-обновляется каждые 2с, чтобы не сканировать протухший код.
+// Открой http://localhost:8099
+const QR_PORT = 8099;
+try {
+  http.createServer((req, res) => {
+    if (req.url && req.url.indexOf("/qr.png") === 0) {
+      try {
+        const img = fs.readFileSync(path.join(__dirname, "qr.png"));
+        res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store" });
+        res.end(img);
+      } catch { res.writeHead(404); res.end(); }
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end('<!doctype html><html><head><meta charset="utf-8"><title>RFC · QR</title></head>' +
+      '<body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,sans-serif;background:#fff">' +
+      '<h2 style="color:#E11236;margin:0 0 4px">RFC — привязка WhatsApp</h2>' +
+      '<p style="color:#888;margin:0 0 18px">Отсканируй телефоном с номером 77475749420 · обновляется само</p>' +
+      '<img id="q" src="/qr.png" width="330" height="330" style="border:1px solid #eee;border-radius:14px" ' +
+      'onerror="this.style.display=\'none\';document.getElementById(\'ok\').style.display=\'block\'">' +
+      '<div id="ok" style="display:none;color:#1a7d35;font-size:20px;font-weight:600">✅ Подключено (или ждём новый QR)</div>' +
+      '<script>setInterval(function(){var i=document.getElementById("q");i.style.display="";document.getElementById("ok").style.display="none";i.src="/qr.png?"+Date.now();},2000)</script>' +
+      '</body></html>');
+  }).listen(QR_PORT, "127.0.0.1", () => console.log(`🌐 Живой QR: открой http://localhost:${QR_PORT}`))
+    .on("error", (e) => console.error("[qr-server]", e.code || e.message));
+} catch (e) { console.error("[qr-server]", e?.message || e); }
 
 // Брендовый стикер «красный флаг» RFC
 let FLAG_STICKER = null;
@@ -143,6 +171,7 @@ async function start() {
 
     if (connection === "open") {
       reconnectAttempts = 0; // успех — сбрасываем бэкофф
+      try { fs.rmSync(QR_PNG, { force: true }); } catch {} // убираем QR — уже подключились
       console.log("\n✅ Подключено! Бот RFC на связи.");
       console.log(`🤖 AI-режим: ${AI_ENABLED ? "включён (Claude)" : "выключен — только сценарии"}`);
       console.log(`📨 Уведомления менеджерам в Telegram: ${NOTIFY_ENABLED ? "включены" : "выключены (нет WA_BOT_SECRET)"}`);
