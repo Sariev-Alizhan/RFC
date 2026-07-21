@@ -34,9 +34,19 @@ export async function notifyManagers(payload) {
   return post(payload, { retries: 2 });
 }
 
-// Лог сообщения в CRM (не критично, без ретраев). { jid, phone, name, sender, text }
+// Лог сообщения в CRM (не критично, без ретраев). { jid, phone, name, sender, text, ts? }
 export async function logMessage(payload) {
   return post({ kind: "wa_msg", ...payload });
+}
+
+// Батч-лог истории чатов (из messaging-history.set). rows: [{jid,phone,name,sender,text,ts}]
+export async function logMessagesBatch(rows) {
+  if (!NOTIFY_ENABLED || !rows || !rows.length) return false;
+  // порциями по 200, чтобы не перегружать
+  for (let i = 0; i < rows.length; i += 200) {
+    await post({ kind: "wa_msg", batch: rows.slice(i, i + 200) });
+  }
+  return true;
 }
 
 // Создаёт реальный заказ в CRM (rfc_orders) + триггерит уведомление менеджерам.

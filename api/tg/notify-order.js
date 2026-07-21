@@ -117,24 +117,50 @@ function formatLead(b) {
   return { text: lines.join('\n'), phone };
 }
 
-// Логирование сообщения WhatsApp в CRM (таблица wa_messages)
+// Валидное время сообщения (ISO) или undefined → БД поставит now()
+function validTs(ts) {
+  if (ts == null) return undefined;
+  let d;
+  if (typeof ts === 'number') d = new Date(ts < 1e12 ? ts * 1000 : ts); // сек или мс
+  else d = new Date(ts);
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+function toRow(m) {
+  const jid = String(m.jid || '').slice(0, 120);
+  if (!jid) return null;
+  const row = {
+    jid,
+    phone: String(m.phone || '').replace(/[^\d]/g, '').slice(0, 20) || null,
+    name: m.name ? String(m.name).slice(0, 120) : null,
+    sender: ['customer', 'bot', 'manager'].includes(m.sender) ? m.sender : 'customer',
+    text: m.text ? String(m.text).slice(0, 4000) : null,
+  };
+  const ts = validTs(m.ts);
+  if (ts) row.created_at = ts;
+  return row;
+}
+
+// Логирование сообщения(ий) WhatsApp в CRM (таблица wa_messages).
+// Поддерживает одиночное { jid, ... } и батч { batch: [ {jid,...}, ... ] } (для истории).
 async function handleWaMsg(req, res) {
   if (!sb) return res.status(200).json({ skipped: true, reason: 'no supabase' });
   const b = req.body || {};
-  const row = {
-    jid: String(b.jid || '').slice(0, 120),
-    phone: String(b.phone || '').replace(/[^\d]/g, '').slice(0, 20) || null,
-    name: b.name ? String(b.name).slice(0, 120) : null,
-    sender: ['customer', 'bot', 'manager'].includes(b.sender) ? b.sender : 'customer',
-    text: b.text ? String(b.text).slice(0, 4000) : null,
-  };
-  if (!row.jid) return res.status(400).json({ error: 'jid required' });
-  const { error } = await sb.from('wa_messages').insert(row);
+  let rows;
+  if (Array.isArray(b.batch)) {
+    rows = b.batch.map(toRow).filter(Boolean).slice(0, 2000);
+    if (!rows.length) return res.status(200).json({ ok: true, inserted: 0 });
+  } else {
+    const r = toRow(b);
+    if (!r) return res.status(400).json({ error: 'jid required' });
+    rows = [r];
+  }
+  const { error } = await sb.from('wa_messages').insert(rows);
   if (error) {
     console.error('wa_messages insert failed:', error.message);
     return res.status(200).json({ ok: false, reason: 'insert_failed' });
   }
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, inserted: rows.length });
 }
 
 async function handleWaLead(req, res) {

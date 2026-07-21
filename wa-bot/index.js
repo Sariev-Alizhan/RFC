@@ -57,7 +57,7 @@ try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp"));
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, logMessage, createOrder, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, logMessage, logMessagesBatch, createOrder, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -153,10 +153,36 @@ async function start() {
     logger,
     markOnlineOnConnect: false,
     qrTimeout: 60000, // держим один QR дольше — успеть отсканировать
-    browser: ["RFC Продажник", "Chrome", "1.0"],
+    syncFullHistory: true, // подтянуть историю чатов при привязке → в CRM
+    browser: ["RFC Продажник", "Desktop", "1.0"], // Desktop даёт больше истории
   });
 
   sock.ev.on("creds.update", saveCreds);
+
+  // История чатов при привязке устройства → пишем в CRM (старые переписки становятся видны)
+  sock.ev.on("messaging-history.set", (h) => {
+    const messages = h?.messages || [];
+    if (!messages.length) return;
+    const rows = [];
+    for (const msg of messages) {
+      const jid = msg.key?.remoteJid || "";
+      if (!jid || jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) continue;
+      const text = extractText(msg).trim();
+      if (!text) continue;
+      rows.push({
+        jid,
+        phone: jid.split("@")[0].replace(/[^\d]/g, ""),
+        name: msg.pushName || null,
+        sender: msg.key.fromMe ? "manager" : "customer",
+        text,
+        ts: Number(msg.messageTimestamp) || undefined,
+      });
+    }
+    if (rows.length) {
+      console.log(`📚 История WhatsApp: ${rows.length} сообщений → CRM`);
+      logMessagesBatch(rows).catch(() => {});
+    }
+  });
 
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;

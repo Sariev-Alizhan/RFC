@@ -125,18 +125,17 @@ export async function think(session, text) {
     case "delivery": return { reply: T.delivery };
     case "payment":  return { reply: T.payment };
     case "socials":  return { reply: T.socials };
-    case "thanks":   return { reply: "Всегда пожалуйста 🙌 Обращайся!" };
+    case "thanks":   return { reply: "Обращайся 🚩" };
     case "human":    return { reply: T.human, mute: 30, notify: { kind: "handoff", text } };
     case "order": {
-      session.order = { step: "product" };
-      const preset = findProduct(t); // вдруг сразу написал «хочу худи»
-      return asObj(orderFlow(session, text, preset));
+      // Бренд, не мерч — не форма, а направление на живого менеджера
+      const p = findProduct(t);
+      return { reply: T.orderToManager, mute: 30, notify: { kind: "handoff", text: p ? "Интересует: " + p.name + " — " + text : text } };
     }
     default: {
-      // Назвал товар без явного «хочу» и AI выключен → предложим оформить
+      // Назвал товар и AI выключен → направляем на менеджера
       if (!AI_ENABLED && findProduct(t)) {
-        session.order = { step: "product" };
-        return asObj(orderFlow(session, text, findProduct(t)));
+        return { reply: T.orderToManager, mute: 30, notify: { kind: "handoff", text: "Интересует: " + findProduct(t).name + " — " + text } };
       }
       // Свободный вопрос → AI, если включён
       if (AI_ENABLED) {
