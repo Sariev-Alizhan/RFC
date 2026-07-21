@@ -152,6 +152,7 @@ async function start() {
     auth: state,
     logger,
     markOnlineOnConnect: false,
+    qrTimeout: 60000, // держим один QR дольше — успеть отсканировать
     browser: ["RFC Продажник", "Chrome", "1.0"],
   });
 
