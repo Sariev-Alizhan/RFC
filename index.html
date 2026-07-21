@@ -369,6 +369,25 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .act.del{margin-left:auto;color:#aa2222;border-color:transparent}.act.del:hover{background:#fbeaed;border-color:#fbeaed}
 /* Empty states */
 .crm-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 20px;background:#fafafa;border:1px dashed #e8e8e8;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+/* Аналитика */
+.an-periods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.an-p{background:#fafafa;border:1px solid #eee;border-radius:14px;padding:14px}
+.an-p>span{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.05em}
+.an-p>b{display:block;font-family:var(--serif);font-size:20px;margin:4px 0 2px}
+.an-p>i{font-size:12px;color:#888;font-style:normal}
+.an-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.an-h{font-family:var(--serif);font-weight:600;font-size:14px;margin-bottom:14px}
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.an-bars{display:flex;align-items:flex-end;gap:5px;height:130px}
+.an-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+.an-bar-fill{width:100%;background:var(--red);border-radius:4px 4px 0 0;min-height:2px}
+.an-bar-lbl{font-size:9px;color:#aaa;white-space:nowrap}
+.an-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.an-row-n{flex:0 0 40%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.an-row-bar{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden}
+.an-row-bar>div{height:100%;background:var(--red);border-radius:4px}
+.an-row-v{flex:none;color:#666;font-size:12px;white-space:nowrap}
+@media(max-width:640px){.an-grid{grid-template-columns:1fr}.an-periods{grid-template-columns:1fr}.an-row-n{flex-basis:46%}}
 .crm-empty .empty-em{line-height:1;margin-bottom:10px;color:#c4c8cf;display:inline-flex}
 .crm-empty b{font-size:15px;color:var(--ink);font-weight:700;letter-spacing:-.01em}
 .crm-empty .empty-sub{font-size:13px;color:#888;max-width:340px;line-height:1.5}
@@ -2086,7 +2105,7 @@ rfc.adminLogout=function(){ if(CLOUD){sb.auth.signOut().then(function(){renderCr
 function cloudLoad(){
  sb.from("rfc_orders").select("*").order("created_at",{ascending:false}).then(function(r){
   if(r&&r.error){ rfc.toast("Ошибка загрузки заказов"); return; }
-  state.crm=(r.data||[]).map(function(o){return {id:o.id,date:fmtDate(o.created_at),name:o.name,phone:o.phone,email:o.email,country:o.country,city:o.city,address:o.address,comment:o.comment,delivery:o.delivery,items:o.items||[],total:o.total,status:o.status};});
+  state.crm=(r.data||[]).map(function(o){return {id:o.id,date:fmtDate(o.created_at),created_at:o.created_at,name:o.name,phone:o.phone,email:o.email,country:o.country,city:o.city,address:o.address,comment:o.comment,delivery:o.delivery,items:o.items||[],total:o.total,status:o.status};});
   renderCrm();
  });
 }
@@ -2128,11 +2147,46 @@ function renderCrm(){
    '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
  }).join(""):(state.crm.length===0?'<div class="crm-empty"><span class="empty-em">'+ic("orders",44)+'</span><b>Пока нет заказов</b><span class="empty-sub">Когда покупатели оформят заказ через сайт, он появится здесь сразу же.</span></div>':'<div class="crm-empty"><span class="empty-em">'+ic("search",44)+'</span><b>Ничего не найдено</b><span class="empty-sub">Попробуй сбросить фильтры или изменить запрос.</span></div>');
  var tab=state.adminTab||"orders";
- var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">'+ic("orders",15)+'</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">'+ic("chat",15)+'</span>WhatsApp</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">'+ic("box",15)+'</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">'+ic("studio",15)+'</span>AI Студия</button></div>';
+ var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">'+ic("orders",15)+'</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="analytics"?"on":"")+'" onclick="rfc.adminTab(\'analytics\')"><span class="tab-em">'+ic("chart",15)+'</span>Аналитика</button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">'+ic("chat",15)+'</span>WhatsApp</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">'+ic("box",15)+'</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">'+ic("studio",15)+'</span>AI Студия</button></div>';
  var ordersBlock='<div class="crm-stats"><div class="stat"><span class="stat-em">'+ic("chart",20)+'</span><b>'+total+'</b><span>Всего заказов</span></div><div class="stat kpi-red"><span class="stat-em">'+ic("spark",20)+'</span><b>'+fresh+'</b><span>Новых</span></div><div class="stat kpi-amber"><span class="stat-em">'+ic("clock",20)+'</span><b>'+inProgress+'</b><span>В работе</span></div><div class="stat"><span class="stat-em">'+ic("wallet",20)+'</span><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+searchBar+'<div class="crm-chips">'+chips+'</div><div class="crm-list">'+rows+'</div>';
  $("#crm").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
- '<div class="wrap crm">'+tabBar+(tab==="wa"?renderWaBlock():(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock)))+'</div>';
+ '<div class="wrap crm">'+tabBar+(tab==="analytics"?renderAnalyticsBlock():(tab==="wa"?renderWaBlock():(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock))))+'</div>';
+}
+function renderAnalyticsBlock(){
+ var orders=state.crm||[];
+ if(!orders.length) return '<div class="crm-empty"><span class="empty-em">'+ic("chart",44)+'</span><b>Пока нет данных</b><span class="empty-sub">Аналитика появится, когда будут заказы.</span></div>';
+ var live=orders.filter(function(o){return o.status!=="Отменён";});
+ var revenue=live.reduce(function(a,o){return a+(Number(o.total)||0);},0);
+ var cnt=live.length, avg=cnt?Math.round(revenue/cnt):0;
+ var paid=orders.filter(function(o){return o.status==="Оплачен"||o.status==="Отправлен"||o.status==="Доставлен";}).length;
+ var conv=orders.length?Math.round(paid/orders.length*100):0;
+ var now=Date.now();
+ function inLast(o,days){var t=new Date(o.created_at).getTime();return !isNaN(t)&&(now-t)<=days*864e5;}
+ function pRev(days){return live.filter(function(o){return inLast(o,days);}).reduce(function(a,o){return a+(Number(o.total)||0);},0);}
+ function pCnt(days){return live.filter(function(o){return inLast(o,days);}).length;}
+ var days=[],dmap={};
+ for(var i=13;i>=0;i--){var d=new Date(now-i*864e5),o={label:d.getDate()+"."+(d.getMonth()+1),key:d.toDateString(),rev:0};days.push(o);dmap[o.key]=o;}
+ live.forEach(function(o){var d=new Date(o.created_at);if(!isNaN(d.getTime())&&dmap[d.toDateString()])dmap[d.toDateString()].rev+=(Number(o.total)||0);});
+ var maxRev=Math.max.apply(null,days.map(function(x){return x.rev;}).concat([1]));
+ var bars=days.map(function(x){var h=x.rev?Math.max(Math.round(x.rev/maxRev*100),3):0;return '<div class="an-bar" title="'+x.label+': '+fmt(x.rev)+'"><div class="an-bar-fill" style="height:'+h+'%"></div><span class="an-bar-lbl">'+x.label+'</span></div>';}).join("");
+ var prod={};
+ live.forEach(function(o){(o.items||[]).forEach(function(it){var n=(it.name||it.title||"товар");if(!prod[n])prod[n]={qty:0,rev:0};var q=Number(it.qty||it.quantity||1);prod[n].qty+=q;prod[n].rev+=(Number(it.price)||0)*q;});});
+ var top=Object.keys(prod).map(function(k){return {name:k,qty:prod[k].qty,rev:prod[k].rev};}).sort(function(a,b){return b.rev-a.rev;}).slice(0,5);
+ var maxQty=Math.max.apply(null,top.map(function(x){return x.qty;}).concat([1]));
+ var topRows=top.length?top.map(function(x){return '<div class="an-row"><span class="an-row-n">'+String(x.name).replace(/[<>]/g,'')+'</span><div class="an-row-bar"><div style="width:'+Math.round(x.qty/maxQty*100)+'%"></div></div><b class="an-row-v">'+x.qty+' шт · '+fmt(x.rev)+'</b></div>';}).join(""):'<div style="color:#999;font-size:13px">Пока нет проданных позиций</div>';
+ var statuses=CRM_STATUSES.map(function(s){return {s:s,n:orders.filter(function(o){return o.status===s;}).length};});
+ var maxSt=Math.max.apply(null,statuses.map(function(x){return x.n;}).concat([1]));
+ var stRows=statuses.map(function(x){return '<div class="an-row"><span class="an-row-n" style="display:flex;align-items:center;gap:6px">'+statusIcon(x.s)+x.s+'</span><div class="an-row-bar"><div style="width:'+Math.round(x.n/maxSt*100)+'%"></div></div><b class="an-row-v">'+x.n+'</b></div>';}).join("");
+ return '<div class="crm-stats">'+
+   '<div class="stat"><span class="stat-em">'+ic("wallet",20)+'</span><b>'+fmt(revenue)+'</b><span>Выручка</span></div>'+
+   '<div class="stat"><span class="stat-em">'+ic("orders",20)+'</span><b>'+cnt+'</b><span>Заказов</span></div>'+
+   '<div class="stat"><span class="stat-em">'+ic("chart",20)+'</span><b>'+fmt(avg)+'</b><span>Средний чек</span></div>'+
+   '<div class="stat kpi-red"><span class="stat-em">'+ic("check",20)+'</span><b>'+conv+'%</b><span>Конверсия</span></div>'+
+ '</div>'+
+ '<div class="an-periods"><div class="an-p"><span>Сегодня</span><b>'+fmt(pRev(1))+'</b><i>'+pCnt(1)+' зак.</i></div><div class="an-p"><span>7 дней</span><b>'+fmt(pRev(7))+'</b><i>'+pCnt(7)+' зак.</i></div><div class="an-p"><span>30 дней</span><b>'+fmt(pRev(30))+'</b><i>'+pCnt(30)+' зак.</i></div></div>'+
+ '<div class="an-card"><div class="an-h">Выручка · последние 14 дней</div><div class="an-bars">'+bars+'</div></div>'+
+ '<div class="an-grid"><div class="an-card"><div class="an-h">Топ товаров</div>'+topRows+'</div><div class="an-card"><div class="an-h">Заказы по статусам</div>'+stRows+'</div></div>';
 }
 function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
