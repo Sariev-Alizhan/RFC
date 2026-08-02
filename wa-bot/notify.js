@@ -44,6 +44,11 @@ export async function notifyIncoming(payload) {
   return post({ kind: "wa_incoming", ...payload }, { retries: 1 });
 }
 
+// Утренний дайджест: список клиентов, писавших ночью. clients: [{phone,name,count,last}]
+export async function notifyNightDigest(clients) {
+  return post({ kind: "wa_night_digest", clients }, { retries: 2 });
+}
+
 // Батч-лог истории чатов (из messaging-history.set). rows: [{jid,phone,name,sender,text,ts}]
 export async function logMessagesBatch(rows) {
   if (!NOTIFY_ENABLED || !rows || !rows.length) return false;

@@ -58,7 +58,7 @@ try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp"));
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, notifyIncoming, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, notifyIncoming, notifyNightDigest, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -82,6 +82,17 @@ const NIGHT_TO = 8;   // до 08:00
 const NIGHT_TEXT = "Спасибо за сообщение! Сейчас нерабочее время — завтра с утра менеджер свяжется с вами и ответит на все вопросы 🌙";
 const nightReplied = new Map(); // jid -> ts последнего ночного автоответа (чтобы не спамить)
 const NIGHT_REPLY_TTL = 10 * 60 * 60 * 1000; // повторно отвечаем не раньше чем через 10 ч (= следующая ночь)
+// Кто писал ночью → утром менеджерам уходит дайджест в TG. Файл — чтобы пережить рестарт.
+const NIGHT_FILE = path.join(__dirname, "night-contacts.json");
+function nightLoad() { try { return JSON.parse(fs.readFileSync(NIGHT_FILE, "utf8")) || {}; } catch { return {}; } }
+function nightSave(o) { try { fs.writeFileSync(NIGHT_FILE, JSON.stringify(o)); } catch {} }
+function nightRecord(jid, phone, name, text) {
+  const o = nightLoad();
+  const e = o[jid] || { phone, name: null, count: 0, last: "" };
+  e.count++; e.last = String(text || "").slice(0, 120);
+  if (name) e.name = name;
+  o[jid] = e; nightSave(o);
+}
 function isNight() {
   const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Almaty", hour: "numeric", hour12: false }).format(new Date())) % 24;
   return NIGHT_FROM <= NIGHT_TO ? h >= NIGHT_FROM && h < NIGHT_TO : h >= NIGHT_FROM || h < NIGHT_TO;
@@ -182,6 +193,20 @@ async function processOutbox(sock) {
     }
   } finally { outboxBusy = false; }
 }
+
+// Утро настало → шлём менеджерам дайджест ночных клиентов и чистим список.
+// Сработает и позже 08:00, если ночью ноут был выключен (список в файле).
+setInterval(() => {
+  try {
+    if (isNight()) return;
+    const o = nightLoad();
+    const clients = Object.values(o);
+    if (!clients.length) return;
+    nightSave({});
+    notifyNightDigest(clients).catch(() => {});
+    console.log(`🌅 Утренний дайджест: ${clients.length} клиент(ов) писали ночью → менеджерам в TG`);
+  } catch (e) { console.error("[digest]", e?.message || e); }
+}, 60 * 1000).unref?.();
 
 // Периодическая чистка памяти
 setInterval(() => {
@@ -503,6 +528,7 @@ async function start() {
 
     // Ночь: диалог не ведём, один раз за ночь говорим, что менеджер напишет утром
     if (isNight()) {
+      nightRecord(jid, phone, pushName, text); // в утренний дайджест менеджерам
       if (Date.now() - (nightReplied.get(jid) || 0) > NIGHT_REPLY_TTL) {
         nightReplied.set(jid, Date.now());
         await sendReply(sendJid, NIGHT_TEXT).catch(() => {});

@@ -320,6 +320,30 @@ async function handleWaIncoming(req, res) {
   return res.status(200).json({ sent, admins: adminIds.length });
 }
 
+// Утренний дайджест: клиенты, писавшие ночью (бот пообещал им ответ менеджера утром)
+async function handleWaNightDigest(req, res) {
+  const clients = Array.isArray(req.body?.clients) ? req.body.clients.slice(0, 50) : [];
+  if (!clients.length) return res.status(200).json({ skipped: true, reason: 'empty' });
+  const lines = [`🌅 <b>Доброе утро! За ночь написали: ${clients.length}</b>`, '', 'Бот пообещал им, что менеджер свяжется утром — не подведи:', ''];
+  for (const c of clients) {
+    const ph = String(c.phone || '').replace(/[^\d]/g, '');
+    const nm = c.name ? escHtml(String(c.name).slice(0, 60)) : (ph ? '+' + ph : 'клиент');
+    const link = ph ? `<a href="https://wa.me/${ph}">${nm}</a>` : nm;
+    lines.push(`• ${link}${Number(c.count) > 1 ? ` · ${Number(c.count)} сообщ.` : ''}${c.last ? ` — «${escHtml(String(c.last).slice(0, 80))}»` : ''}`);
+  }
+  lines.push('');
+  lines.push('⚡️ Ответить можно из CRM: redflag.kz/#admin → WhatsApp');
+  const text = lines.join('\n');
+  const adminIds = await getAllAdminChatIds();
+  if (!adminIds.length) return res.status(200).json({ skipped: true, reason: 'no admins' });
+  let sent = 0;
+  for (const chatId of adminIds) {
+    const r = await tg('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true });
+    if (r?.ok) sent++;
+  }
+  return res.status(200).json({ sent, clients: clients.length });
+}
+
 async function handleWaLead(req, res) {
   const b = req.body || {};
   const { text, phone } = formatLead(b);
@@ -365,7 +389,7 @@ export default async function handler(req, res) {
   const waKind = req.body?.kind;
   // Ответ из CRM: авторизация сессией Supabase (JWT менеджера), не секретом бота
   if (waKind === 'wa_send') return handleWaSend(req, res);
-  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming'];
+  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest'];
   if (WA_KINDS.includes(waKind)) {
     if (!safeEq(rawAuth, WA_BOT_SECRET)) return res.status(401).json({ error: 'Unauthorized' });
     if (waKind === 'wa_msg')   return handleWaMsg(req, res);
@@ -374,6 +398,7 @@ export default async function handler(req, res) {
     if (waKind === 'wa_sent')  return handleWaSent(req, res);
     if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
     if (waKind === 'wa_incoming') return handleWaIncoming(req, res);
+    if (waKind === 'wa_night_digest') return handleWaNightDigest(req, res);
     return handleWaLead(req, res);
   }
 
