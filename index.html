@@ -410,6 +410,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-item-mid b{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-item-mid span{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-item-time{font-size:11px;color:#aaa;flex:none}
+.wa-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
 .wa-prog{display:flex;align-items:center;gap:8px;margin-top:3px;min-width:0}
 .wa-prog-bar{flex:none;width:104px;height:4px;border-radius:99px;background:#eceef1;overflow:hidden}
 .wa-prog-bar div{height:100%;border-radius:99px;transition:width .35s ease}
@@ -2219,15 +2220,15 @@ function waFunnel(c){
   var r=rank[o.status]||0;
   if(best===null||r>bestR){best=o.status;bestR=r;}
  });
- if(best==="Доставлен") return {pct:100,label:"Доставлен",color:"#1a7d35"};
- if(best==="Отправлен") return {pct:90, label:"Отправлен",color:"#0d9488"};
- if(best==="Оплачен")   return {pct:80, label:"Оплачен",color:"#10b981"};
- if(best==="Связались") return {pct:70, label:"Заказ · связались",color:"#8b5cf6"};
- if(best==="Новый")     return {pct:60, label:"Заказ оформлен",color:"#8b5cf6"};
- if(best==="Отменён")   return {pct:100,label:"Отменён",color:"#9ca3af"};
- if(hasMgr) return {pct:45,label:"Менеджер в диалоге",color:"#3b82f6"};
- if(hasBot) return {pct:25,label:"Бот консультирует",color:"#f59e0b"};
- return {pct:10,label:"Новый — ждёт ответа",color:"#e11236"};
+ if(best==="Доставлен") return {pct:100,label:"Доставлен",color:"#1a7d35",k:"paid"};
+ if(best==="Отправлен") return {pct:90, label:"Отправлен",color:"#0d9488",k:"paid"};
+ if(best==="Оплачен")   return {pct:80, label:"Оплачен",color:"#10b981",k:"paid"};
+ if(best==="Связались") return {pct:70, label:"Заказ · связались",color:"#8b5cf6",k:"order"};
+ if(best==="Новый")     return {pct:60, label:"Заказ оформлен",color:"#8b5cf6",k:"order"};
+ if(best==="Отменён")   return {pct:100,label:"Отменён",color:"#9ca3af",k:"cancel"};
+ if(hasMgr) return {pct:45,label:"Менеджер в диалоге",color:"#3b82f6",k:"mgr"};
+ if(hasBot) return {pct:25,label:"Бот консультирует",color:"#f59e0b",k:"bot"};
+ return {pct:10,label:"Новый — ждёт ответа",color:"#e11236",k:"wait"};
 }
 function waFunnelBar(f){
  return '<div class="wa-prog"><div class="wa-prog-bar"><div style="width:'+f.pct+'%;background:'+f.color+'"></div></div><span class="wa-stage" style="color:'+f.color+'">'+f.label+' · '+f.pct+'%</span></div>';
@@ -2259,14 +2260,23 @@ function renderWaBlock(){
   var chip='<span class="wa-stage-big" style="color:'+f.color+';background:'+f.color+'14;border:1px solid '+f.color+'33">'+f.label+' · '+f.pct+'%</span>';
   return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
  }
- // Список диалогов
- var rows=list.map(function(c){
+ // Список диалогов + фильтр по этапу воронки
+ list.forEach(function(c){c._f=waFunnel(c);});
+ var F=state.waFilter||"all";
+ var buckets=[["all","Все"],["wait","Ждут ответа"],["bot","Бот"],["mgr","Менеджер"],["order","Заказ"],["paid","Оплачен+"],["cancel","Отменён"]];
+ var chips='<div class="wa-filters">'+buckets.map(function(b){
+  var n=b[0]==="all"?list.length:list.filter(function(c){return c._f.k===b[0];}).length;
+  if(!n&&b[0]!=="all")return "";
+  return '<button class="chip '+(F===b[0]?"on":"")+'" onclick="rfc.waFilter(\''+b[0]+'\')">'+b[1]+'<span class="chip-c">'+n+'</span></button>';
+ }).join("")+'</div>';
+ var shown=F==="all"?list:list.filter(function(c){return c._f.k===F;});
+ var rows=shown.map(function(c){
   var title=c.name||("+"+(c.phone||""));
   var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?ic("bot",11)+" ":ic("user",11)+" "))+waEsc(waLastText(c.last).slice(0,60));
-  var f=waFunnel(c);
-  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(f)+'</div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
+  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(c._f)+'</div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
  }).join("");
- return refresh+'<div class="wa-list">'+rows+'</div>';
+ if(!rows)rows='<div style="text-align:center;color:#999;font-size:13px;padding:30px 0">На этом этапе диалогов нет</div>';
+ return refresh+chips+'<div class="wa-list">'+rows+'</div>';
 }
 function renderAiBlock(){
  var els=[{name:"rfc-navy-cap",label:"Navy кепка"},{name:"rfc-flag-tee",label:"Чёрная футболка"},{name:"rfc-camo-cap",label:"Камо-кепка"}];
@@ -2332,6 +2342,7 @@ rfc.waLoad=function(){
  });
 };
 rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
+rfc.waFilter=function(k){state.waFilter=k;renderCrm();};
 rfc.waBack=function(){state.waActive=null;renderCrm();};
 function waMediaLabel(t){return t==="image"?"📷 Фото":t==="video"?"🎥 Видео":t==="audio"?"🎤 Голосовое":t==="document"?"📎 Файл":"";}
 // Медиа хранится в text как "[img] <url>\n<подпись>" (без спец-колонок). Разбираем.
