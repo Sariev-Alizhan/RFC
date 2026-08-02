@@ -223,15 +223,31 @@ async function handleWaSend(req, res) {
   const b = req.body || {};
   const jid = String(b.jid || '').slice(0, 120);
   const text = String(b.text || '').slice(0, 4000).trim();
-  if (!jid || !text) return res.status(400).json({ error: 'jid and text required' });
+  // Фото от менеджера: base64 → public bucket wa-media → в очередь уходит ссылка
+  let media_url = null;
+  try {
+    if (b.mediaBase64) {
+      const buf = Buffer.from(String(b.mediaBase64), 'base64');
+      const mime = String(b.mimetype || 'image/jpeg');
+      if (buf.length && buf.length <= 8 * 1024 * 1024 && /^image\//.test(mime)) {
+        await ensureBucket(MEDIA_BUCKET, true);
+        const ext = (mime.split('/')[1] || 'jpg').replace(/[^a-z0-9]/gi, '').slice(0, 5) || 'jpg';
+        const path = `outbox/${crypto.randomUUID()}.${ext}`;
+        const up = await sb.storage.from(MEDIA_BUCKET).upload(path, buf, { contentType: mime, upsert: false });
+        if (up.error) console.error('wa_send media upload failed:', up.error.message);
+        else media_url = sb.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+      }
+    }
+  } catch (e) { console.error('wa_send media error:', e.message); }
+  if (!jid || (!text && !media_url)) return res.status(400).json({ error: 'jid and text or image required' });
   try {
     await ensureBucket(OUTBOX_BUCKET, false);
     const name = `${Date.now()}-${crypto.randomUUID()}.json`;
-    const up = await sb.storage.from(OUTBOX_BUCKET).upload(name, Buffer.from(JSON.stringify({ jid, text })), {
+    const up = await sb.storage.from(OUTBOX_BUCKET).upload(name, Buffer.from(JSON.stringify({ jid, text, media_url })), {
       contentType: 'application/json', upsert: false,
     });
     if (up.error) { console.error('wa_send upload failed:', up.error.message); return res.status(200).json({ ok: false }); }
-    return res.status(200).json({ ok: true, id: name });
+    return res.status(200).json({ ok: true, id: name, media_url });
   } catch (e) { console.error('wa_send error:', e.message); return res.status(200).json({ ok: false }); }
 }
 
@@ -247,7 +263,7 @@ async function handleWaPoll(req, res) {
       if (!obj.name.endsWith('.json')) continue;
       const dl = await sb.storage.from(OUTBOX_BUCKET).download(obj.name);
       if (dl.error || !dl.data) continue;
-      try { const j = JSON.parse(await dl.data.text()); items.push({ id: obj.name, jid: j.jid, text: j.text }); }
+      try { const j = JSON.parse(await dl.data.text()); items.push({ id: obj.name, jid: j.jid, text: j.text, media_url: j.media_url || null }); }
       catch { await sb.storage.from(OUTBOX_BUCKET).remove([obj.name]); } // битый — убираем
     }
     return res.status(200).json({ items });

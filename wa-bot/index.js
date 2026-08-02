@@ -146,15 +146,25 @@ async function processOutbox(sock) {
   try {
     const items = await pollOutbox();
     for (const it of items) {
-      const jid = it.jid, text = it.text;
-      if (!jid || !text) { await markSent(it.id, false); continue; }
+      const jid = it.jid, text = (it.text || "").trim(), media = it.media_url || null;
+      if (!jid || (!text && !media)) { await markSent(it.id, false); continue; }
       try {
-        const sent = await sock.sendMessage(jid, { text });
+        let sent;
+        if (media) {
+          // Фото из CRM: скачиваем из Storage и шлём картинкой (текст = подпись)
+          const r = await fetch(media, { signal: AbortSignal.timeout(20000) });
+          if (!r.ok) throw new Error(`media http ${r.status}`);
+          const buf = Buffer.from(await r.arrayBuffer());
+          sent = await sock.sendMessage(jid, { image: buf, caption: text || undefined });
+        } else {
+          sent = await sock.sendMessage(jid, { text });
+        }
         rememberBotMsg(sent?.key?.id);              // не логировать эхо второй раз в handle()
         muted.set(jid, Date.now() + MUTE_MS);        // менеджер ведёт диалог → бот молчит
-        logMessage({ jid, phone: jidDigits(jid), sender: "manager", text }).catch(() => {});
+        const logText = media ? "[img] " + media + (text ? "\n" + text : "") : text;
+        logMessage({ jid, phone: jidDigits(jid), sender: "manager", text: logText }).catch(() => {});
         await markSent(it.id, true);
-        console.log(`📤 Ответ из CRM отправлен → ${jidDigits(jid)}`);
+        console.log(`📤 Ответ из CRM отправлен${media ? " (фото)" : ""} → ${jidDigits(jid)}`);
       } catch (e) {
         console.error("[outbox] отправка не удалась:", e?.message || e);
         await markSent(it.id, false);
