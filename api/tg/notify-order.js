@@ -299,6 +299,18 @@ async function handleWaSent(req, res) {
   return res.status(200).json({ ok: true });
 }
 
+// Пульс бота: запоминаем время последнего «я жив» (объект в sys/ — wa_poll его не видит)
+async function handleWaHeartbeat(req, res) {
+  if (!sb) return res.status(200).json({ ok: false });
+  try {
+    await ensureBucket(OUTBOX_BUCKET, false);
+    await sb.storage.from(OUTBOX_BUCKET).upload('sys/heartbeat.json', Buffer.from(JSON.stringify({ ts: Date.now() })), {
+      contentType: 'application/json', upsert: true,
+    });
+    return res.status(200).json({ ok: true });
+  } catch (e) { console.error('wa_heartbeat:', e.message); return res.status(200).json({ ok: false }); }
+}
+
 // Товары с фото для бота (каталог в WhatsApp): только то, что реально продаём сейчас.
 // НЕ отдаём предзаказ/«скоро» — синхронизировано с isSoon/isPreorder в index.html.
 const WA_NOT_SELLING_TYPES = ['hoodie', 'sweat', 'boxers', 'socks'];
@@ -453,8 +465,17 @@ async function handleDailyDigest(req, res) {
     `🛒 Заказов: <b>${live.length}</b>${all.length > live.length ? ` (+${all.length - live.length} отменён.)` : ''} · выручка <b>₸${rev.toLocaleString('ru-RU')}</b>`,
     `💬 WhatsApp: ${custToday} сообщ. от клиентов · новых диалогов: ${newChats}`,
     waiting ? `⏳ Ждут ответа сейчас: <b>${waiting}</b> — загляни в CRM` : `✅ Неотвеченных чатов нет`,
-    '', 'CRM: redflag.kz/#admin'
   ];
+  // Жив ли бот (ноутбук): по последнему heartbeat
+  try {
+    const dl = await sb.storage.from(OUTBOX_BUCKET).download('sys/heartbeat.json');
+    if (dl.data) {
+      const hb = JSON.parse(await dl.data.text());
+      const mins = Math.round((Date.now() - (Number(hb.ts) || 0)) / 60000);
+      lines.push(mins <= 30 ? '🤖 Бот на связи' : `⚠️ Бот офлайн ~${mins < 1440 ? mins + ' мин' : Math.round(mins / 60) + ' ч'} — ответы из CRM копятся в очереди`);
+    }
+  } catch {}
+  lines.push('', 'CRM: redflag.kz/#admin');
   const text = lines.join('\n');
   const adminIds = await getAllAdminChatIds();
   let sent = 0;
@@ -484,7 +505,7 @@ export default async function handler(req, res) {
   const waKind = req.body?.kind;
   // Ответ из CRM: авторизация сессией Supabase (JWT менеджера), не секретом бота
   if (waKind === 'wa_send') return handleWaSend(req, res);
-  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest', 'wa_waiting', 'wa_products'];
+  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest', 'wa_waiting', 'wa_products', 'wa_heartbeat'];
   if (WA_KINDS.includes(waKind)) {
     if (!safeEq(rawAuth, WA_BOT_SECRET)) return res.status(401).json({ error: 'Unauthorized' });
     if (waKind === 'wa_msg')   return handleWaMsg(req, res);
@@ -492,6 +513,7 @@ export default async function handler(req, res) {
     if (waKind === 'wa_poll')  return handleWaPoll(req, res);
     if (waKind === 'wa_sent')  return handleWaSent(req, res);
     if (waKind === 'wa_products') return handleWaProducts(req, res);
+    if (waKind === 'wa_heartbeat') return handleWaHeartbeat(req, res);
     if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
     if (waKind === 'wa_incoming') return handleWaIncoming(req, res);
     if (waKind === 'wa_night_digest') return handleWaNightDigest(req, res);

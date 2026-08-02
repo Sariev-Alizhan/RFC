@@ -1615,7 +1615,7 @@ rfc.openCart=function(){renderCart();$("#cart").classList.add("on");openScrim();
 rfc.closeCart=function(){$("#cart").classList.remove("on");maybeCloseScrim();};
 rfc.openMenu=function(){$("#menu").classList.add("on");openScrim();};
 rfc.closeMenu=function(){$("#menu").classList.remove("on");maybeCloseScrim();};
-rfc.closeAll=function(){$$(".screen").forEach(function(s){s.classList.remove("on");});rfc.closeCart();rfc.closeMenu();$("#guide").classList.remove("on");document.body.style.overflow="";document.body.classList.remove("pdp-open");var psb=document.getElementById("pdpSticky");if(psb)psb.classList.remove("on");rfc.lbClose();};
+rfc.closeAll=function(){$$(".screen").forEach(function(s){s.classList.remove("on");});rfc.closeCart();rfc.closeMenu();$("#guide").classList.remove("on");document.body.style.overflow="";document.body.classList.remove("pdp-open");var psb=document.getElementById("pdpSticky");if(psb)psb.classList.remove("on");rfc.lbClose();if(location.hash==="#admin"){try{history.replaceState(null,"",location.pathname+location.search);}catch(_){location.hash="";}}};
 
 /* ===================== PDP ===================== */
 rfc.openProduct=function(id){
@@ -2132,6 +2132,9 @@ function crmBar(title){return '<div class="scr-bar"><div class="wrap in"><button
 function fmtDate(iso){try{var x=new Date(iso),m=["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"],p=function(n){return(n<10?"0":"")+n;};return x.getDate()+" "+m[x.getMonth()]+", "+p(x.getHours())+":"+p(x.getMinutes());}catch(e){return "";}}
 rfc.openCrm=function(){
  rfc.closeMenu();
+ // Держим #admin в адресе — обновление страницы возвращает в CRM, а не на витрину
+ if(location.hash!=="#admin"){try{history.replaceState(null,"","#admin");}catch(_){location.hash="admin";}}
+ if(!state.adminTab){try{state.adminTab=sessionStorage.getItem("rfcAdminTab")||null;}catch(_){}}
  if(CLOUD){ showScreen("#crm"); $("#crm").innerHTML=crmBar("RFC · CRM")+'<div class="wrap" style="padding:60px 18px;text-align:center;color:#999">Загрузка…</div>';
   sb.auth.getSession().then(function(res){ if(res&&res.data&&res.data.session){ cloudLoad(); } else { renderCrmLogin(); } }).catch(function(){ renderCrmLogin(); });
  } else { renderCrm(); showScreen("#crm"); }
@@ -2468,7 +2471,7 @@ function copyText(s){try{navigator.clipboard.writeText(s);rfc.toast("Скопи�
 rfc.crmSetSearch=function(v){state.crmSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('crmSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 rfc.crmSetSort=function(v){state.crmSort=v;renderCrm();};
 rfc.crmCopy=function(i){var o=state.crm[i];if(!o)return;var addr=(o.country||"")+(o.city?", "+o.city:"")+(o.address?", "+o.address:"");var t=o.name+"\n"+o.phone+(o.email?"\n"+o.email:"")+"\nДоставка: "+(o.delivery||"")+"\nАдрес: "+addr+(o.comment?"\nКоммент: "+o.comment:"")+"\nИтого: "+fmt(o.total)+"\nЗаказ: "+o.id;copyText(t);};
-rfc.adminTab=function(t){state.adminTab=t;renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}if(t==="catalog"&&!state.productsLoaded&&!state.productsLoading){rfc.loadProducts();}if(t==="wa"&&!state.waLoaded&&!state.waLoading){rfc.waLoad();}waAutoRefresh(t==="wa");};
+rfc.adminTab=function(t){state.adminTab=t;try{sessionStorage.setItem("rfcAdminTab",t);}catch(_){}renderCrm();if(t==="ai"&&!state.aiHistoryLoaded){state.aiHistoryLoaded=true;rfc.aiLoadHistory();}if(t==="catalog"&&!state.productsLoaded&&!state.productsLoading){rfc.loadProducts();}if(t==="wa"&&!state.waLoaded&&!state.waLoading){rfc.waLoad();}waAutoRefresh(t==="wa");};
 rfc.waLoad=function(){
  if(!sb){state.waError="Supabase не подключён";state.waLoaded=true;renderCrm();return;}
  state.waLoading=true;state.waError=null;if(state.adminTab==="wa")renderCrm();

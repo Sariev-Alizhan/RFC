@@ -66,7 +66,11 @@ try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp"));
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, notifyIncoming, notifyNightDigest, notifyWaiting, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, fetchProducts, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, notifyIncoming, notifyNightDigest, notifyWaiting, notifyHeartbeat, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, fetchProducts, NOTIFY_ENABLED } from "./notify.js";
+
+// Пульс: раз в 15 мин отмечаемся на сервере — вечерний отчёт покажет, жив ли бот
+notifyHeartbeat().catch(() => {});
+setInterval(() => notifyHeartbeat().catch(() => {}), 15 * 60 * 1000).unref?.();
 
 // Кэш товаров для фото-каталога (обновляем раз в 10 мин) + антиспам фото по чату
 const productsCache = { ts: 0, items: [] };

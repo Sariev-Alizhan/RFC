@@ -54,6 +54,11 @@ export async function notifyWaiting(payload) {
   return post({ kind: "wa_waiting", ...payload }, { retries: 1 });
 }
 
+// Пульс бота: сервер запоминает «жив в такое-то время» — вечерний отчёт покажет офлайн
+export async function notifyHeartbeat() {
+  return post({ kind: "wa_heartbeat" });
+}
+
 // Батч-лог истории чатов (из messaging-history.set). rows: [{jid,phone,name,sender,text,ts}]
 export async function logMessagesBatch(rows) {
   if (!NOTIFY_ENABLED || !rows || !rows.length) return false;
