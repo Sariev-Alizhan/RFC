@@ -47,5 +47,8 @@
       ]
     }
   ],
-  "cleanUrls": true
+  "cleanUrls": true,
+  "crons": [
+    { "path": "/api/tg/notify-order?cron=daily", "schedule": "0 16 * * *" }
+  ]
 }

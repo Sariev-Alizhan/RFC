@@ -404,8 +404,51 @@ async function getAllAdminChatIds() {
   return Array.from(ids);
 }
 
+// Вечерний отчёт дня (Vercel Cron, 21:00 Алматы = 16:00 UTC): заказы + WhatsApp за сегодня
+async function handleDailyDigest(req, res) {
+  if (!sb || !BOT_TOKEN) return res.status(200).json({ skipped: true, reason: 'not configured' });
+  // Начало сегодняшнего дня по Алматы (UTC+5) в UTC
+  const almaty = new Date(Date.now() + 5 * 3600 * 1000);
+  const dayStart = new Date(Date.UTC(almaty.getUTCFullYear(), almaty.getUTCMonth(), almaty.getUTCDate()) - 5 * 3600 * 1000).toISOString();
+  const { data: orders } = await sb.from('rfc_orders').select('total,status,created_at').gte('created_at', dayStart);
+  const all = orders || [];
+  const live = all.filter(o => o.status !== 'Отменён');
+  const rev = live.reduce((a, o) => a + (Number(o.total) || 0), 0);
+  const { data: msgs } = await sb.from('wa_messages').select('jid,sender,created_at').order('created_at', { ascending: false }).limit(1000);
+  const m = msgs || [];
+  const custToday = m.filter(x => x.created_at >= dayStart && x.sender === 'customer').length;
+  const firstSeen = {}, lastSender = {};
+  for (const x of m) { firstSeen[x.jid] = x.created_at; if (!(x.jid in lastSender)) lastSender[x.jid] = x.sender; } // m по убыванию: last=первое вхождение, first=последнее
+  const newChats = Object.values(firstSeen).filter(t => t >= dayStart).length;
+  const waiting = Object.values(lastSender).filter(s => s === 'customer').length;
+  const dd = String(almaty.getUTCDate()).padStart(2, '0') + '.' + String(almaty.getUTCMonth() + 1).padStart(2, '0');
+  const lines = [
+    `📊 <b>Итоги дня · ${dd}</b>`, '',
+    `🛒 Заказов: <b>${live.length}</b>${all.length > live.length ? ` (+${all.length - live.length} отменён.)` : ''} · выручка <b>₸${rev.toLocaleString('ru-RU')}</b>`,
+    `💬 WhatsApp: ${custToday} сообщ. от клиентов · новых диалогов: ${newChats}`,
+    waiting ? `⏳ Ждут ответа сейчас: <b>${waiting}</b> — загляни в CRM` : `✅ Неотвеченных чатов нет`,
+    '', 'CRM: redflag.kz/#admin'
+  ];
+  const text = lines.join('\n');
+  const adminIds = await getAllAdminChatIds();
+  let sent = 0;
+  for (const chatId of adminIds) {
+    const r = await tg('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true });
+    if (r?.ok) sent++;
+  }
+  return res.status(200).json({ sent, orders: live.length, rev, custToday, newChats, waiting });
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET') {
+    if (req.query?.cron === 'daily') {
+      // Только Vercel Cron (или явный CRON_SECRET) может дёргать отчёт
+      const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+      const isCron = /vercel-cron/i.test(String(req.headers['user-agent'] || ''));
+      const okSecret = process.env.CRON_SECRET && safeEq(bearer, process.env.CRON_SECRET);
+      if (!isCron && !okSecret) return res.status(401).json({ error: 'Unauthorized' });
+      return handleDailyDigest(req, res);
+    }
     return res.status(200).json({ ok: true, service: 'rfc-tg-notify-order', has_secret: !!WEBHOOK_SECRET });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
