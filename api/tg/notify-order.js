@@ -1,5 +1,19 @@
-import { sb } from '../_lib/supabase.js';
+import { sb, verifyAuth } from '../_lib/supabase.js';
 import crypto from 'crypto';
+
+// Гарантируем существование bucket (service role, без SQL). Идемпотентно.
+const _bucketReady = {};
+async function ensureBucket(id, isPublic) {
+  if (!sb) return;
+  if (_bucketReady[id]) return;
+  try {
+    const { error } = await sb.storage.createBucket(id, { public: isPublic });
+    if (error && !/exist/i.test(error.message || '')) console.error(`bucket ${id}:`, error.message);
+  } catch (e) { console.error(`bucket ${id}:`, e.message); }
+  _bucketReady[id] = true;
+}
+const OUTBOX_BUCKET = 'wa-outbox';
+const MEDIA_BUCKET = 'wa-media';
 
 // Постоянное по времени сравнение секретов (без утечки длины/префикса)
 function safeEq(a, b) {
@@ -163,6 +177,119 @@ async function handleWaMsg(req, res) {
   return res.status(200).json({ ok: true, inserted: rows.length });
 }
 
+// Приём медиа от бота: грузим в Storage (wa-media) и пишем сообщение со ссылкой.
+// Медиа от клиента: грузим в Storage (публичный bucket) и пишем сообщение.
+// Без DDL: ссылку кладём прямо в text с маркером [img]/[video]/[audio]/[file].
+const MEDIA_MARK = { image: '[img] ', video: '[video] ', audio: '[audio] ', document: '[file] ' };
+async function handleWaMedia(req, res) {
+  if (!sb) return res.status(200).json({ skipped: true, reason: 'no supabase' });
+  const b = req.body || {};
+  const row = toRow(b);
+  if (!row) return res.status(400).json({ error: 'jid required' });
+  const type = ['image', 'video', 'audio', 'document'].includes(b.media_type) ? b.media_type : 'image';
+  let media_url = null;
+  try {
+    if (b.mediaBase64) {
+      const buf = Buffer.from(String(b.mediaBase64), 'base64');
+      if (buf.length && buf.length < 15 * 1024 * 1024) {
+        await ensureBucket(MEDIA_BUCKET, true);
+        const ext = String(b.ext || 'bin').replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin';
+        const dir = (row.phone || 'x').slice(0, 20);
+        const path = `${dir}/${crypto.randomUUID()}.${ext}`;
+        const up = await sb.storage.from(MEDIA_BUCKET).upload(path, buf, {
+          contentType: b.mimetype || 'application/octet-stream', upsert: false,
+        });
+        if (up.error) console.error('wa-media upload failed:', up.error.message);
+        else media_url = sb.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+      }
+    }
+  } catch (e) { console.error('wa media error:', e.message); }
+  // text = "[img] <url>" + опционально подпись с новой строки
+  const caption = row.text ? String(row.text) : '';
+  row.text = media_url ? ((MEDIA_MARK[type] || '[file] ') + media_url + (caption ? '\n' + caption : '')) : (caption || MEDIA_MARK[type].trim());
+  const { error } = await sb.from('wa_messages').insert(row);
+  if (error) {
+    console.error('wa_media insert failed:', error.message);
+    return res.status(200).json({ ok: false, reason: 'insert_failed' });
+  }
+  return res.status(200).json({ ok: true, media_url });
+}
+
+// Постановка ответа менеджера в очередь (из CRM). Авторизация — сессия Supabase (JWT).
+async function handleWaSend(req, res) {
+  if (!sb) return res.status(200).json({ skipped: true, reason: 'no supabase' });
+  const auth = await verifyAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: 'Unauthorized', detail: auth.error });
+  const b = req.body || {};
+  const jid = String(b.jid || '').slice(0, 120);
+  const text = String(b.text || '').slice(0, 4000).trim();
+  if (!jid || !text) return res.status(400).json({ error: 'jid and text required' });
+  try {
+    await ensureBucket(OUTBOX_BUCKET, false);
+    const name = `${Date.now()}-${crypto.randomUUID()}.json`;
+    const up = await sb.storage.from(OUTBOX_BUCKET).upload(name, Buffer.from(JSON.stringify({ jid, text })), {
+      contentType: 'application/json', upsert: false,
+    });
+    if (up.error) { console.error('wa_send upload failed:', up.error.message); return res.status(200).json({ ok: false }); }
+    return res.status(200).json({ ok: true, id: name });
+  } catch (e) { console.error('wa_send error:', e.message); return res.status(200).json({ ok: false }); }
+}
+
+// Бот забирает очередь исходящих из Storage (FIFO по имени = timestamp).
+async function handleWaPoll(req, res) {
+  if (!sb) return res.status(200).json({ items: [] });
+  try {
+    await ensureBucket(OUTBOX_BUCKET, false);
+    const { data, error } = await sb.storage.from(OUTBOX_BUCKET).list('', { limit: 20, sortBy: { column: 'name', order: 'asc' } });
+    if (error) { console.error('wa_poll list failed:', error.message); return res.status(200).json({ items: [] }); }
+    const items = [];
+    for (const obj of (data || [])) {
+      if (!obj.name.endsWith('.json')) continue;
+      const dl = await sb.storage.from(OUTBOX_BUCKET).download(obj.name);
+      if (dl.error || !dl.data) continue;
+      try { const j = JSON.parse(await dl.data.text()); items.push({ id: obj.name, jid: j.jid, text: j.text }); }
+      catch { await sb.storage.from(OUTBOX_BUCKET).remove([obj.name]); } // битый — убираем
+    }
+    return res.status(200).json({ items });
+  } catch (e) { console.error('wa_poll error:', e.message); return res.status(200).json({ items: [] }); }
+}
+
+// Бот отчитался об отправке → удаляем объект из очереди.
+async function handleWaSent(req, res) {
+  if (!sb) return res.status(200).json({ ok: true });
+  const b = req.body || {};
+  const id = String(b.id || '');
+  if (!id) return res.status(400).json({ error: 'id required' });
+  try { await sb.storage.from(OUTBOX_BUCKET).remove([id]); } catch (e) { console.error('wa_sent remove:', e.message); }
+  return res.status(200).json({ ok: true });
+}
+
+// Уведомление менеджерам о новом входящем сообщении клиента (WhatsApp).
+function formatIncoming(b) {
+  const phone = String(b.phone || '').replace(/[^\d]/g, '');
+  const lines = ['💬 <b>Новое сообщение в WhatsApp</b>', ''];
+  if (b.name) lines.push(`👤 ${escHtml(b.name)}`);
+  if (phone) lines.push(`📞 +${escHtml(phone)}`);
+  if (b.text) { lines.push(''); lines.push(`«${escHtml(String(b.text).slice(0, 400))}»`); }
+  return { text: lines.join('\n'), phone };
+}
+
+async function handleWaIncoming(req, res) {
+  const { text, phone } = formatIncoming(req.body || {});
+  const kb = phone ? [[{ text: '💬 Ответить в WhatsApp', url: `https://wa.me/${phone}` }]] : undefined;
+  const adminIds = await getAllAdminChatIds();
+  if (!adminIds.length) return res.status(200).json({ skipped: true, reason: 'no admins' });
+  let sent = 0;
+  for (const chatId of adminIds) {
+    const r = await tg('sendMessage', {
+      chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true,
+      ...(kb ? { reply_markup: { inline_keyboard: kb } } : {})
+    });
+    if (r?.ok) sent++;
+  }
+  return res.status(200).json({ sent, admins: adminIds.length });
+}
+
 async function handleWaLead(req, res) {
   const b = req.body || {};
   const { text, phone } = formatLead(b);
@@ -206,10 +333,17 @@ export default async function handler(req, res) {
   // Ветки WA-бота с авторизацией WA_BOT_SECRET
   const rawAuth = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   const waKind = req.body?.kind;
-  if (waKind === 'order' || waKind === 'handoff' || waKind === 'wa_msg') {
+  // Ответ из CRM: авторизация сессией Supabase (JWT менеджера), не секретом бота
+  if (waKind === 'wa_send') return handleWaSend(req, res);
+  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming'];
+  if (WA_KINDS.includes(waKind)) {
     if (!safeEq(rawAuth, WA_BOT_SECRET)) return res.status(401).json({ error: 'Unauthorized' });
-    if (waKind === 'wa_msg') return handleWaMsg(req, res);
+    if (waKind === 'wa_msg')   return handleWaMsg(req, res);
+    if (waKind === 'wa_media') return handleWaMedia(req, res);
+    if (waKind === 'wa_poll')  return handleWaPoll(req, res);
+    if (waKind === 'wa_sent')  return handleWaSent(req, res);
     if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
+    if (waKind === 'wa_incoming') return handleWaIncoming(req, res);
     return handleWaLead(req, res);
   }
 

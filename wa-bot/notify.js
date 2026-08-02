@@ -39,6 +39,11 @@ export async function logMessage(payload) {
   return post({ kind: "wa_msg", ...payload });
 }
 
+// Уведомление менеджерам в TG о новом входящем сообщении клиента. { name, phone, text }
+export async function notifyIncoming(payload) {
+  return post({ kind: "wa_incoming", ...payload }, { retries: 1 });
+}
+
 // Батч-лог истории чатов (из messaging-history.set). rows: [{jid,phone,name,sender,text,ts}]
 export async function logMessagesBatch(rows) {
   if (!NOTIFY_ENABLED || !rows || !rows.length) return false;
@@ -47,6 +52,33 @@ export async function logMessagesBatch(rows) {
     await post({ kind: "wa_msg", batch: rows.slice(i, i + 200) });
   }
   return true;
+}
+
+// Загрузка медиа (фото/видео/файл клиента) в CRM. payload: { jid, phone, name, sender,
+// text, media_type, mediaBase64, mimetype, ext, ts }
+export async function logMedia(payload) {
+  return post({ kind: 'wa_media', ...payload });
+}
+
+// Забрать очередь исходящих ответов из CRM. Возвращает [{id, jid, text}].
+export async function pollOutbox() {
+  if (!NOTIFY_ENABLED) return [];
+  try {
+    const r = await fetch(URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SECRET}` },
+      body: JSON.stringify({ kind: 'wa_poll' }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return [];
+    const data = await r.json().catch(() => null);
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch { return []; }
+}
+
+// Отметить исходящее отправленным/ошибочным.
+export async function markSent(id, ok) {
+  return post({ kind: 'wa_sent', id, ok: Boolean(ok) });
 }
 
 // Создаёт реальный заказ в CRM (rfc_orders) + триггерит уведомление менеджерам.

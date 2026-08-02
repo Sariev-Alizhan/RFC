@@ -1,0 +1,9 @@
+wa-bot
+node_modules
+.vercel
+.env
+.env.local
+.DS_Store
+*.log
+*.sql
+tma.html

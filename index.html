@@ -425,6 +425,15 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-tag{font-size:10px;font-weight:700;margin-bottom:3px;letter-spacing:.01em;display:inline-flex;align-items:center;gap:3px}
 .wa-tag.bot{color:#0a7d2e}.wa-tag.mgr{color:#b8860b}
 .wa-time{font-size:10px;color:#aaa;margin-top:3px}
+.wa-img{display:block;max-width:230px;max-height:280px;width:auto;height:auto;border-radius:10px;cursor:pointer}
+.wa-cap{margin-top:6px}
+.wa-file{display:inline-block;font-size:13px;color:#0a5}
+.wa-pending{font-size:11px;opacity:.6}
+.wa-reply{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #eee;background:#fafafa}
+.wa-reply-in{flex:1;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink)}
+.wa-reply-in:focus{outline:none;border-color:var(--ink)}
+.wa-reply-btn{border:none;background:#25d366;color:#fff;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+.wa-reply-btn:hover{background:#1fb457}
 .ai-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
 .ai-form-col{display:flex;flex-direction:column;gap:10px}
 .ai-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:700;margin-top:4px}
@@ -2207,16 +2216,19 @@ function renderWaBlock(){
   var thread=c.items.slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);}).map(function(m){
    var who=m.sender==="customer"?"in":"out";
    var tag=m.sender==="bot"?'<span class="wa-tag bot">'+ic("bot",12)+' Бот</span>':(m.sender==="manager"?'<span class="wa-tag mgr">'+ic("user",12)+' Менеджер</span>':'');
-   return '<div class="wa-msg '+who+'">'+tag+'<div class="wa-bubble">'+waEsc(m.text).replace(/\n/g,"<br>")+'</div><span class="wa-time">'+fmtDate(m.created_at)+'</span></div>';
+   var body=waBubbleBody(m);
+   return '<div class="wa-msg '+who+'">'+tag+'<div class="wa-bubble">'+body+(m._pending?' <span class="wa-pending">⏳</span>':'')+'</div><span class="wa-time">'+fmtDate(m.created_at)+'</span></div>';
   }).join("");
   var title=c.name||("+"+(c.phone||""));
   var waHref=waPhone(c.phone)?'https://wa.me/'+waPhone(c.phone):'#';
-  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span></div><a class="act wa" href="'+waHref+'" target="_blank">'+waIcon(15)+'Ответить</a></div><div class="wa-thread">'+thread+'</div></div>';
+  var jidAttr=waEsc(c.jid).replace(/'/g,"\\'");
+  var composer='<form class="wa-reply" onsubmit="return rfc.waSend(event,\''+jidAttr+'\')"><input id="waReplyInput" class="wa-reply-in" placeholder="Ответить клиенту…" autocomplete="off"><button class="wa-reply-btn" type="submit" title="Отправить">'+waIcon(16)+'</button></form>';
+  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span></div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
  }
  // Список диалогов
  var rows=list.map(function(c){
   var title=c.name||("+"+(c.phone||""));
-  var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?ic("bot",11)+" ":ic("user",11)+" "))+waEsc((c.last.text||"").slice(0,60));
+  var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?ic("bot",11)+" ":ic("user",11)+" "))+waEsc(waLastText(c.last).slice(0,60));
   return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span></div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
  }).join("");
  return refresh+'<div class="wa-list">'+rows+'</div>';
@@ -2286,6 +2298,57 @@ rfc.waLoad=function(){
 };
 rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
 rfc.waBack=function(){state.waActive=null;renderCrm();};
+function waMediaLabel(t){return t==="image"?"📷 Фото":t==="video"?"🎥 Видео":t==="audio"?"🎤 Голосовое":t==="document"?"📎 Файл":"";}
+// Медиа хранится в text как "[img] <url>\n<подпись>" (без спец-колонок). Разбираем.
+function waParseMedia(m){
+ if(m.media_url)return {type:m.media_type||"image",url:m.media_url,caption:m.text||""}; // совместимость
+ var mm=(m.text||"").match(/^\[(img|video|audio|file)\]\s(\S+)([\s\S]*)$/);
+ if(!mm)return null;
+ var map={img:"image",video:"video",audio:"audio",file:"document"};
+ return {type:map[mm[1]],url:mm[2],caption:(mm[3]||"").replace(/^\n/,"")};
+}
+function waMediaFromParsed(md){
+ var u=waEsc(md.url);
+ if(md.type==="image")return '<a href="'+u+'" target="_blank"><img class="wa-img" src="'+u+'" alt="фото" loading="lazy"></a>';
+ if(md.type==="video")return '<video class="wa-img" src="'+u+'" controls preload="metadata"></video>';
+ if(md.type==="audio")return '<audio src="'+u+'" controls style="max-width:230px"></audio>';
+ return '<a class="wa-file" href="'+u+'" target="_blank">'+waMediaLabel("document")+'</a>';
+}
+function waBubbleBody(m){
+ var md=waParseMedia(m);
+ if(md){var cap=md.caption?('<div class="wa-cap">'+waEsc(md.caption).replace(/\n/g,"<br>")+'</div>'):"";return waMediaFromParsed(md)+cap;}
+ return waEsc(m.text||"").replace(/\n/g,"<br>");
+}
+function waLastText(m){var md=waParseMedia(m);if(md)return waMediaLabel(md.type)+(md.caption?" "+md.caption:"");return m.text||"";}
+rfc.waSend=function(ev,jid){
+ if(ev&&ev.preventDefault)ev.preventDefault();
+ var inp=document.getElementById('waReplyInput');
+ var txt=inp?inp.value.trim():"";
+ if(!txt||!sb||!jid)return false;
+ inp.disabled=true;
+ sb.auth.getSession().then(function(s){
+  var token=s&&s.data&&s.data.session?s.data.session.access_token:null;
+  if(!token){inp.disabled=false;rfc.toast("Сессия истекла — войди заново");return;}
+  return fetch("/api/tg/notify-order",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({kind:"wa_send",jid:jid,text:txt})})
+   .then(function(r){return r.json().catch(function(){return {};});})
+   .then(function(j){
+    inp.disabled=false;
+    if(!j||!j.ok){rfc.toast("Не отправилось");return;}
+    inp.value="";inp.focus();
+    state.waMsgs=state.waMsgs||[];
+    state.waMsgs.unshift({jid:jid,phone:(jid.split("@")[0]||""),sender:"manager",text:txt,created_at:new Date().toISOString(),_pending:true});
+    renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;
+    rfc.toast("Отправляется…");
+    setTimeout(function(){
+     if(!(state.adminTab==='wa'&&state.waActive===jid&&sb))return;
+     sb.from("wa_messages").select("*").order("created_at",{ascending:false}).limit(1000).then(function(rr){
+      if(!rr.error&&state.adminTab==='wa'&&state.waActive===jid){state.waMsgs=rr.data||[];renderCrm();var e2=document.querySelector('.wa-thread');if(e2)e2.scrollTop=e2.scrollHeight;}
+     });
+    },7000);
+   });
+ }).catch(function(){inp.disabled=false;rfc.toast("Ошибка отправки");});
+ return false;
+};
 var waTimer=null;
 function waAutoRefresh(on){
  if(waTimer){clearInterval(waTimer);waTimer=null;}
@@ -2293,11 +2356,23 @@ function waAutoRefresh(on){
  waTimer=setInterval(function(){
   var crm=document.getElementById('crm');
   if(state.adminTab!=='wa'||!crm||crm.offsetParent===null){waAutoRefresh(false);return;}
-  if(state.waActive||!sb)return; // не мешаем открытому чату
+  if(!sb)return;
   sb.from("wa_messages").select("*").order("created_at",{ascending:false}).limit(1000).then(function(r){
-   if(!r.error&&state.adminTab==='wa'&&!state.waActive){state.waMsgs=r.data||[];state.waLoaded=true;renderCrm();}
+   if(r.error||state.adminTab!=='wa')return;
+   var fresh=r.data||[];state.waLoaded=true;
+   // перерисовываем только если есть новое (чтобы не дёргать экран и ввод зря)
+   var old=state.waMsgs||[];
+   var k=function(m){return m?(m.id||m.created_at||""):"";};
+   if(fresh.length===old.length&&k(fresh[0])===k(old[0]))return;
+   // сохраняем набранный текст и фокус в поле ответа открытого чата
+   var inp=document.getElementById('waReplyInput');
+   var val=inp?inp.value:null,foc=inp&&document.activeElement===inp;
+   state.waMsgs=fresh;renderCrm();
+   var ni=document.getElementById('waReplyInput');
+   if(ni&&val!=null){ni.value=val;if(foc){ni.focus();try{ni.setSelectionRange(val.length,val.length);}catch(_){}}}
+   var th=document.querySelector('.wa-thread');if(th)th.scrollTop=th.scrollHeight;
   });
- },20000);
+ },12000);
 }
 rfc.loadProducts=function(){
  if(!sb){state.productsLoaded=true;state.productsError="Supabase не подключён";renderCrm();return;}

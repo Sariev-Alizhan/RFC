@@ -7,6 +7,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
+  downloadMediaMessage,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import qrcode from "qrcode-terminal";
@@ -57,7 +58,7 @@ try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp"));
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, logMessage, logMessagesBatch, createOrder, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, notifyIncoming, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -72,6 +73,30 @@ const botSentIds = new Set();
 
 const MUTE_MS = 30 * 60 * 1000; // авто-пауза 30 мин, когда пишет живой человек
 const SESSION_TTL = 6 * 60 * 60 * 1000; // чистим неактивные сессии через 6 ч
+
+// === Ночной режим ===
+// С NIGHT_FROM до NIGHT_TO (время Алматы) бот не ведёт диалог: один раз за ночь
+// отвечает, что менеджер свяжется утром. Логи в CRM и TG-уведомления работают как обычно.
+const NIGHT_FROM = 0; // с 00:00
+const NIGHT_TO = 8;   // до 08:00
+const NIGHT_TEXT = "Спасибо за сообщение! Сейчас нерабочее время — завтра с утра менеджер свяжется с вами и ответит на все вопросы 🌙";
+const nightReplied = new Map(); // jid -> ts последнего ночного автоответа (чтобы не спамить)
+const NIGHT_REPLY_TTL = 10 * 60 * 60 * 1000; // повторно отвечаем не раньше чем через 10 ч (= следующая ночь)
+function isNight() {
+  const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Almaty", hour: "numeric", hour12: false }).format(new Date())) % 24;
+  return NIGHT_FROM <= NIGHT_TO ? h >= NIGHT_FROM && h < NIGHT_TO : h >= NIGHT_FROM || h < NIGHT_TO;
+}
+
+// Троттлинг TG-уведомлений о новых сообщениях (чтобы серия сообщений не спамила)
+const notifyThrottle = new Map(); // jid -> ts
+const NOTIFY_THROTTLE_MS = 30 * 1000;
+function shouldNotify(jid) {
+  const now = Date.now();
+  if (now - (notifyThrottle.get(jid) || 0) < NOTIFY_THROTTLE_MS) return false;
+  notifyThrottle.set(jid, now);
+  return true;
+}
+const MEDIA_LABEL = { image: "📷 Фото", video: "🎥 Видео", audio: "🎤 Голосовое", document: "📎 Файл" };
 
 function getSession(jid) {
   let s = sessions.get(jid);
@@ -105,11 +130,45 @@ function enqueue(jid, task) {
   return next;
 }
 
+// === Очередь исходящих ответов из CRM ===
+// Менеджер пишет в CRM → строка в wa_outbox → бот забирает и отправляет в WhatsApp.
+let outboxTimer = null;
+let outboxBusy = false;
+function stopOutbox() { if (outboxTimer) { clearInterval(outboxTimer); outboxTimer = null; } }
+function startOutbox(sock) {
+  stopOutbox();
+  outboxTimer = setInterval(() => processOutbox(sock).catch(() => {}), 4000);
+  outboxTimer.unref?.();
+}
+async function processOutbox(sock) {
+  if (outboxBusy) return;
+  outboxBusy = true;
+  try {
+    const items = await pollOutbox();
+    for (const it of items) {
+      const jid = it.jid, text = it.text;
+      if (!jid || !text) { await markSent(it.id, false); continue; }
+      try {
+        const sent = await sock.sendMessage(jid, { text });
+        rememberBotMsg(sent?.key?.id);              // не логировать эхо второй раз в handle()
+        muted.set(jid, Date.now() + MUTE_MS);        // менеджер ведёт диалог → бот молчит
+        logMessage({ jid, phone: jidDigits(jid), sender: "manager", text }).catch(() => {});
+        await markSent(it.id, true);
+        console.log(`📤 Ответ из CRM отправлен → ${jidDigits(jid)}`);
+      } catch (e) {
+        console.error("[outbox] отправка не удалась:", e?.message || e);
+        await markSent(it.id, false);
+      }
+    }
+  } finally { outboxBusy = false; }
+}
+
 // Периодическая чистка памяти
 setInterval(() => {
   const now = Date.now();
   for (const [jid, s] of sessions) if (now - (s.lastSeen || 0) > SESSION_TTL) sessions.delete(jid);
   for (const [jid, until] of muted) if (now > until) muted.delete(jid);
+  for (const [jid, ts] of nightReplied) if (now - ts > NIGHT_REPLY_TTL) nightReplied.delete(jid);
 }, 30 * 60 * 1000).unref?.();
 
 // Достаём текст из разных типов сообщений WhatsApp
@@ -125,6 +184,95 @@ function extractText(msg) {
     m.listResponseMessage?.title ||
     ""
   );
+}
+
+// Превью сообщения для истории/CRM: текст, а если его нет — метка медиа.
+// Нужно, чтобы чаты, где были только фото/голосовые/файлы, тоже были видны.
+function messagePreview(msg) {
+  const t = extractText(msg).trim();
+  if (t) return t;
+  // разворачиваем возможную обёртку (ephemeral / viewOnce / device-sent)
+  const m =
+    msg.message?.ephemeralMessage?.message ||
+    msg.message?.viewOnceMessage?.message ||
+    msg.message?.viewOnceMessageV2?.message ||
+    msg.message?.documentWithCaptionMessage?.message ||
+    msg.message || {};
+  if (m.imageMessage) return "📷 Фото";
+  if (m.videoMessage) return "🎥 Видео";
+  if (m.audioMessage) return m.audioMessage.ptt ? "🎤 Голосовое" : "🎵 Аудио";
+  if (m.stickerMessage) return "🩹 Стикер";
+  if (m.documentMessage) return "📎 " + (m.documentMessage.fileName || "Файл");
+  if (m.contactMessage || m.contactsArrayMessage) return "👤 Контакт";
+  if (m.locationMessage || m.liveLocationMessage) return "📍 Геолокация";
+  if (m.pollCreationMessage || m.pollCreationMessageV3) return "📊 Опрос";
+  if (m.reactionMessage) return "";           // реакции не считаем сообщением
+  if (m.protocolMessage) return "";           // служебные — пропускаем
+  return "";
+}
+
+// === Резолв настоящего номера ===
+// WhatsApp для многих чатов отдаёт приватный ID @lid (не телефон!). Настоящий номер
+// лежит в @s.whatsapp.net — берём из senderPn (входящие) или из списка контактов (lid↔jid).
+const isPhoneJid = (j) => typeof j === "string" && j.endsWith("@s.whatsapp.net");
+const isLidJid = (j) => typeof j === "string" && j.endsWith("@lid");
+const jidDigits = (j) => String(j || "").split("@")[0].split(":")[0].replace(/[^\d]/g, "");
+
+const lidToPhoneJid = new Map(); // "123@lid" -> "77...@s.whatsapp.net"
+const nameByPhone = new Map();   // "77..." (цифры) -> имя из контактов
+
+// Забираем маппинг lid→номер и имена из массива контактов (history.set / contacts.upsert)
+function absorbContacts(contacts) {
+  if (!Array.isArray(contacts)) return;
+  for (const c of contacts) {
+    if (!c) continue;
+    const phoneJid = isPhoneJid(c.jid) ? c.jid : (isPhoneJid(c.id) ? c.id : null);
+    const lid = isLidJid(c.lid) ? c.lid : (isLidJid(c.id) ? c.id : null);
+    if (lid && phoneJid) lidToPhoneJid.set(lid, phoneJid);
+    const nm = String(c.name || c.notify || c.verifiedName || "").trim();
+    if (nm && phoneJid) nameByPhone.set(jidDigits(phoneJid), nm);
+  }
+}
+
+// Учим маппинг из входящего: senderPn = номер собеседника, когда чат в формате @lid
+function learnFromKey(key) {
+  if (!key || key.fromMe) return;
+  const rj = key.remoteJid;
+  if (isLidJid(rj) && isPhoneJid(key.senderPn)) lidToPhoneJid.set(rj, key.senderPn);
+}
+
+// Настоящий {jid, phone, name} чата по сообщению. resolved=false → номер не удалось раскрыть.
+function resolvePeer(msg) {
+  const key = msg.key || {};
+  const rj = key.remoteJid || "";
+  let phoneJid = null;
+  if (isPhoneJid(rj)) phoneJid = rj;
+  else if (isLidJid(rj)) {
+    if (!key.fromMe && isPhoneJid(key.senderPn)) phoneJid = key.senderPn;
+    else if (lidToPhoneJid.has(rj)) phoneJid = lidToPhoneJid.get(rj);
+  }
+  const canonical = phoneJid || rj;
+  const phone = jidDigits(canonical);
+  const name = String(msg.pushName || "").trim() || nameByPhone.get(phone) || null;
+  return { jid: canonical, phone, name, resolved: Boolean(phoneJid) };
+}
+
+// Если в сообщении есть медиа — вернёт { type, ext, mime }, иначе null.
+function mediaInfo(msg) {
+  const m =
+    msg.message?.ephemeralMessage?.message ||
+    msg.message?.viewOnceMessage?.message ||
+    msg.message?.viewOnceMessageV2?.message ||
+    msg.message || {};
+  if (m.imageMessage) return { type: "image", ext: "jpg", mime: m.imageMessage.mimetype || "image/jpeg" };
+  if (m.videoMessage) return { type: "video", ext: "mp4", mime: m.videoMessage.mimetype || "video/mp4" };
+  if (m.audioMessage) return { type: "audio", ext: "ogg", mime: m.audioMessage.mimetype || "audio/ogg" };
+  if (m.documentMessage) {
+    const fn = String(m.documentMessage.fileName || "");
+    const ext = (fn.split(".").pop() || "bin").toLowerCase();
+    return { type: "document", ext, mime: m.documentMessage.mimetype || "application/octet-stream" };
+  }
+  return null;
 }
 
 let reconnectScheduled = false;
@@ -144,7 +292,11 @@ function scheduleReconnect(sock, delay) {
 }
 
 async function start() {
-  const { state, saveCreds } = await useMultiFileAuthState("./auth");
+  const authDir = path.join(__dirname, "auth");
+  // Свежая привязка = ещё нет creds. Только тогда импортируем историю (иначе на обычном
+  // реконнекте не пере-заливаем старые чаты — «только вперёд», без задвоений в CRM).
+  const freshLink = !fs.existsSync(path.join(authDir, "creds.json"));
+  const { state, saveCreds } = await useMultiFileAuthState(authDir);
   const { version } = await fetchLatestBaileysVersion();
 
   const sock = makeWASocket({
@@ -159,28 +311,50 @@ async function start() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  // История чатов при привязке устройства → пишем в CRM (старые переписки становятся видны)
+  // Контакты дают маппинг lid→номер и имена (нужно для правильных номеров в CRM)
+  sock.ev.on("contacts.upsert", absorbContacts);
+  sock.ev.on("contacts.update", absorbContacts);
+
+  // История чатов при привязке устройства → пишем в CRM (старые переписки становятся видны).
+  // Ловим ВСЕ личные чаты, включая те, где были только фото/голосовые/файлы (медиа-метки).
   sock.ev.on("messaging-history.set", (h) => {
+    absorbContacts(h?.contacts); // маппинг lid→номер + имена (нужно и для живых сообщений)
+    if (!freshLink) return;      // не импортируем историю на обычном перезапуске — «только вперёд»
     const messages = h?.messages || [];
-    if (!messages.length) return;
+    const chatsCount = (h?.chats || []).length;
+    if (!messages.length) {
+      if (chatsCount) console.log(`📚 История: получено ${chatsCount} чатов (сообщения подтянутся отдельно)…`);
+      return;
+    }
+    // 2) учим маппинг из входящих (senderPn) — чтобы и исходящие в этом чате раскрылись
+    for (const msg of messages) learnFromKey(msg.key);
+    // 3) строим строки с настоящими номерами/именами
     const rows = [];
+    const seenJids = new Set();
+    let unresolved = 0;
     for (const msg of messages) {
-      const jid = msg.key?.remoteJid || "";
-      if (!jid || jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) continue;
-      const text = extractText(msg).trim();
+      const rj = msg.key?.remoteJid || "";
+      if (!rj || rj.endsWith("@g.us") || rj.endsWith("@broadcast") || rj.includes("newsletter") || rj === "status@broadcast") continue;
+      const text = messagePreview(msg);
       if (!text) continue;
+      const peer = resolvePeer(msg);
+      if (isLidJid(rj) && !peer.resolved) { unresolved++; continue; } // не пишем фейковый номер
+      seenJids.add(peer.jid);
       rows.push({
-        jid,
-        phone: jid.split("@")[0].replace(/[^\d]/g, ""),
-        name: msg.pushName || null,
+        jid: peer.jid,
+        phone: peer.phone,
+        name: peer.name,
         sender: msg.key.fromMe ? "manager" : "customer",
         text,
         ts: Number(msg.messageTimestamp) || undefined,
       });
     }
     if (rows.length) {
-      console.log(`📚 История WhatsApp: ${rows.length} сообщений → CRM`);
+      const pct = h?.progress != null ? ` (${h.progress}%)` : "";
+      console.log(`📚 История WhatsApp${pct}: ${rows.length} сообщений из ${seenJids.size} чатов → CRM${unresolved ? `, номер не раскрыт у ${unresolved} (пропущены)` : ""}`);
       logMessagesBatch(rows).catch(() => {});
+    } else if (unresolved) {
+      console.log(`⚠️ История: ${unresolved} сообщений без распознанного номера (пропущены)`);
     }
   });
 
@@ -203,9 +377,11 @@ async function start() {
       console.log(`🤖 AI-режим: ${AI_ENABLED ? "включён (Claude)" : "выключен — только сценарии"}`);
       console.log(`📨 Уведомления менеджерам в Telegram: ${NOTIFY_ENABLED ? "включены" : "выключены (нет WA_BOT_SECRET)"}`);
       console.log("💬 Отвечаю на входящие сообщения. Не закрывай это окно.\n");
+      startOutbox(sock); // забираем ответы менеджеров из CRM и шлём в WhatsApp
     }
 
     if (connection === "close") {
+      stopOutbox();
       const code = new Boom(lastDisconnect?.error)?.output?.statusCode;
       const loggedOut = code === DisconnectReason.loggedOut;
       console.log(`⚠️  Соединение закрыто (код ${code}).`);
@@ -239,12 +415,32 @@ async function start() {
     } catch {}
   }
 
-  async function handle(msg) {
-    const jid = msg.key.remoteJid || "";
-    if (jid.endsWith("@g.us") || jid.endsWith("@broadcast") || jid.includes("newsletter")) return;
+  // Скачать медиа клиента и отправить в CRM (чтобы менеджер видел фото/файл)
+  async function downloadAndLogMedia(msg, media, meta) {
+    try {
+      const buf = await downloadMediaMessage(msg, "buffer", {}, { logger, reuploadRequest: sock.updateMediaMessage });
+      if (!buf || !buf.length || buf.length > 12 * 1024 * 1024) return; // пропускаем пустое/огромное
+      const caption = extractText(msg).trim() || null;
+      await logMedia({
+        jid: meta.jid, phone: meta.phone, name: meta.name, sender: "customer",
+        text: caption, media_type: media.type,
+        mediaBase64: buf.toString("base64"), mimetype: media.mime, ext: media.ext,
+        ts: Number(msg.messageTimestamp) || undefined,
+      });
+      console.log(`🖼  Медиа от ${meta.phone} (${media.type}) → CRM`);
+    } catch (e) { console.error("[media] не скачалось:", e?.message || e); }
+  }
 
-    const phone = jid.split("@")[0].replace(/[^\d]/g, "");
-    const pushName = msg.pushName || null;
+  async function handle(msg) {
+    const sendJid = msg.key.remoteJid || ""; // куда физически отправлять ответ (может быть @lid)
+    if (sendJid.endsWith("@g.us") || sendJid.endsWith("@broadcast") || sendJid.includes("newsletter")) return;
+
+    // Настоящий номер/имя — по нему группируем чат в CRM (иначе показывает @lid-мусор)
+    learnFromKey(msg.key);
+    const peer = resolvePeer(msg);
+    const jid = peer.jid;       // канонический (номерной) jid — для логов и сессий
+    const phone = peer.phone;
+    const pushName = peer.name;
 
     // Исходящее (fromMe): либо эхо самого бота (игнор), либо ручной ответ менеджера (мут+лог)
     if (msg.key.fromMe) {
@@ -258,22 +454,42 @@ async function start() {
       return;
     }
 
+    // Медиа от клиента (фото/видео/файл) → скачиваем и показываем в CRM картинкой
+    const media = mediaInfo(msg);
+    if (media) downloadAndLogMedia(msg, media, { jid, phone, name: pushName }).catch(() => {});
+
     const text = extractText(msg).trim();
+
+    // Мгновенное уведомление менеджерам в TG о новом сообщении клиента (с троттлингом)
+    const notifyText = text || (media ? MEDIA_LABEL[media.type] : "");
+    if (notifyText && shouldNotify(jid)) {
+      notifyIncoming({ name: pushName, phone, text: notifyText }).catch(() => {});
+    }
 
     // Пустое/медиа без текста
     if (!text) {
       const s = sessions.get(jid);
-      if (s && s.order && !isMuted(jid)) {
-        await sendReply(jid, "Пришли, пожалуйста, ответ текстом 🙏 (голосовые и фото я пока не читаю).").catch(() => {});
+      if (s && s.order && !isMuted(jid) && !isNight()) {
+        await sendReply(sendJid, "Пришлите, пожалуйста, ответ текстом 🙏 (голосовые и фото я пока не читаю).").catch(() => {});
       }
       return;
     }
 
-    // Лог входящего сообщения клиента в CRM
-    logMessage({ jid, phone, name: pushName, sender: "customer", text }).catch(() => {});
+    // Лог входящего текста клиента (если это подпись к медиа — уже записано вместе с файлом)
+    if (!media) logMessage({ jid, phone, name: pushName, sender: "customer", text }).catch(() => {});
 
     // На паузе (менеджер ведёт диалог) — молчим
     if (isMuted(jid)) return;
+
+    // Ночь: диалог не ведём, один раз за ночь говорим, что менеджер напишет утром
+    if (isNight()) {
+      if (Date.now() - (nightReplied.get(jid) || 0) > NIGHT_REPLY_TTL) {
+        nightReplied.set(jid, Date.now());
+        await sendReply(sendJid, NIGHT_TEXT).catch(() => {});
+        logMessage({ jid, phone, sender: "bot", text: NIGHT_TEXT }).catch(() => {});
+      }
+      return;
+    }
 
     try {
       const session = getSession(jid);
@@ -284,11 +500,11 @@ async function start() {
         notifyManagers({ ...notify, name: notify.name || pushName, phone }).catch(() => {});
       }
 
-      await sendReply(jid, reply);
+      await sendReply(sendJid, reply);
       logMessage({ jid, phone, sender: "bot", text: reply }).catch(() => {});
 
       // Брендовый флаг RFC в ключевые моменты (приветствие, оформленный заказ)
-      if (sticker) await sendSticker(jid);
+      if (sticker) await sendSticker(sendJid);
 
       // Оформленный заказ — создаём реальный заказ в CRM + follow-up с номером
       if (order) {
@@ -303,8 +519,8 @@ async function start() {
           comment: "Заказ через WhatsApp-бота",
         }).then((res) => {
           if (res?.id) {
-            const t = `Номер твоего заказа: *${res.id}* — менеджер свяжется для подтверждения и оплаты.`;
-            sendReply(jid, t).then(() => logMessage({ jid, phone, sender: "bot", text: t }).catch(() => {})).catch(() => {});
+            const t = `Номер вашего заказа: *${res.id}* — менеджер свяжется с вами для подтверждения и оплаты.`;
+            sendReply(sendJid, t).then(() => logMessage({ jid, phone, sender: "bot", text: t }).catch(() => {})).catch(() => {});
           }
         }).catch(() => {});
       }

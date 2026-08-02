@@ -38,9 +38,9 @@ function orderFlow(session, text, presetProduct) {
     const p = presetProduct || findProduct(text);
     if (!p) {
       return (
-        `Что хочешь заказать? 👇\n` +
+        `Что хотите заказать? 👇\n` +
         PRODUCTS.map((p) => `• ${p.name} — ${fmt(p.price)}`).join("\n") +
-        `\n\nНапиши название (например: «худи» или «кепка»).`
+        `\n\nНапишите название (например: «худи» или «кепка»).`
       );
     }
     o.product = p;
@@ -59,7 +59,7 @@ function orderFlow(session, text, presetProduct) {
     const s = SIZES.includes(up)
       ? up
       : [...SIZES].sort((a, b) => b.length - a.length).find((sz) => new RegExp(`\\b${sz}\\b`).test(text.toUpperCase()));
-    if (!s) return `Не понял размер 🤔 Напиши один из: ${SIZES.join(", ")}.`;
+    if (!s) return `Не понял размер 🤔 Напишите один из: ${SIZES.join(", ")}.`;
     o.size = s;
     o.step = "name";
     return `Размер *${s}* ✅ На какое имя оформляем?`;
@@ -77,13 +77,13 @@ function orderFlow(session, text, presetProduct) {
     o.city = text.trim().slice(0, 120);
     session.order = null; // заказ собран, сбрасываем машину
     const reply =
-      `Красава, заказ собран! 🚩\n\n` +
+      `Отлично, заказ собран! 🚩\n\n` +
       `• Товар: ${o.product.name}\n` +
       `• Размер: ${o.size}\n` +
       `• Имя: ${o.name}\n` +
       `• Куда: ${o.city}\n` +
       `• Сумма: *${fmt(o.product.price)}*\n\n` +
-      `Менеджер щас подтвердит наличие и пришлёт Kaspi для оплаты:\n${SHOP.kaspiLink}\n\n` +
+      `Менеджер скоро подтвердит наличие и пришлёт Kaspi для оплаты:\n${SHOP.kaspiLink}\n\n` +
       `Добро пожаловать в комьюнити 🔥`;
     // Данные для создания реального заказа в CRM (rfc_orders)
     const order = {
@@ -108,7 +108,7 @@ export async function think(session, text) {
   if (session.order) {
     if (has(t, "отмен", "стоп", "не надо", "передумал")) {
       session.order = null;
-      return { reply: "Ок, отменил оформление 👌 Обращайся, если что!" };
+      return { reply: "Хорошо, отменил оформление 👌 Обращайтесь, если что!" };
     }
     if (intent(t) === "human") {
       session.order = null;
@@ -125,7 +125,7 @@ export async function think(session, text) {
     case "delivery": return { reply: T.delivery };
     case "payment":  return { reply: T.payment };
     case "socials":  return { reply: T.socials };
-    case "thanks":   return { reply: "Обращайся 🚩" };
+    case "thanks":   return { reply: "Обращайтесь 🚩" };
     case "human":    return { reply: T.human, mute: 30, notify: { kind: "handoff", text } };
     case "order": {
       // Бренд, не мерч — не форма, а направление на живого менеджера
