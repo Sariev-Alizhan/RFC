@@ -147,6 +147,16 @@ async function processOutbox(sock) {
     const items = await pollOutbox();
     for (const it of items) {
       const jid = it.jid, text = (it.text || "").trim(), media = it.media_url || null;
+      // Команда из CRM: пауза/включение бота в чате
+      if (it.ctl === "mute" || it.ctl === "unmute") {
+        if (jid) {
+          if (it.ctl === "mute") muted.set(jid, Date.now() + (Number(it.minutes) || 30) * 60 * 1000);
+          else muted.delete(jid);
+          console.log(`⏯ Бот ${it.ctl === "mute" ? "на паузе" : "снова отвечает"} в чате ${jidDigits(jid)}`);
+        }
+        await markSent(it.id, true);
+        continue;
+      }
       if (!jid || (!text && !media)) { await markSent(it.id, false); continue; }
       try {
         let sent;

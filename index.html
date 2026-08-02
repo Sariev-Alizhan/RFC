@@ -424,6 +424,7 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-q:hover{background:#fff;border-color:#ccc;color:var(--ink)}
 .wa-attach{width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#888;flex:0 0 auto;transition:.15s}
 .wa-attach:hover{color:var(--ink);border-color:#ccc}
+.act.bot-off{color:#e11236;border-color:#e1123644;background:#e1123608}
 .wa-funnel{border:1px solid #eee;border-radius:14px;padding:14px 16px;margin:0 0 14px;background:#fafafa}
 .wa-fun-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .wa-conv{font-size:12px;color:#666}.wa-conv b{color:#1a7d35;font-size:13px}
@@ -2301,7 +2302,9 @@ function renderWaBlock(){
   var composer=quick+'<form class="wa-reply" onsubmit="return rfc.waSend(event,\''+jidAttr+'\')">'+attach+'<input id="waReplyInput" class="wa-reply-in" placeholder="Ответить клиенту…" autocomplete="off"><button class="wa-reply-btn" type="submit" title="Отправить">'+waIcon(16)+'</button></form>';
   var f=waFunnel(c);
   var chip='<span class="wa-stage-big" style="color:'+f.color+';background:'+f.color+'14;border:1px solid '+f.color+'33">'+f.label+' · '+f.pct+'%</span>';
-  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
+  var botOff=((state.waMuted||{})[c.jid]||0)>Date.now();
+  var botBtn='<button class="act'+(botOff?' bot-off':'')+'" onclick="rfc.waBotToggle(\''+jidAttr+'\')" title="'+(botOff?"Бот на паузе в этом чате — нажми, чтобы включить":"Бот отвечает в этом чате — нажми, чтобы поставить на паузу на 24 ч")+'">'+ic("bot",13)+' '+(botOff?"выкл":"вкл")+'</button>';
+  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><div style="display:flex;gap:6px;align-items:center">'+botBtn+'<a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
  }
  // Список диалогов + фильтр по этапу воронки
  list.forEach(function(c){c._f=waFunnel(c);c._need=c.last.sender==="customer";});
@@ -2410,6 +2413,24 @@ rfc.waLoad=function(){
 rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
 rfc.waFilter=function(k){state.waFilter=k;renderCrm();};
 rfc.waSetSearch=function(v){state.waSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('waSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
+// Пауза/включение бота в конкретном чате (команда уходит боту через очередь)
+rfc.waBotToggle=function(jid){
+ if(!sb||!jid)return;
+ state.waMuted=state.waMuted||{};
+ var isOff=(state.waMuted[jid]||0)>Date.now();
+ sb.auth.getSession().then(function(s){
+  var token=s&&s.data&&s.data.session?s.data.session.access_token:null;
+  if(!token){rfc.toast("Сессия истекла — войди заново");return;}
+  return fetch("/api/tg/notify-order",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({kind:"wa_send",jid:jid,ctl:isOff?"unmute":"mute",minutes:1440})})
+   .then(function(r){return r.json().catch(function(){return {};});})
+   .then(function(j){
+    if(!j||!j.ok){rfc.toast("Не получилось — попробуй ещё раз");return;}
+    if(isOff)delete state.waMuted[jid];else state.waMuted[jid]=Date.now()+1440*60*1000;
+    renderCrm();
+    rfc.toast(isOff?"Бот снова отвечает в этом чате":"Бот на паузе в этом чате на 24 ч");
+   });
+ }).catch(function(){rfc.toast("Ошибка");});
+};
 // Отправка фото клиенту из CRM: файл → base64 → сервер грузит в Storage → бот шлёт картинкой
 rfc.waAttach=function(ev,jid){
  var f=ev.target&&ev.target.files&&ev.target.files[0];

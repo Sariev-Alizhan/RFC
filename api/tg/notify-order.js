@@ -223,6 +223,20 @@ async function handleWaSend(req, res) {
   const b = req.body || {};
   const jid = String(b.jid || '').slice(0, 120);
   const text = String(b.text || '').slice(0, 4000).trim();
+  // Управление ботом в чате: пауза/включение (бот заберёт из очереди и обновит muted)
+  if (b.ctl === 'mute' || b.ctl === 'unmute') {
+    if (!jid) return res.status(400).json({ error: 'jid required' });
+    const minutes = Math.min(Math.max(Number(b.minutes) || 30, 1), 10080);
+    try {
+      await ensureBucket(OUTBOX_BUCKET, false);
+      const name = `${Date.now()}-${crypto.randomUUID()}.json`;
+      const up = await sb.storage.from(OUTBOX_BUCKET).upload(name, Buffer.from(JSON.stringify({ jid, ctl: b.ctl, minutes })), {
+        contentType: 'application/json', upsert: false,
+      });
+      if (up.error) { console.error('wa_send ctl failed:', up.error.message); return res.status(200).json({ ok: false }); }
+      return res.status(200).json({ ok: true, id: name });
+    } catch (e) { console.error('wa_send ctl error:', e.message); return res.status(200).json({ ok: false }); }
+  }
   // Фото от менеджера: base64 → public bucket wa-media → в очередь уходит ссылка
   let media_url = null;
   try {
@@ -263,7 +277,7 @@ async function handleWaPoll(req, res) {
       if (!obj.name.endsWith('.json')) continue;
       const dl = await sb.storage.from(OUTBOX_BUCKET).download(obj.name);
       if (dl.error || !dl.data) continue;
-      try { const j = JSON.parse(await dl.data.text()); items.push({ id: obj.name, jid: j.jid, text: j.text, media_url: j.media_url || null }); }
+      try { const j = JSON.parse(await dl.data.text()); items.push({ id: obj.name, jid: j.jid, text: j.text, media_url: j.media_url || null, ctl: j.ctl || null, minutes: j.minutes || null }); }
       catch { await sb.storage.from(OUTBOX_BUCKET).remove([obj.name]); } // битый — убираем
     }
     return res.status(200).json({ items });
