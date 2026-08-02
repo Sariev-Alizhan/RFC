@@ -411,6 +411,13 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-item-mid span{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-item-time{font-size:11px;color:#aaa;flex:none}
 .wa-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.wa-search{width:100%;margin:0 0 12px;padding:11px 15px;border:1px solid #e3e5e8;border-radius:12px;font-size:13px;font-family:inherit;background:#fff;outline:none;transition:.15s}
+.wa-search:focus{border-color:#c7cbd1;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.wa-av{position:relative}
+.wa-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:#e11236;border:2px solid #fff}
+.wa-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
+.wa-need{font-size:9.5px;font-weight:800;color:#e11236;text-transform:uppercase;letter-spacing:.05em}
+.admin-tab .tab-c.hot{background:#e11236;color:#fff}
 .wa-funnel{border:1px solid #eee;border-radius:14px;padding:14px 16px;margin:0 0 14px;background:#fafafa}
 .wa-fun-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .wa-conv{font-size:12px;color:#666}.wa-conv b{color:#1a7d35;font-size:13px}
@@ -2132,6 +2139,8 @@ function cloudLoad(){
   state.crm=(r.data||[]).map(function(o){return {id:o.id,date:fmtDate(o.created_at),created_at:o.created_at,name:o.name,phone:o.phone,email:o.email,country:o.country,city:o.city,address:o.address,comment:o.comment,delivery:o.delivery,items:o.items||[],total:o.total,status:o.status};});
   renderCrm();
  });
+ // Чаты грузим сразу — чтобы счётчик «ждут ответа» на вкладке WhatsApp был виден с порога
+ if(!state.waLoaded&&!state.waLoading)rfc.waLoad();
 }
 function renderCrm(){
  var q=(state.crmSearch||"").trim().toLowerCase();
@@ -2171,7 +2180,7 @@ function renderCrm(){
    '<div class="crm-foot"><select class="crm-sel" onchange="rfc.crmStatus('+realIdx+',this.value)">'+opts+'</select>'+waBtn+mailBtn+'<button class="act" onclick="rfc.crmCopy('+realIdx+')">Скопировать</button><button class="act del" onclick="rfc.crmDel('+realIdx+')">Удалить</button></div></div>';
  }).join(""):(state.crm.length===0?'<div class="crm-empty"><span class="empty-em">'+ic("orders",44)+'</span><b>Пока нет заказов</b><span class="empty-sub">Когда покупатели оформят заказ через сайт, он появится здесь сразу же.</span></div>':'<div class="crm-empty"><span class="empty-em">'+ic("search",44)+'</span><b>Ничего не найдено</b><span class="empty-sub">Попробуй сбросить фильтры или изменить запрос.</span></div>');
  var tab=state.adminTab||"orders";
- var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">'+ic("orders",15)+'</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="analytics"?"on":"")+'" onclick="rfc.adminTab(\'analytics\')"><span class="tab-em">'+ic("chart",15)+'</span>Аналитика</button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">'+ic("chat",15)+'</span>WhatsApp</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">'+ic("box",15)+'</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">'+ic("studio",15)+'</span>AI Студия</button></div>';
+ var tabBar='<div class="admin-tabs"><button class="admin-tab '+(tab==="orders"?"on":"")+'" onclick="rfc.adminTab(\'orders\')"><span class="tab-em">'+ic("orders",15)+'</span>Заказы<span class="tab-c">'+total+'</span></button><button class="admin-tab '+(tab==="analytics"?"on":"")+'" onclick="rfc.adminTab(\'analytics\')"><span class="tab-em">'+ic("chart",15)+'</span>Аналитика</button><button class="admin-tab '+(tab==="wa"?"on":"")+'" onclick="rfc.adminTab(\'wa\')"><span class="tab-em">'+ic("chat",15)+'</span>WhatsApp'+(function(){var n=waNeedsReply();return n?'<span class="tab-c hot">'+n+'</span>':"";})()+'</button><button class="admin-tab '+(tab==="catalog"?"on":"")+'" onclick="rfc.adminTab(\'catalog\')"><span class="tab-em">'+ic("box",15)+'</span>Каталог</button><button class="admin-tab '+(tab==="ai"?"on":"")+'" onclick="rfc.adminTab(\'ai\')"><span class="tab-em">'+ic("studio",15)+'</span>AI Студия</button></div>';
  var ordersBlock='<div class="crm-stats"><div class="stat"><span class="stat-em">'+ic("chart",20)+'</span><b>'+total+'</b><span>Всего заказов</span></div><div class="stat kpi-red"><span class="stat-em">'+ic("spark",20)+'</span><b>'+fresh+'</b><span>Новых</span></div><div class="stat kpi-amber"><span class="stat-em">'+ic("clock",20)+'</span><b>'+inProgress+'</b><span>В работе</span></div><div class="stat"><span class="stat-em">'+ic("wallet",20)+'</span><b>'+fmt(revenue)+'</b><span>Сумма</span></div></div>'+searchBar+'<div class="crm-chips">'+chips+'</div><div class="crm-list">'+rows+'</div>';
  $("#crm").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
@@ -2215,6 +2224,13 @@ function renderAnalyticsBlock(){
 function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
 function waJid(j){return String(j==null?"":j).replace(/[^a-zA-Z0-9@._-]/g,"");}
+// Сколько чатов ждут ответа (последнее сообщение — от клиента)
+function waNeedsReply(){
+ var last={};
+ (state.waMsgs||[]).forEach(function(m){var t=new Date(m.created_at);if(!last[m.jid]||t>last[m.jid].t)last[m.jid]={t:t,s:m.sender};});
+ var n=0;Object.keys(last).forEach(function(k){if(last[k].s==="customer")n++;});
+ return n;
+}
 // Воронка отработки клиента: этап + % по переписке и заказам из CRM (матч по номеру)
 function waFunnel(c){
  var msgs=c.items||[];
@@ -2270,9 +2286,9 @@ function renderWaBlock(){
   return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
  }
  // Список диалогов + фильтр по этапу воронки
- list.forEach(function(c){c._f=waFunnel(c);});
- // Горящие (ждут ответа) — всегда наверху, остальные по свежести
- list.sort(function(a,b){var wa=a._f.k==="wait"?0:1,wb=b._f.k==="wait"?0:1;return wa-wb||new Date(b.last.created_at)-new Date(a.last.created_at);});
+ list.forEach(function(c){c._f=waFunnel(c);c._need=c.last.sender==="customer";});
+ // Требующие ответа (последнее слово за клиентом) — всегда наверху, остальные по свежести
+ list.sort(function(a,b){return (a._need?0:1)-(b._need?0:1)||new Date(b.last.created_at)-new Date(a.last.created_at);});
  // Сводка воронки: распределение по этапам + конверсия в оплату
  var ST=[["wait","Ждут ответа"],["bot","Бот"],["mgr","Менеджер"],["order","Заказ"],["paid","Оплачен+"],["cancel","Отменён"]];
  var SC={wait:"#e11236",bot:"#f59e0b",mgr:"#3b82f6",order:"#8b5cf6",paid:"#10b981",cancel:"#c4c8cf"};
@@ -2290,13 +2306,25 @@ function renderWaBlock(){
   return '<button class="chip '+(F===b[0]?"on":"")+'" onclick="rfc.waFilter(\''+b[0]+'\')">'+b[1]+'<span class="chip-c">'+n+'</span></button>';
  }).join("")+'</div>';
  var shown=F==="all"?list:list.filter(function(c){return c._f.k===F;});
+ // Поиск: имя, номер, текст любого сообщения чата
+ var q=(state.waSearch||"").trim().toLowerCase(),qd=q.replace(/[^\d]/g,"");
+ if(q){
+  shown=shown.filter(function(c){
+   if((c.name||"").toLowerCase().indexOf(q)>=0)return true;
+   if(qd&&(c.phone||"").indexOf(qd)>=0)return true;
+   return c.items.some(function(m){return (m.text||"").toLowerCase().indexOf(q)>=0;});
+  });
+ }
+ var search='<input id="waSearch" class="wa-search" placeholder="Поиск: имя, номер, текст сообщения…" value="'+waEsc(state.waSearch||"")+'" oninput="rfc.waSetSearch(this.value)" autocomplete="off">';
  var rows=shown.map(function(c){
   var title=c.name||("+"+(c.phone||""));
   var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?ic("bot",11)+" ":ic("user",11)+" "))+waEsc(waLastText(c.last).slice(0,60));
-  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(c._f)+'</div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
+  var dot=c._need?'<span class="wa-dot"></span>':"";
+  var right='<div class="wa-item-right"><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span>'+(c._need?'<span class="wa-need">ответить</span>':"")+'</div>';
+  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+dot+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(c._f)+'</div>'+right+'</button>';
  }).join("");
- if(!rows)rows='<div style="text-align:center;color:#999;font-size:13px;padding:30px 0">На этом этапе диалогов нет</div>';
- return refresh+summary+chips+'<div class="wa-list">'+rows+'</div>';
+ if(!rows)rows='<div style="text-align:center;color:#999;font-size:13px;padding:30px 0">'+(q?"Ничего не найдено":"На этом этапе диалогов нет")+'</div>';
+ return refresh+summary+search+chips+'<div class="wa-list">'+rows+'</div>';
 }
 function renderAiBlock(){
  var els=[{name:"rfc-navy-cap",label:"Navy кепка"},{name:"rfc-flag-tee",label:"Чёрная футболка"},{name:"rfc-camo-cap",label:"Камо-кепка"}];
@@ -2358,11 +2386,12 @@ rfc.waLoad=function(){
   state.waLoading=false;state.waLoaded=true;
   if(r.error){state.waError=r.error.message;}
   else{state.waMsgs=r.data||[];}
-  if(state.adminTab==="wa")renderCrm();
+  renderCrm(); // и вкладку, и бейдж «ждут ответа» на табе
  });
 };
 rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
 rfc.waFilter=function(k){state.waFilter=k;renderCrm();};
+rfc.waSetSearch=function(v){state.waSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('waSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 rfc.waBack=function(){state.waActive=null;renderCrm();};
 function waMediaLabel(t){return t==="image"?"📷 Фото":t==="video"?"🎥 Видео":t==="audio"?"🎤 Голосовое":t==="document"?"📎 Файл":"";}
 // Медиа хранится в text как "[img] <url>\n<подпись>" (без спец-колонок). Разбираем.
@@ -2430,12 +2459,16 @@ function waAutoRefresh(on){
    var old=state.waMsgs||[];
    var k=function(m){return m?(m.id||m.created_at||""):"";};
    if(fresh.length===old.length&&k(fresh[0])===k(old[0]))return;
-   // сохраняем набранный текст и фокус в поле ответа открытого чата
+   // сохраняем набранный текст и фокус в поле ответа/поиска
    var inp=document.getElementById('waReplyInput');
    var val=inp?inp.value:null,foc=inp&&document.activeElement===inp;
+   var si=document.getElementById('waSearch');
+   var sval=si?si.value:null,sfoc=si&&document.activeElement===si;
    state.waMsgs=fresh;renderCrm();
    var ni=document.getElementById('waReplyInput');
    if(ni&&val!=null){ni.value=val;if(foc){ni.focus();try{ni.setSelectionRange(val.length,val.length);}catch(_){}}}
+   var nsi=document.getElementById('waSearch');
+   if(nsi&&sval!=null){nsi.value=sval;if(sfoc){nsi.focus();try{nsi.setSelectionRange(sval.length,sval.length);}catch(_){}}}
    var th=document.querySelector('.wa-thread');if(th)th.scrollTop=th.scrollHeight;
   });
  },12000);
