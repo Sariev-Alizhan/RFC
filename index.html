@@ -2385,13 +2385,16 @@ function renderWaBlock(){
  var leg=ST.map(function(s){var n=cnt[s[0]]||0;return n?'<span class="wa-leg"><i style="background:'+SC[s[0]]+'"></i>'+s[1]+' · <b>'+n+'</b></span>':"";}).join("");
  var summary='<div class="wa-funnel"><div class="wa-fun-top"><span class="ai-lbl">Воронка клиентов</span><span class="wa-conv">Конверсия в оплату: <b>'+conv+'%</b></span></div><div class="wa-fun-bar">'+segs+'</div><div class="wa-fun-leg">'+leg+'</div></div>';
  var F=state.waFilter||"all";
- var buckets=[["all","Все"],["wait","Ждут ответа"],["bot","Бот"],["mgr","Менеджер"],["order","Заказ"],["paid","Оплачен+"],["cancel","Отменён"]];
+ // «Предзаказ» — клиенты, интересовавшиеся тем, чего ещё нет в продаже (для запуска худи)
+ var PRE_RE=/худи|свитшот|трус|носк|предзаказ|hoodie/i;
+ var isPre=function(c){return c.items.some(function(m){return m.sender==="customer"&&PRE_RE.test(m.text||"");});};
+ var buckets=[["all","Все"],["wait","Ждут ответа"],["bot","Бот"],["mgr","Менеджер"],["order","Заказ"],["paid","Оплачен+"],["pre","Предзаказ"],["cancel","Отменён"]];
  var chips='<div class="wa-filters">'+buckets.map(function(b){
-  var n=b[0]==="all"?list.length:list.filter(function(c){return c._f.k===b[0];}).length;
+  var n=b[0]==="all"?list.length:(b[0]==="pre"?list.filter(isPre).length:list.filter(function(c){return c._f.k===b[0];}).length);
   if(!n&&b[0]!=="all")return "";
   return '<button class="chip '+(F===b[0]?"on":"")+'" onclick="rfc.waFilter(\''+b[0]+'\')">'+b[1]+'<span class="chip-c">'+n+'</span></button>';
  }).join("")+'</div>';
- var shown=F==="all"?list:list.filter(function(c){return c._f.k===F;});
+ var shown=F==="all"?list:(F==="pre"?list.filter(isPre):list.filter(function(c){return c._f.k===F;}));
  // Поиск: имя, номер, текст любого сообщения чата
  var q=(state.waSearch||"").trim().toLowerCase(),qd=q.replace(/[^\d]/g,"");
  if(q){
