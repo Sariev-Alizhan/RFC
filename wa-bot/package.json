@@ -6,7 +6,8 @@
   "description": "WhatsApp продажник RFC (Red Flag Community) — гибрид: сценарии + Claude AI. Подключение сканированием QR.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "check": "node check.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

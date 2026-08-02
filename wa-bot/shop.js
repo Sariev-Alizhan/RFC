@@ -20,7 +20,8 @@ export const PRODUCTS = [
   { key: "cap",     name: 'Кепка "RFC Logo"',             price: 15000, sized: false, selling: true,  match: ["кепк", "cap", "бейсболк"] },
   { key: "hoodie",  name: 'Худи "Red Flag Community"',    price: 29000, sized: true,  selling: false, status: "открываем предзаказ", match: ["худи", "hoodie", "толстовк"] },
   { key: "sweat",   name: 'Свитшот "Red Flag Community"', price: 29000, sized: true,  selling: false, status: "открываем предзаказ", match: ["свитшот", "sweat", "кофт"] },
-  { key: "boxers",  name: 'Трусы "Red Flag Community"',   price: 29000, sized: true,  selling: false, status: "появятся совсем скоро", match: ["трус", "боксер", "белье", "бельё", "boxers", "носк"] },
+  { key: "boxers",  name: 'Трусы "Red Flag Community"',   price: 29000, sized: true,  selling: false, status: "появятся совсем скоро", match: ["трус", "боксер", "белье", "бельё", "boxers"] },
+  { key: "socks",   name: 'Носки "RFC"',                  price: 0,     sized: false, selling: false, status: "появятся совсем скоро", match: ["носк", "socks"] },
 ];
 export const SELLING = PRODUCTS.filter((p) => p.selling);
 
