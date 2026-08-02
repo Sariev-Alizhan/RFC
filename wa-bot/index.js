@@ -26,8 +26,9 @@ process.on("uncaughtException", (e) => console.error("[uncaught]", e?.message ||
 process.on("unhandledRejection", (e) => console.error("[unhandledRejection]", e?.message || e));
 
 // Живой QR в браузере — авто-обновляется каждые 2с, чтобы не сканировать протухший код.
-// Открой http://localhost:8099
-const QR_PORT = 8099;
+// Локально: http://localhost:8099. На сервере (Railway/VPS задаёт PORT) слушаем наружу.
+const QR_PORT = Number(process.env.PORT || process.env.QR_PORT || 8099);
+const QR_HOST = process.env.PORT ? "0.0.0.0" : "127.0.0.1";
 try {
   http.createServer((req, res) => {
     if (req.url && req.url.indexOf("/qr.png") === 0) {
@@ -48,7 +49,7 @@ try {
       '<div id="ok" style="display:none;color:#1a7d35;font-size:20px;font-weight:600">✅ Подключено (или ждём новый QR)</div>' +
       '<script>setInterval(function(){var i=document.getElementById("q");i.style.display="";document.getElementById("ok").style.display="none";i.src="/qr.png?"+Date.now();},2000)</script>' +
       '</body></html>');
-  }).listen(QR_PORT, "127.0.0.1", () => console.log(`🌐 Живой QR: открой http://localhost:${QR_PORT}`))
+  }).listen(QR_PORT, QR_HOST, () => console.log(`🌐 Живой QR: открой http://localhost:${QR_PORT}`))
     .on("error", (e) => console.error("[qr-server]", e.code || e.message));
 } catch (e) { console.error("[qr-server]", e?.message || e); }
 
@@ -364,7 +365,10 @@ async function start() {
   const authDir = path.join(__dirname, "auth");
   // Свежая привязка = ещё нет creds. Только тогда импортируем историю (иначе на обычном
   // реконнекте не пере-заливаем старые чаты — «только вперёд», без задвоений в CRM).
-  const freshLink = !fs.existsSync(path.join(authDir, "creds.json"));
+  // WA_SKIP_HISTORY=1 — не импортировать историю даже при свежей привязке
+  // (нужно при перепривязке на сервере, чтобы не задвоить старые чаты в CRM)
+  const skipHistory = process.env.WA_SKIP_HISTORY === "1";
+  const freshLink = !fs.existsSync(path.join(authDir, "creds.json")) && !skipHistory;
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
   const { version } = await fetchLatestBaileysVersion();
 
@@ -374,7 +378,7 @@ async function start() {
     logger,
     markOnlineOnConnect: false,
     qrTimeout: 60000, // держим один QR дольше — успеть отсканировать
-    syncFullHistory: true, // подтянуть историю чатов при привязке → в CRM
+    syncFullHistory: !skipHistory, // подтянуть историю чатов при привязке → в CRM
     browser: ["RFC Продажник", "Desktop", "1.0"], // Desktop даёт больше истории
   });
 
