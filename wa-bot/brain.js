@@ -120,7 +120,7 @@ export async function think(session, text) {
   const key = intent(t);
   switch (key) {
     case "welcome":  return { reply: T.welcome, sticker: true };
-    case "catalog":  return { reply: T.catalog };
+    case "catalog":  return { reply: T.catalog, catalog: true };
     case "sizes":    return { reply: T.sizes };
     case "delivery": return { reply: T.delivery };
     case "payment":  return { reply: T.payment };

@@ -86,6 +86,22 @@ export async function pollOutbox() {
   } catch { return []; }
 }
 
+// Товары с фото для каталога в WhatsApp. Возвращает [{name, price, image}].
+export async function fetchProducts() {
+  if (!NOTIFY_ENABLED) return [];
+  try {
+    const r = await fetch(URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SECRET}` },
+      body: JSON.stringify({ kind: 'wa_products' }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return [];
+    const data = await r.json().catch(() => null);
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch { return []; }
+}
+
 // Отметить исходящее отправленным/ошибочным.
 export async function markSent(id, ok) {
   return post({ kind: 'wa_sent', id, ok: Boolean(ok) });

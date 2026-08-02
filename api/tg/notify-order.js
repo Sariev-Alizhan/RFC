@@ -294,6 +294,21 @@ async function handleWaSent(req, res) {
   return res.status(200).json({ ok: true });
 }
 
+// Товары с фото для бота (каталог в WhatsApp): только доступные и с картинкой
+async function handleWaProducts(req, res) {
+  if (!sb) return res.status(200).json({ items: [] });
+  const { data, error } = await sb.from('rfc_products')
+    .select('name,price,images,available,sort_order')
+    .eq('available', true)
+    .order('sort_order')
+    .limit(12);
+  if (error) { console.error('wa_products:', error.message); return res.status(200).json({ items: [] }); }
+  const items = (data || [])
+    .filter(p => Array.isArray(p.images) && p.images[0])
+    .map(p => ({ name: p.name, price: Number(p.price) || 0, image: p.images[0] }));
+  return res.status(200).json({ items });
+}
+
 // Уведомление менеджерам о новом входящем сообщении клиента (WhatsApp).
 function formatIncoming(b) {
   const phone = String(b.phone || '').replace(/[^\d]/g, '');
@@ -458,13 +473,14 @@ export default async function handler(req, res) {
   const waKind = req.body?.kind;
   // Ответ из CRM: авторизация сессией Supabase (JWT менеджера), не секретом бота
   if (waKind === 'wa_send') return handleWaSend(req, res);
-  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest', 'wa_waiting'];
+  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest', 'wa_waiting', 'wa_products'];
   if (WA_KINDS.includes(waKind)) {
     if (!safeEq(rawAuth, WA_BOT_SECRET)) return res.status(401).json({ error: 'Unauthorized' });
     if (waKind === 'wa_msg')   return handleWaMsg(req, res);
     if (waKind === 'wa_media') return handleWaMedia(req, res);
     if (waKind === 'wa_poll')  return handleWaPoll(req, res);
     if (waKind === 'wa_sent')  return handleWaSent(req, res);
+    if (waKind === 'wa_products') return handleWaProducts(req, res);
     if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
     if (waKind === 'wa_incoming') return handleWaIncoming(req, res);
     if (waKind === 'wa_night_digest') return handleWaNightDigest(req, res);

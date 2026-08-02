@@ -59,7 +59,17 @@ try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp"));
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, notifyIncoming, notifyNightDigest, notifyWaiting, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, notifyIncoming, notifyNightDigest, notifyWaiting, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, fetchProducts, NOTIFY_ENABLED } from "./notify.js";
+
+// Кэш товаров для фото-каталога (обновляем раз в 10 мин) + антиспам фото по чату
+const productsCache = { ts: 0, items: [] };
+async function getProducts() {
+  if (Date.now() - productsCache.ts < 10 * 60 * 1000 && productsCache.items.length) return productsCache.items;
+  const items = await fetchProducts();
+  if (items.length) { productsCache.ts = Date.now(); productsCache.items = items; }
+  return productsCache.items;
+}
+const catalogSent = new Map(); // jid -> ts (фото-каталог не чаще раза в 30 мин на чат)
 
 const logger = pino({ level: "silent" });
 
@@ -479,6 +489,27 @@ async function start() {
     return sent;
   }
 
+  // Фото-каталог: до 4 карточек товаров с картинками (после текстового каталога)
+  async function sendCatalogPhotos(sendJid, jid, phone) {
+    if (Date.now() - (catalogSent.get(jid) || 0) < 30 * 60 * 1000) return;
+    const items = (await getProducts()).slice(0, 4);
+    if (!items.length) return;
+    catalogSent.set(jid, Date.now());
+    for (const p of items) {
+      try {
+        const r = await fetch(p.image, { signal: AbortSignal.timeout(15000) });
+        if (!r.ok) continue;
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (!buf.length || buf.length > 6 * 1024 * 1024) continue;
+        const caption = `${p.name} — ${Number(p.price).toLocaleString("ru-RU").replace(/,/g, " ")} ₸`;
+        const sent = await sock.sendMessage(sendJid, { image: buf, caption });
+        rememberBotMsg(sent?.key?.id);
+        logMessage({ jid, phone, sender: "bot", text: "[img] " + p.image + "\n" + caption }).catch(() => {});
+        await new Promise((r2) => setTimeout(r2, 700)); // пауза между карточками
+      } catch (e) { console.error("[catalog]", e?.message || e); }
+    }
+  }
+
   // Отправка брендового стикера «красный флаг»
   async function sendSticker(jid) {
     if (!FLAG_STICKER) return;
@@ -571,7 +602,7 @@ async function start() {
 
     try {
       const session = getSession(jid);
-      const { reply, mute, notify, order, sticker } = await think(session, text);
+      const { reply, mute, notify, order, sticker, catalog } = await think(session, text);
 
       // Запрос менеджера — уведомляем в Telegram + следим, чтобы клиент не ждал зря
       if (notify) {
@@ -586,6 +617,9 @@ async function start() {
 
       // Брендовый флаг RFC в ключевые моменты (приветствие, оформленный заказ)
       if (sticker) await sendSticker(sendJid);
+
+      // Каталог: следом за текстом шлём карточки товаров с фото
+      if (catalog) await sendCatalogPhotos(sendJid, jid, phone).catch(() => {});
 
       // Оформленный заказ — создаём реальный заказ в CRM + follow-up с номером
       if (order) {
