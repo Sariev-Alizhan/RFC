@@ -411,6 +411,15 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-item-mid span{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-item-time{font-size:11px;color:#aaa;flex:none}
 .wa-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.wa-funnel{border:1px solid #eee;border-radius:14px;padding:14px 16px;margin:0 0 14px;background:#fafafa}
+.wa-fun-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.wa-conv{font-size:12px;color:#666}.wa-conv b{color:#1a7d35;font-size:13px}
+.wa-fun-bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:#eceef1;gap:2px}
+.wa-fun-bar div{height:100%;min-width:6px;transition:flex .35s ease}
+.wa-fun-leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px}
+.wa-leg{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#666}
+.wa-leg b{color:var(--ink)}
+.wa-leg i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
 .wa-prog{display:flex;align-items:center;gap:8px;margin-top:3px;min-width:0}
 .wa-prog-bar{flex:none;width:104px;height:4px;border-radius:99px;background:#eceef1;overflow:hidden}
 .wa-prog-bar div{height:100%;border-radius:99px;transition:width .35s ease}
@@ -2262,6 +2271,17 @@ function renderWaBlock(){
  }
  // Список диалогов + фильтр по этапу воронки
  list.forEach(function(c){c._f=waFunnel(c);});
+ // Горящие (ждут ответа) — всегда наверху, остальные по свежести
+ list.sort(function(a,b){var wa=a._f.k==="wait"?0:1,wb=b._f.k==="wait"?0:1;return wa-wb||new Date(b.last.created_at)-new Date(a.last.created_at);});
+ // Сводка воронки: распределение по этапам + конверсия в оплату
+ var ST=[["wait","Ждут ответа"],["bot","Бот"],["mgr","Менеджер"],["order","Заказ"],["paid","Оплачен+"],["cancel","Отменён"]];
+ var SC={wait:"#e11236",bot:"#f59e0b",mgr:"#3b82f6",order:"#8b5cf6",paid:"#10b981",cancel:"#c4c8cf"};
+ var cnt={};list.forEach(function(c){cnt[c._f.k]=(cnt[c._f.k]||0)+1;});
+ var active=list.length-(cnt.cancel||0);
+ var conv=active?Math.round((cnt.paid||0)/active*100):0;
+ var segs=ST.map(function(s){var n=cnt[s[0]]||0;return n?'<div style="flex:'+n+';background:'+SC[s[0]]+'" title="'+s[1]+': '+n+'"></div>':"";}).join("");
+ var leg=ST.map(function(s){var n=cnt[s[0]]||0;return n?'<span class="wa-leg"><i style="background:'+SC[s[0]]+'"></i>'+s[1]+' · <b>'+n+'</b></span>':"";}).join("");
+ var summary='<div class="wa-funnel"><div class="wa-fun-top"><span class="ai-lbl">Воронка клиентов</span><span class="wa-conv">Конверсия в оплату: <b>'+conv+'%</b></span></div><div class="wa-fun-bar">'+segs+'</div><div class="wa-fun-leg">'+leg+'</div></div>';
  var F=state.waFilter||"all";
  var buckets=[["all","Все"],["wait","Ждут ответа"],["bot","Бот"],["mgr","Менеджер"],["order","Заказ"],["paid","Оплачен+"],["cancel","Отменён"]];
  var chips='<div class="wa-filters">'+buckets.map(function(b){
@@ -2276,7 +2296,7 @@ function renderWaBlock(){
   return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(c._f)+'</div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
  }).join("");
  if(!rows)rows='<div style="text-align:center;color:#999;font-size:13px;padding:30px 0">На этом этапе диалогов нет</div>';
- return refresh+chips+'<div class="wa-list">'+rows+'</div>';
+ return refresh+summary+chips+'<div class="wa-list">'+rows+'</div>';
 }
 function renderAiBlock(){
  var els=[{name:"rfc-navy-cap",label:"Navy кепка"},{name:"rfc-flag-tee",label:"Чёрная футболка"},{name:"rfc-camo-cap",label:"Камо-кепка"}];
