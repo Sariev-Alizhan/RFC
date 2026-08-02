@@ -410,6 +410,11 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-item-mid b{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-item-mid span{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-item-time{font-size:11px;color:#aaa;flex:none}
+.wa-prog{display:flex;align-items:center;gap:8px;margin-top:3px;min-width:0}
+.wa-prog-bar{flex:none;width:104px;height:4px;border-radius:99px;background:#eceef1;overflow:hidden}
+.wa-prog-bar div{height:100%;border-radius:99px;transition:width .35s ease}
+.wa-stage{font-size:10.5px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-stage-big{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;margin-top:4px;letter-spacing:.02em;width:fit-content;white-space:nowrap;align-self:center}
 .wa-chat{border:1px solid #eee;border-radius:16px;overflow:hidden;background:#fff}
 .wa-chat-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid #eee;background:#fafafa}
 .wa-chat-who{flex:1;text-align:center;display:flex;flex-direction:column;gap:1px}
@@ -2200,6 +2205,33 @@ function renderAnalyticsBlock(){
 function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
 function waJid(j){return String(j==null?"":j).replace(/[^a-zA-Z0-9@._-]/g,"");}
+// Воронка отработки клиента: этап + % по переписке и заказам из CRM (матч по номеру)
+function waFunnel(c){
+ var msgs=c.items||[];
+ var hasBot=false,hasMgr=false;
+ msgs.forEach(function(m){if(m.sender==="bot")hasBot=true;if(m.sender==="manager")hasMgr=true;});
+ var tail=waPhone(c.phone).slice(-10);
+ var rank={"Отменён":-1,"Новый":1,"Связались":2,"Оплачен":3,"Отправлен":4,"Доставлен":5};
+ var best=null,bestR=-99;
+ (state.crm||[]).forEach(function(o){
+  var p=String(o.phone||"").replace(/[^\d]/g,"");
+  if(!tail||p.slice(-10)!==tail)return;
+  var r=rank[o.status]||0;
+  if(best===null||r>bestR){best=o.status;bestR=r;}
+ });
+ if(best==="Доставлен") return {pct:100,label:"Доставлен",color:"#1a7d35"};
+ if(best==="Отправлен") return {pct:90, label:"Отправлен",color:"#0d9488"};
+ if(best==="Оплачен")   return {pct:80, label:"Оплачен",color:"#10b981"};
+ if(best==="Связались") return {pct:70, label:"Заказ · связались",color:"#8b5cf6"};
+ if(best==="Новый")     return {pct:60, label:"Заказ оформлен",color:"#8b5cf6"};
+ if(best==="Отменён")   return {pct:100,label:"Отменён",color:"#9ca3af"};
+ if(hasMgr) return {pct:45,label:"Менеджер в диалоге",color:"#3b82f6"};
+ if(hasBot) return {pct:25,label:"Бот консультирует",color:"#f59e0b"};
+ return {pct:10,label:"Новый — ждёт ответа",color:"#e11236"};
+}
+function waFunnelBar(f){
+ return '<div class="wa-prog"><div class="wa-prog-bar"><div style="width:'+f.pct+'%;background:'+f.color+'"></div></div><span class="wa-stage" style="color:'+f.color+'">'+f.label+' · '+f.pct+'%</span></div>';
+}
 function renderWaBlock(){
  if(state.waLoading)return '<div class="wrap" style="padding:50px 0;text-align:center;color:#999">Загрузка чатов…</div>';
  if(state.waError)return '<div class="crm-empty"><span class="empty-em">'+ic("warn",44)+'</span><b>Не удалось загрузить</b><span class="empty-sub">'+waEsc(state.waError)+'</span></div>';
@@ -2223,13 +2255,16 @@ function renderWaBlock(){
   var waHref=waPhone(c.phone)?'https://wa.me/'+waPhone(c.phone):'#';
   var jidAttr=waEsc(c.jid).replace(/'/g,"\\'");
   var composer='<form class="wa-reply" onsubmit="return rfc.waSend(event,\''+jidAttr+'\')"><input id="waReplyInput" class="wa-reply-in" placeholder="Ответить клиенту…" autocomplete="off"><button class="wa-reply-btn" type="submit" title="Отправить">'+waIcon(16)+'</button></form>';
-  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span></div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
+  var f=waFunnel(c);
+  var chip='<span class="wa-stage-big" style="color:'+f.color+';background:'+f.color+'14;border:1px solid '+f.color+'33">'+f.label+' · '+f.pct+'%</span>';
+  return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
  }
  // Список диалогов
  var rows=list.map(function(c){
   var title=c.name||("+"+(c.phone||""));
   var preview=(c.last.sender==="customer"?"":(c.last.sender==="bot"?ic("bot",11)+" ":ic("user",11)+" "))+waEsc(waLastText(c.last).slice(0,60));
-  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span></div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
+  var f=waFunnel(c);
+  return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(f)+'</div><span class="wa-item-time">'+fmtDate(c.last.created_at)+'</span></button>';
  }).join("");
  return refresh+'<div class="wa-list">'+rows+'</div>';
 }
