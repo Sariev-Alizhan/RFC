@@ -2193,6 +2193,41 @@ function renderCrm(){
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:24px">RFC · CRM</div>'+(CLOUD?'<button class="act" onclick="rfc.adminLogout()">Выйти</button>':'<span style="width:46px"></span>')+'</div></div>'+
  '<div class="wrap crm">'+tabBar+(tab==="analytics"?renderAnalyticsBlock():(tab==="wa"?renderWaBlock():(tab==="ai"?renderAiBlock():(tab==="catalog"?renderCatalogBlock():ordersBlock))))+'</div>';
 }
+// Метрики WhatsApp для Аналитики: диалоги, конверсия чат→заказ, скорость ответа, ночные
+function waAnalytics(){
+ var msgs=state.waMsgs||[];
+ if(!msgs.length)return null;
+ var chats={};
+ msgs.forEach(function(m){(chats[m.jid]=chats[m.jid]||[]).push(m);});
+ var jids=Object.keys(chats);
+ var now=Date.now(),d7=now-7*864e5;
+ var new7=0;
+ jids.forEach(function(j){
+  var first=Infinity;
+  chats[j].forEach(function(m){var t=+new Date(m.created_at);if(t<first)first=t;});
+  if(first>=d7)new7++;
+ });
+ var ordPhones={};
+ (state.crm||[]).forEach(function(o){var p=String(o.phone||"").replace(/[^\d]/g,"").slice(-10);if(p)ordPhones[p]=1;});
+ var withOrder=0;
+ jids.forEach(function(j){var ph=String((chats[j][0]||{}).phone||j.split("@")[0]).replace(/[^\d]/g,"").slice(-10);if(ph&&ordPhones[ph])withOrder++;});
+ var conv=jids.length?Math.round(withOrder/jids.length*100):0;
+ // среднее время первого ответа менеджера (по чатам, где менеджер отвечал)
+ var rts=[];
+ jids.forEach(function(j){
+  var items=chats[j].slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);});
+  var cust=null;
+  for(var i=0;i<items.length;i++){
+   var m=items[i];
+   if(m.sender==="customer"&&cust===null)cust=+new Date(m.created_at);
+   if(m.sender==="manager"&&cust!==null){rts.push(+new Date(m.created_at)-cust);break;}
+  }
+ });
+ var avgMin=rts.length?Math.round(rts.reduce(function(a,b){return a+b;},0)/rts.length/60000):null;
+ var night7=0;
+ msgs.forEach(function(m){if(m.sender!=="customer")return;var d=new Date(m.created_at);if(+d>=d7&&d.getHours()<8)night7++;});
+ return {total:jids.length,new7:new7,need:waNeedsReply(),conv:conv,avgMin:avgMin,night7:night7};
+}
 function renderAnalyticsBlock(){
  var orders=state.crm||[];
  if(!orders.length) return '<div class="crm-empty"><span class="empty-em">'+ic("chart",44)+'</span><b>Пока нет данных</b><span class="empty-sub">Аналитика появится, когда будут заказы.</span></div>';
@@ -2226,7 +2261,22 @@ function renderAnalyticsBlock(){
  '</div>'+
  '<div class="an-periods"><div class="an-p"><span>Сегодня</span><b>'+fmt(pRev(1))+'</b><i>'+pCnt(1)+' зак.</i></div><div class="an-p"><span>7 дней</span><b>'+fmt(pRev(7))+'</b><i>'+pCnt(7)+' зак.</i></div><div class="an-p"><span>30 дней</span><b>'+fmt(pRev(30))+'</b><i>'+pCnt(30)+' зак.</i></div></div>'+
  '<div class="an-card"><div class="an-h">Выручка · последние 14 дней</div><div class="an-bars">'+bars+'</div></div>'+
- '<div class="an-grid"><div class="an-card"><div class="an-h">Топ товаров</div>'+topRows+'</div><div class="an-card"><div class="an-h">Заказы по статусам</div>'+stRows+'</div></div>';
+ '<div class="an-grid"><div class="an-card"><div class="an-h">Топ товаров</div>'+topRows+'</div><div class="an-card"><div class="an-h">Заказы по статусам</div>'+stRows+'</div></div>'+
+ (function(){
+  var wa=waAnalytics();
+  if(!wa)return "";
+  function mins(m){return m==null?"—":(m<60?m+" мин":(Math.round(m/6)/10)+" ч");}
+  function cell(v,l,c){return '<div class="an-p"><span>'+l+'</span><b'+(c?' style="color:'+c+'"':'')+'>'+v+'</b></div>';}
+  return '<div class="an-card" style="margin-top:14px"><div class="an-h">WhatsApp · диалоги</div>'+
+   '<div class="an-periods" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:0">'+
+   cell(wa.total,"Диалогов всего")+
+   cell(wa.new7,"Новых за 7 дней")+
+   cell(wa.need,"Ждут ответа",wa.need?"#e11236":null)+
+   cell(wa.conv+"%","Чат → заказ",wa.conv>=20?"#1a7d35":null)+
+   cell(mins(wa.avgMin),"Ср. ответ менеджера")+
+   cell(wa.night7,"Ночных за 7 дней")+
+   '</div></div>';
+ })();
 }
 function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
