@@ -492,7 +492,9 @@ async function start() {
   // Фото-каталог: до 4 карточек товаров с картинками (после текстового каталога)
   async function sendCatalogPhotos(sendJid, jid, phone) {
     if (Date.now() - (catalogSent.get(jid) || 0) < 30 * 60 * 1000) return;
-    const items = (await getProducts()).slice(0, 4);
+    // Дедуп по названию (в базе есть цветовые вариации) — 4 карточки = 4 разных товара
+    const seen = new Set();
+    const items = (await getProducts()).filter((p) => !seen.has(p.name) && seen.add(p.name)).slice(0, 4);
     if (!items.length) return;
     catalogSent.set(jid, Date.now());
     for (const p of items) {
