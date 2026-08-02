@@ -294,17 +294,21 @@ async function handleWaSent(req, res) {
   return res.status(200).json({ ok: true });
 }
 
-// Товары с фото для бота (каталог в WhatsApp): только доступные и с картинкой
+// Товары с фото для бота (каталог в WhatsApp): только то, что реально продаём сейчас.
+// НЕ отдаём предзаказ/«скоро» — синхронизировано с isSoon/isPreorder в index.html.
+const WA_NOT_SELLING_TYPES = ['hoodie', 'sweat', 'boxers', 'socks'];
+const WA_NOT_SELLING_NAME = /трус|носк|боксер|худи|свитшот/i;
 async function handleWaProducts(req, res) {
   if (!sb) return res.status(200).json({ items: [] });
   const { data, error } = await sb.from('rfc_products')
-    .select('name,price,images,available,sort_order')
+    .select('name,price,images,available,sort_order,type')
     .eq('available', true)
     .order('sort_order')
-    .limit(12);
+    .limit(20);
   if (error) { console.error('wa_products:', error.message); return res.status(200).json({ items: [] }); }
   const items = (data || [])
     .filter(p => Array.isArray(p.images) && p.images[0])
+    .filter(p => !WA_NOT_SELLING_TYPES.includes(String(p.type || '')) && !WA_NOT_SELLING_NAME.test(String(p.name || '')))
     .map(p => ({ name: p.name, price: Number(p.price) || 0, image: p.images[0] }));
   return res.status(200).json({ items });
 }

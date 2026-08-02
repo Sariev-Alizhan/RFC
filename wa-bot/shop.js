@@ -12,13 +12,22 @@ export const SHOP = {
 };
 
 // Товары. key — для распознавания в тексте, price — в тенге (₸).
+// selling:false = НЕ продаём сейчас (предзаказ/скоро) — бот такое не предлагает,
+// а при вопросе говорит статус и направляет на менеджера. Синхронизировано с
+// isSoon/isPreorder в index.html (hoodie=предзаказ, sweat/boxers=скоро).
 export const PRODUCTS = [
-  { key: "hoodie",  name: 'Худи "Red Flag Community"',    price: 29000, sized: true,  match: ["худи", "hoodie", "толстовк"] },
-  { key: "sweat",   name: 'Свитшот "Red Flag Community"', price: 29000, sized: true,  match: ["свитшот", "sweat", "кофт"] },
-  { key: "tee",     name: 'Футболка "RFC"',               price: 23000, sized: true,  match: ["футболк", "майк", "tee", "t-shirt", "шведк"] },
-  { key: "cap",     name: 'Кепка "RFC Logo"',             price: 15000, sized: false, match: ["кепк", "cap", "бейсболк"] },
-  { key: "boxers",  name: 'Трусы "Red Flag Community"',   price: 29000, sized: true,  match: ["трус", "боксер", "белье", "бельё", "boxers"] },
+  { key: "tee",     name: 'Футболка "RFC"',               price: 23000, sized: true,  selling: true,  match: ["футболк", "майк", "tee", "t-shirt", "шведк"] },
+  { key: "cap",     name: 'Кепка "RFC Logo"',             price: 15000, sized: false, selling: true,  match: ["кепк", "cap", "бейсболк"] },
+  { key: "hoodie",  name: 'Худи "Red Flag Community"',    price: 29000, sized: true,  selling: false, status: "открываем предзаказ", match: ["худи", "hoodie", "толстовк"] },
+  { key: "sweat",   name: 'Свитшот "Red Flag Community"', price: 29000, sized: true,  selling: false, status: "открываем предзаказ", match: ["свитшот", "sweat", "кофт"] },
+  { key: "boxers",  name: 'Трусы "Red Flag Community"',   price: 29000, sized: true,  selling: false, status: "появятся совсем скоро", match: ["трус", "боксер", "белье", "бельё", "boxers", "носк"] },
 ];
+export const SELLING = PRODUCTS.filter((p) => p.selling);
+
+// Ответ на интерес к товару, которого ещё нет в продаже
+export function notSellingReply(p) {
+  return `${p.name} — пока не в продаже, ${p.status} 🔜\nМогу соединить с менеджером — он расскажет детали и запишет вас одним из первых. Напишите *менеджер*.`;
+}
 
 export const SIZES = ["S", "M", "L", "XL", "XXL"];
 
@@ -44,8 +53,9 @@ export const T = {
 
   catalog:
     `*Каталог ${SHOP.brand}* 🚩\n\n` +
-    PRODUCTS.map((p) => `• ${p.name} — *${fmt(p.price)}*`).join("\n") +
-    `\n\nВсе фото, цвета и коллекции — на сайте:\n${SHOP.site}\n\n` +
+    PRODUCTS.filter((p) => p.selling).map((p) => `• ${p.name} — *${fmt(p.price)}*`).join("\n") +
+    `\n\nХуди и свитшот — открываем предзаказ, скоро 🔜\n` +
+    `Все фото, цвета и коллекции — на сайте:\n${SHOP.site}\n\n` +
     `Понравилось что-то? Напишите *менеджер* — подберём размер и оформим.`,
 
   sizes:

@@ -1,6 +1,6 @@
 // === Мозг продажника: сценарии + машина оформления заказа + AI-фолбэк ===
 
-import { T, SHOP, SIZES, fmt, findProduct, PRODUCTS } from "./shop.js";
+import { T, SHOP, SIZES, fmt, findProduct, PRODUCTS, SELLING, notSellingReply } from "./shop.js";
 import { aiReply, AI_ENABLED } from "./ai.js";
 
 const has = (t, ...words) => words.some((w) => t.includes(w));
@@ -36,11 +36,12 @@ function orderFlow(session, text, presetProduct) {
   // Шаг: выбор товара
   if (o.step === "product") {
     const p = presetProduct || findProduct(text);
+    if (p && !p.selling) return notSellingReply(p);
     if (!p) {
       return (
         `Что хотите заказать? 👇\n` +
-        PRODUCTS.map((p) => `• ${p.name} — ${fmt(p.price)}`).join("\n") +
-        `\n\nНапишите название (например: «худи» или «кепка»).`
+        SELLING.map((p) => `• ${p.name} — ${fmt(p.price)}`).join("\n") +
+        `\n\nНапишите название (например: «футболка» или «кепка»).`
       );
     }
     o.product = p;
@@ -130,12 +131,21 @@ export async function think(session, text) {
     case "order": {
       // Бренд, не мерч — не форма, а направление на живого менеджера
       const p = findProduct(t);
+      // Товар ещё не в продаже (предзаказ/скоро) — не предлагаем купить, зовём менеджера
+      if (p && !p.selling) {
+        return { reply: notSellingReply(p), mute: 30, notify: { kind: "handoff", text: "Интересует предзаказ: " + p.name + " — " + text } };
+      }
       return { reply: T.orderToManager, mute: 30, notify: { kind: "handoff", text: p ? "Интересует: " + p.name + " — " + text : text } };
     }
     default: {
       // Назвал товар и AI выключен → направляем на менеджера
-      if (!AI_ENABLED && findProduct(t)) {
-        return { reply: T.orderToManager, mute: 30, notify: { kind: "handoff", text: "Интересует: " + findProduct(t).name + " — " + text } };
+      const named = findProduct(t);
+      // Упомянул то, чего нет в продаже — говорим статус (без мута: диалог продолжается)
+      if (named && !named.selling) {
+        return { reply: notSellingReply(named) };
+      }
+      if (!AI_ENABLED && named) {
+        return { reply: T.orderToManager, mute: 30, notify: { kind: "handoff", text: "Интересует: " + named.name + " — " + text } };
       }
       // Свободный вопрос → AI, если включён
       if (AI_ENABLED) {
