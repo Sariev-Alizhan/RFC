@@ -418,6 +418,10 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
 .wa-need{font-size:9.5px;font-weight:800;color:#e11236;text-transform:uppercase;letter-spacing:.05em}
 .admin-tab .tab-c.hot{background:#e11236;color:#fff}
+.wa-quick{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 2px;background:#fff;scrollbar-width:none}
+.wa-quick::-webkit-scrollbar{display:none}
+.wa-q{flex:none;font-size:11px;font-weight:600;padding:6px 12px;border:1px solid #e7e9ec;border-radius:99px;background:#fafafa;cursor:pointer;color:#555;font-family:inherit;transition:.15s}
+.wa-q:hover{background:#fff;border-color:#ccc;color:var(--ink)}
 .wa-funnel{border:1px solid #eee;border-radius:14px;padding:14px 16px;margin:0 0 14px;background:#fafafa}
 .wa-fun-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .wa-conv{font-size:12px;color:#666}.wa-conv b{color:#1a7d35;font-size:13px}
@@ -2224,6 +2228,16 @@ function renderAnalyticsBlock(){
 function waEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function waPhone(p){return String(p==null?"":p).replace(/[^\d]/g,"");}
 function waJid(j){return String(j==null?"":j).replace(/[^a-zA-Z0-9@._-]/g,"");}
+// Быстрые шаблоны ответов менеджера (подставляются в поле, можно отредактировать)
+var WA_QUICK=[
+ {l:"Приветствие",t:"Здравствуйте! Это менеджер RFC, я на связи 🚩"},
+ {l:"Kaspi",t:"Оплатить можно через Kaspi: https://pay.kaspi.kz/pay/yszmgt89 — после оплаты пришлите, пожалуйста, скрин."},
+ {l:"Оплата ✅",t:"Оплату получили ✅ Собираем ваш заказ — после отправки пришлём трек-номер."},
+ {l:"Отправлен",t:"Ваш заказ отправлен 🚚 Трек-номер: "},
+ {l:"Размер",t:"Подскажите, пожалуйста, ваш рост и вес — подберу размер."},
+ {l:"Спасибо",t:"Спасибо за заказ! Добро пожаловать в комьюнити 🚩"}
+];
+rfc.waQuick=function(i){var q=WA_QUICK[i];var e=document.getElementById('waReplyInput');if(q&&e){e.value=q.t;e.focus();try{e.setSelectionRange(q.t.length,q.t.length);}catch(_){}}};
 // Сколько чатов ждут ответа (последнее сообщение — от клиента)
 function waNeedsReply(){
  var last={};
@@ -2280,7 +2294,8 @@ function renderWaBlock(){
   var title=c.name||("+"+(c.phone||""));
   var waHref=waPhone(c.phone)?'https://wa.me/'+waPhone(c.phone):'#';
   var jidAttr=waEsc(c.jid).replace(/'/g,"\\'");
-  var composer='<form class="wa-reply" onsubmit="return rfc.waSend(event,\''+jidAttr+'\')"><input id="waReplyInput" class="wa-reply-in" placeholder="Ответить клиенту…" autocomplete="off"><button class="wa-reply-btn" type="submit" title="Отправить">'+waIcon(16)+'</button></form>';
+  var quick='<div class="wa-quick">'+WA_QUICK.map(function(q,i){return '<button type="button" class="wa-q" onclick="rfc.waQuick('+i+')">'+q.l+'</button>';}).join("")+'</div>';
+  var composer=quick+'<form class="wa-reply" onsubmit="return rfc.waSend(event,\''+jidAttr+'\')"><input id="waReplyInput" class="wa-reply-in" placeholder="Ответить клиенту…" autocomplete="off"><button class="wa-reply-btn" type="submit" title="Отправить">'+waIcon(16)+'</button></form>';
   var f=waFunnel(c);
   var chip='<span class="wa-stage-big" style="color:'+f.color+';background:'+f.color+'14;border:1px solid '+f.color+'33">'+f.label+' · '+f.pct+'%</span>';
   return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
