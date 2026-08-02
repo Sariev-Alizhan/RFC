@@ -29,8 +29,15 @@ process.on("unhandledRejection", (e) => console.error("[unhandledRejection]", e?
 // Локально: http://localhost:8099. На сервере (Railway/VPS задаёт PORT) слушаем наружу.
 const QR_PORT = Number(process.env.PORT || process.env.QR_PORT || 8099);
 const QR_HOST = process.env.PORT ? "0.0.0.0" : "127.0.0.1";
+// На сервере QR открыт наружу — защищаем ключом (?key=...), иначе чужой может
+// отсканировать pairing-QR и увести аккаунт. Задай QR_KEY в env сервера.
+const QR_KEY = process.env.QR_KEY || "";
 try {
   http.createServer((req, res) => {
+    if (QR_HOST === "0.0.0.0" && QR_KEY) {
+      const key = new URL(req.url || "/", "http://x").searchParams.get("key");
+      if (key !== QR_KEY) { res.writeHead(401, { "Content-Type": "text/plain; charset=utf-8" }); res.end("Добавь ?key=<QR_KEY> к адресу"); return; }
+    }
     if (req.url && req.url.indexOf("/qr.png") === 0) {
       try {
         const img = fs.readFileSync(path.join(__dirname, "qr.png"));
@@ -47,7 +54,7 @@ try {
       '<img id="q" src="/qr.png" width="330" height="330" style="border:1px solid #eee;border-radius:14px" ' +
       'onerror="this.style.display=\'none\';document.getElementById(\'ok\').style.display=\'block\'">' +
       '<div id="ok" style="display:none;color:#1a7d35;font-size:20px;font-weight:600">✅ Подключено (или ждём новый QR)</div>' +
-      '<script>setInterval(function(){var i=document.getElementById("q");i.style.display="";document.getElementById("ok").style.display="none";i.src="/qr.png?"+Date.now();},2000)</script>' +
+      '<script>var K=new URLSearchParams(location.search).get("key");setInterval(function(){var i=document.getElementById("q");i.style.display="";document.getElementById("ok").style.display="none";i.src="/qr.png?"+(K?"key="+encodeURIComponent(K)+"&":"")+Date.now();},2000)</script>' +
       '</body></html>');
   }).listen(QR_PORT, QR_HOST, () => console.log(`🌐 Живой QR: открой http://localhost:${QR_PORT}`))
     .on("error", (e) => console.error("[qr-server]", e.code || e.message));
@@ -156,6 +163,7 @@ function enqueue(jid, task) {
 // Менеджер пишет в CRM → строка в wa_outbox → бот забирает и отправляет в WhatsApp.
 let outboxTimer = null;
 let outboxBusy = false;
+const outboxFails = new Map(); // id -> число неудачных попыток (после 3 — сдаёмся с пометкой в CRM)
 function stopOutbox() { if (outboxTimer) { clearInterval(outboxTimer); outboxTimer = null; } }
 function startOutbox(sock) {
   stopOutbox();
@@ -197,10 +205,20 @@ async function processOutbox(sock) {
         const logText = media ? "[img] " + media + (text ? "\n" + text : "") : text;
         logMessage({ jid, phone: jidDigits(jid), sender: "manager", text: logText }).catch(() => {});
         await markSent(it.id, true);
+        outboxFails.delete(it.id);
         console.log(`📤 Ответ из CRM отправлен${media ? " (фото)" : ""} → ${jidDigits(jid)}`);
       } catch (e) {
-        console.error("[outbox] отправка не удалась:", e?.message || e);
-        await markSent(it.id, false);
+        // Не удаляем из очереди сразу — пробуем ещё (следующие поллы). После 3 неудач
+        // сдаёмся и оставляем менеджеру пометку в переписке CRM, чтобы сбой был виден.
+        const fails = (outboxFails.get(it.id) || 0) + 1;
+        console.error(`[outbox] отправка не удалась (попытка ${fails}/3):`, e?.message || e);
+        if (fails >= 3) {
+          outboxFails.delete(it.id);
+          await markSent(it.id, false);
+          logMessage({ jid, phone: jidDigits(jid), sender: "bot", text: "⚠️ Не удалось отправить сообщение менеджера (3 попытки): " + (text || "фото") + " — отправь ещё раз." }).catch(() => {});
+        } else {
+          outboxFails.set(it.id, fails);
+        }
       }
     }
   } finally { outboxBusy = false; }
@@ -231,15 +249,21 @@ setInterval(() => {
 
 // Утро настало → шлём менеджерам дайджест ночных клиентов и чистим список.
 // Сработает и позже 08:00, если ночью ноут был выключен (список в файле).
-setInterval(() => {
+setInterval(async () => {
   try {
     if (isNight()) return;
     const o = nightLoad();
     const clients = Object.values(o);
     if (!clients.length) return;
-    nightSave({});
-    notifyNightDigest(clients).catch(() => {});
-    console.log(`🌅 Утренний дайджест: ${clients.length} клиент(ов) писали ночью → менеджерам в TG`);
+    // Чистим список только ПОСЛЕ успешной отправки — иначе при сбое сети
+    // потеряли бы ночных клиентов; неуспех → повтор через минуту.
+    const sent = await notifyNightDigest(clients);
+    if (sent) {
+      nightSave({});
+      console.log(`🌅 Утренний дайджест: ${clients.length} клиент(ов) писали ночью → менеджерам в TG`);
+    } else {
+      console.error("[digest] не отправился — повторю через минуту");
+    }
   } catch (e) { console.error("[digest]", e?.message || e); }
 }, 60 * 1000).unref?.();
 
@@ -249,6 +273,8 @@ setInterval(() => {
   for (const [jid, s] of sessions) if (now - (s.lastSeen || 0) > SESSION_TTL) sessions.delete(jid);
   for (const [jid, until] of muted) if (now > until) muted.delete(jid);
   for (const [jid, ts] of nightReplied) if (now - ts > NIGHT_REPLY_TTL) nightReplied.delete(jid);
+  for (const [jid, ts] of notifyThrottle) if (now - ts > 60 * 60 * 1000) notifyThrottle.delete(jid);
+  for (const [jid, ts] of catalogSent) if (now - ts > 2 * 60 * 60 * 1000) catalogSent.delete(jid);
 }, 30 * 60 * 1000).unref?.();
 
 // Достаём текст из разных типов сообщений WhatsApp
@@ -525,7 +551,14 @@ async function start() {
   async function downloadAndLogMedia(msg, media, meta) {
     try {
       const buf = await downloadMediaMessage(msg, "buffer", {}, { logger, reuploadRequest: sock.updateMediaMessage });
-      if (!buf || !buf.length || buf.length > 12 * 1024 * 1024) return; // пропускаем пустое/огромное
+      if (!buf || !buf.length) return;
+      // Vercel принимает тело ≤4.5 МБ; base64 раздувает на треть → сырой лимит ~3.2 МБ.
+      // Больше — оставляем в CRM пометку, чтобы менеджер знал и глянул в телефоне.
+      if (buf.length > 3.2 * 1024 * 1024) {
+        const mb = Math.round(buf.length / 1024 / 1024 * 10) / 10;
+        logMessage({ jid: meta.jid, phone: meta.phone, name: meta.name, sender: "customer", text: (MEDIA_LABEL[media.type] || "📎 Файл") + ` (${mb} МБ — большой файл, смотри в WhatsApp на телефоне)` }).catch(() => {});
+        return;
+      }
       const caption = extractText(msg).trim() || null;
       await logMedia({
         jid: meta.jid, phone: meta.phone, name: meta.name, sender: "customer",
@@ -575,6 +608,16 @@ async function start() {
 
     // Пустое/медиа без текста
     if (!text) {
+      // Ночью фото/голосовое без текста — тоже клиент: автоответ + в утренний дайджест
+      if (isNight() && !msg.key.fromMe) {
+        nightRecord(jid, phone, pushName, media ? MEDIA_LABEL[media.type] : "");
+        if (!isMuted(jid) && Date.now() - (nightReplied.get(jid) || 0) > NIGHT_REPLY_TTL) {
+          nightReplied.set(jid, Date.now());
+          await sendReply(sendJid, NIGHT_TEXT).catch(() => {});
+          logMessage({ jid, phone, sender: "bot", text: NIGHT_TEXT }).catch(() => {});
+        }
+        return;
+      }
       const s = sessions.get(jid);
       if (s && s.order && !isMuted(jid) && !isNight()) {
         await sendReply(sendJid, "Пришлите, пожалуйста, ответ текстом 🙏 (голосовые и фото я пока не читаю).").catch(() => {});

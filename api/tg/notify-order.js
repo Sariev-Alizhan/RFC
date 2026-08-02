@@ -220,6 +220,11 @@ async function handleWaSend(req, res) {
   if (!sb) return res.status(200).json({ skipped: true, reason: 'no supabase' });
   const auth = await verifyAuth(req);
   if (!auth.ok) return res.status(401).json({ error: 'Unauthorized', detail: auth.error });
+  // Если задан CRM_ADMIN_EMAILS (через запятую) — писать клиентам могут только эти аккаунты
+  const allowed = (process.env.CRM_ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (allowed.length && !allowed.includes(String(auth.user?.email || '').toLowerCase())) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   const b = req.body || {};
   const jid = String(b.jid || '').slice(0, 120);
   const text = String(b.text || '').slice(0, 4000).trim();
@@ -436,10 +441,12 @@ async function handleDailyDigest(req, res) {
   const { data: msgs } = await sb.from('wa_messages').select('jid,sender,created_at').order('created_at', { ascending: false }).limit(1000);
   const m = msgs || [];
   const custToday = m.filter(x => x.created_at >= dayStart && x.sender === 'customer').length;
-  const firstSeen = {}, lastSender = {};
-  for (const x of m) { firstSeen[x.jid] = x.created_at; if (!(x.jid in lastSender)) lastSender[x.jid] = x.sender; } // m по убыванию: last=первое вхождение, first=последнее
+  const firstSeen = {}, lastMsg = {};
+  for (const x of m) { firstSeen[x.jid] = x.created_at; if (!(x.jid in lastMsg)) lastMsg[x.jid] = x; } // m по убыванию: last=первое вхождение, first=последнее
   const newChats = Object.values(firstSeen).filter(t => t >= dayStart).length;
-  const waiting = Object.values(lastSender).filter(s => s === 'customer').length;
+  // «Ждут ответа» — только свежие (48 ч): старые брошенные чаты не пугают цифрой
+  const h48 = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+  const waiting = Object.values(lastMsg).filter(x => x.sender === 'customer' && x.created_at >= h48).length;
   const dd = String(almaty.getUTCDate()).padStart(2, '0') + '.' + String(almaty.getUTCMonth() + 1).padStart(2, '0');
   const lines = [
     `📊 <b>Итоги дня · ${dd}</b>`, '',
@@ -461,11 +468,11 @@ async function handleDailyDigest(req, res) {
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     if (req.query?.cron === 'daily') {
-      // Только Vercel Cron (или явный CRON_SECRET) может дёргать отчёт
+      // Только Vercel Cron: платформа сама шлёт Authorization: Bearer CRON_SECRET
       const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-      const isCron = /vercel-cron/i.test(String(req.headers['user-agent'] || ''));
-      const okSecret = process.env.CRON_SECRET && safeEq(bearer, process.env.CRON_SECRET);
-      if (!isCron && !okSecret) return res.status(401).json({ error: 'Unauthorized' });
+      if (!process.env.CRON_SECRET || !safeEq(bearer, process.env.CRON_SECRET)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
       return handleDailyDigest(req, res);
     }
     return res.status(200).json({ ok: true, service: 'rfc-tg-notify-order', has_secret: !!WEBHOOK_SECRET });

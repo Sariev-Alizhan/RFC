@@ -2367,6 +2367,7 @@ function renderWaBlock(){
   var composer=quick+'<form class="wa-reply" onsubmit="return rfc.waSend(event,\''+jidAttr+'\')">'+attach+'<input id="waReplyInput" class="wa-reply-in" placeholder="Ответить клиенту…" autocomplete="off"><button class="wa-reply-btn" type="submit" title="Отправить">'+waIcon(16)+'</button></form>';
   var f=waFunnel(c);
   var chip='<span class="wa-stage-big" style="color:'+f.color+';background:'+f.color+'14;border:1px solid '+f.color+'33">'+f.label+' · '+f.pct+'%</span>';
+  if(!state.waMuted){try{state.waMuted=JSON.parse(localStorage.getItem("rfcWaMuted")||"{}");}catch(_){state.waMuted={};}}
   var botOff=((state.waMuted||{})[c.jid]||0)>Date.now();
   var botBtn='<button class="act'+(botOff?' bot-off':'')+'" onclick="rfc.waBotToggle(\''+jidAttr+'\')" title="'+(botOff?"Бот на паузе в этом чате — нажми, чтобы включить":"Бот отвечает в этом чате — нажми, чтобы поставить на паузу на 24 ч")+'">'+ic("bot",13)+' '+(botOff?"выкл":"вкл")+'</button>';
   return '<div class="wa-chat"><div class="wa-chat-bar"><button class="act" onclick="rfc.waBack()">← Диалоги</button><div class="wa-chat-who"><b>'+waEsc(title)+'</b><span>+'+waEsc(c.phone||"")+'</span>'+chip+'</div><div style="display:flex;gap:6px;align-items:center">'+botBtn+'<a class="act wa" href="'+waHref+'" target="_blank" title="Открыть в WhatsApp">'+waIcon(15)+'</a></div></div><div class="wa-thread">'+thread+'</div>'+composer+'</div>';
@@ -2495,6 +2496,7 @@ rfc.waBotToggle=function(jid){
    .then(function(j){
     if(!j||!j.ok){rfc.toast("Не получилось — попробуй ещё раз");return;}
     if(isOff)delete state.waMuted[jid];else state.waMuted[jid]=Date.now()+1440*60*1000;
+    try{localStorage.setItem("rfcWaMuted",JSON.stringify(state.waMuted));}catch(_){}
     renderCrm();
     rfc.toast(isOff?"Бот снова отвечает в этом чате":"Бот на паузе в этом чате на 24 ч");
    });
@@ -2536,6 +2538,9 @@ function waParseMedia(m){
  if(m.media_url)return {type:m.media_type||"image",url:m.media_url,caption:m.text||""}; // совместимость
  var mm=(m.text||"").match(/^\[(img|video|audio|file)\]\s(\S+)([\s\S]*)$/);
  if(!mm)return null;
+ // Картинкой рендерим только НАШИ ссылки (Storage/сайт) — клиент может прислать
+ // текст «[img] https://…» с чужим URL, такое показываем как обычный текст
+ if(!/^https:\/\/([a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/|redflag\.kz\/)/i.test(mm[2]))return null;
  var map={img:"image",video:"video",audio:"audio",file:"document"};
  return {type:map[mm[1]],url:mm[2],caption:(mm[3]||"").replace(/^\n/,"")};
 }

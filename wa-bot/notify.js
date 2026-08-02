@@ -8,7 +8,7 @@ const SITE = "https://redflag.kz";
 
 export const NOTIFY_ENABLED = Boolean(SECRET);
 
-async function post(payload, { retries = 0 } = {}) {
+async function post(payload, { retries = 0, timeoutMs = 8000 } = {}) {
   if (!NOTIFY_ENABLED) return false;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -16,7 +16,7 @@ async function post(payload, { retries = 0 } = {}) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${SECRET}` },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (r.ok) return true;
       console.error("[notify] ответ", r.status);
@@ -67,7 +67,7 @@ export async function logMessagesBatch(rows) {
 // Загрузка медиа (фото/видео/файл клиента) в CRM. payload: { jid, phone, name, sender,
 // text, media_type, mediaBase64, mimetype, ext, ts }
 export async function logMedia(payload) {
-  return post({ kind: 'wa_media', ...payload });
+  return post({ kind: 'wa_media', ...payload }, { timeoutMs: 25000 }); // base64-медиа грузится дольше текста
 }
 
 // Забрать очередь исходящих ответов из CRM. Возвращает [{id, jid, text}].
