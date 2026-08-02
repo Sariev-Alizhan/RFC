@@ -11,11 +11,17 @@
         { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
         { "key": "X-Permitted-Cross-Domain-Policies", "value": "none" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org https://widget.cloudpayments.kz https://widget.cloudpayments.ru; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cloud.higgsfield.ai https://api.cloudpayments.kz https://api.cloudpayments.ru; frame-src 'self' https://widget.cloudpayments.kz https://widget.cloudpayments.ru; frame-ancestors 'self'; form-action 'self' https://wa.me; base-uri 'self'; object-src 'none'; upgrade-insecure-requests" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org https://widget.cloudpayments.kz https://widget.cloudpayments.ru; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cloud.higgsfield.ai https://api.cloudpayments.kz https://api.cloudpayments.ru; frame-src 'self' https://widget.cloudpayments.kz https://widget.cloudpayments.ru; frame-ancestors 'self'; form-action 'self' https://wa.me; base-uri 'self'; object-src 'none'; upgrade-insecure-requests" }
       ]
     },
     {
       "source": "/img/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/fonts/(.*).woff2",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
