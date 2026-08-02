@@ -58,7 +58,7 @@ try { FLAG_STICKER = fs.readFileSync(path.join(__dirname, "flag-sticker.webp"));
 
 import { think } from "./brain.js";
 import { AI_ENABLED } from "./ai.js";
-import { notifyManagers, notifyIncoming, notifyNightDigest, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, NOTIFY_ENABLED } from "./notify.js";
+import { notifyManagers, notifyIncoming, notifyNightDigest, notifyWaiting, logMessage, logMessagesBatch, logMedia, pollOutbox, markSent, createOrder, NOTIFY_ENABLED } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -182,6 +182,7 @@ async function processOutbox(sock) {
         }
         rememberBotMsg(sent?.key?.id);              // не логировать эхо второй раз в handle()
         muted.set(jid, Date.now() + MUTE_MS);        // менеджер ведёт диалог → бот молчит
+        waiting.delete(jid);                         // менеджер ответил из CRM — клиент не ждёт
         const logText = media ? "[img] " + media + (text ? "\n" + text : "") : text;
         logMessage({ jid, phone: jidDigits(jid), sender: "manager", text: logText }).catch(() => {});
         await markSent(it.id, true);
@@ -193,6 +194,29 @@ async function processOutbox(sock) {
     }
   } finally { outboxBusy = false; }
 }
+
+// === Эскалация «клиент ждёт» ===
+// Клиент ждёт живого ответа (бот на паузе/передал менеджеру) → напоминания в TG
+// через 15 мин и повторно через 60. Снимается любым ответом менеджера или бота.
+const waiting = new Map(); // jid -> { ts, phone, name, text, level }
+const WAIT_LEVELS = [15, 60]; // минуты до 1-го и 2-го напоминания
+function waitingStart(jid, phone, name, text) {
+  if (!waiting.has(jid)) waiting.set(jid, { ts: Date.now(), phone, name: name || null, text: String(text || "").slice(0, 120), level: 0 });
+}
+setInterval(() => {
+  if (isNight()) return; // ночью не дёргаем — утром придёт дайджест
+  const now = Date.now();
+  for (const [jid, w] of waiting) {
+    if (now - w.ts > 6 * 60 * 60 * 1000) { waiting.delete(jid); continue; }
+    if (w.level >= WAIT_LEVELS.length) continue;
+    const mins = Math.round((now - w.ts) / 60000);
+    if (mins >= WAIT_LEVELS[w.level]) {
+      w.level++;
+      notifyWaiting({ phone: w.phone, name: w.name, text: w.text, minutes: mins }).catch(() => {});
+      console.log(`⏳ Клиент ${w.phone} ждёт ${mins} мин — напоминание менеджерам в TG`);
+    }
+  }
+}, 60 * 1000).unref?.();
 
 // Утро настало → шлём менеджерам дайджест ночных клиентов и чистим список.
 // Сработает и позже 08:00, если ночью ноут был выключен (список в файле).
@@ -494,6 +518,7 @@ async function start() {
       const own = extractText(msg).trim();
       if (own) {
         muted.set(jid, Date.now() + MUTE_MS);
+        waiting.delete(jid); // менеджер ответил (с телефона) — клиент больше не ждёт
         logMessage({ jid, phone, sender: "manager", text: own }).catch(() => {});
       }
       return;
@@ -523,8 +548,11 @@ async function start() {
     // Лог входящего текста клиента (если это подпись к медиа — уже записано вместе с файлом)
     if (!media) logMessage({ jid, phone, name: pushName, sender: "customer", text }).catch(() => {});
 
-    // На паузе (менеджер ведёт диалог) — молчим
-    if (isMuted(jid)) return;
+    // На паузе (менеджер ведёт диалог) — молчим, но помним, что клиент ждёт живого ответа
+    if (isMuted(jid)) {
+      if (!isNight()) waitingStart(jid, phone, pushName, text);
+      return;
+    }
 
     // Ночь: диалог не ведём, один раз за ночь говорим, что менеджер напишет утром
     if (isNight()) {
@@ -541,9 +569,12 @@ async function start() {
       const session = getSession(jid);
       const { reply, mute, notify, order, sticker } = await think(session, text);
 
-      // Запрос менеджера — уведомляем в Telegram
+      // Запрос менеджера — уведомляем в Telegram + следим, чтобы клиент не ждал зря
       if (notify) {
         notifyManagers({ ...notify, name: notify.name || pushName, phone }).catch(() => {});
+        if (!isNight()) waitingStart(jid, phone, pushName, text);
+      } else {
+        waiting.delete(jid); // бот ответил сам — ожидания нет
       }
 
       await sendReply(sendJid, reply);

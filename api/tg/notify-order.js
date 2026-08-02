@@ -344,6 +344,32 @@ async function handleWaNightDigest(req, res) {
   return res.status(200).json({ sent, clients: clients.length });
 }
 
+// Эскалация: клиент ждёт живого ответа уже N минут
+async function handleWaWaiting(req, res) {
+  const b = req.body || {};
+  const phone = String(b.phone || '').replace(/[^\d]/g, '');
+  const mins = Number(b.minutes) || 15;
+  const lines = [`⏳ <b>Клиент ждёт ответа уже ${mins} мин!</b>`, ''];
+  if (b.name) lines.push(`👤 ${escHtml(String(b.name).slice(0, 60))}`);
+  if (phone) lines.push(`📞 +${escHtml(phone)}`);
+  if (b.text) { lines.push(''); lines.push(`«${escHtml(String(b.text).slice(0, 200))}»`); }
+  lines.push('');
+  lines.push('Бот на паузе в этом чате — клиент ждёт живого человека.');
+  const text = lines.join('\n');
+  const kb = phone ? [[{ text: '💬 Ответить сейчас', url: `https://wa.me/${phone}` }]] : undefined;
+  const adminIds = await getAllAdminChatIds();
+  if (!adminIds.length) return res.status(200).json({ skipped: true, reason: 'no admins' });
+  let sent = 0;
+  for (const chatId of adminIds) {
+    const r = await tg('sendMessage', {
+      chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true,
+      ...(kb ? { reply_markup: { inline_keyboard: kb } } : {})
+    });
+    if (r?.ok) sent++;
+  }
+  return res.status(200).json({ sent });
+}
+
 async function handleWaLead(req, res) {
   const b = req.body || {};
   const { text, phone } = formatLead(b);
@@ -389,7 +415,7 @@ export default async function handler(req, res) {
   const waKind = req.body?.kind;
   // Ответ из CRM: авторизация сессией Supabase (JWT менеджера), не секретом бота
   if (waKind === 'wa_send') return handleWaSend(req, res);
-  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest'];
+  const WA_KINDS = ['order', 'handoff', 'wa_msg', 'wa_media', 'wa_poll', 'wa_sent', 'wa_incoming', 'wa_night_digest', 'wa_waiting'];
   if (WA_KINDS.includes(waKind)) {
     if (!safeEq(rawAuth, WA_BOT_SECRET)) return res.status(401).json({ error: 'Unauthorized' });
     if (waKind === 'wa_msg')   return handleWaMsg(req, res);
@@ -399,6 +425,7 @@ export default async function handler(req, res) {
     if (!BOT_TOKEN) return res.status(500).json({ error: 'Bot not configured' });
     if (waKind === 'wa_incoming') return handleWaIncoming(req, res);
     if (waKind === 'wa_night_digest') return handleWaNightDigest(req, res);
+    if (waKind === 'wa_waiting') return handleWaWaiting(req, res);
     return handleWaLead(req, res);
   }
 

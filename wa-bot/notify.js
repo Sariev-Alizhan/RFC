@@ -49,6 +49,11 @@ export async function notifyNightDigest(clients) {
   return post({ kind: "wa_night_digest", clients }, { retries: 2 });
 }
 
+// Эскалация: клиент ждёт живого ответа N минут. { phone, name, text, minutes }
+export async function notifyWaiting(payload) {
+  return post({ kind: "wa_waiting", ...payload }, { retries: 1 });
+}
+
 // Батч-лог истории чатов (из messaging-history.set). rows: [{jid,phone,name,sender,text,ts}]
 export async function logMessagesBatch(rows) {
   if (!NOTIFY_ENABLED || !rows || !rows.length) return false;
