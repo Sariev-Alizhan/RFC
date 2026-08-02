@@ -7,3 +7,4 @@ node_modules/
 wa-bot/auth/
 wa-bot/night-contacts.json
 wa-bot/qr.png
+wa-bot/lid-map.json

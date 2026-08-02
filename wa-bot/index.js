@@ -327,6 +327,21 @@ const jidDigits = (j) => String(j || "").split("@")[0].split(":")[0].replace(/[^
 const lidToPhoneJid = new Map(); // "123@lid" -> "77...@s.whatsapp.net"
 const nameByPhone = new Map();   // "77..." (цифры) -> имя из контактов
 
+// Карта lid→номер переживает рестарт (иначе ручной ответ менеджера в @lid-чате
+// до первого входящего логировался бы в CRM под мусорным номером)
+const LID_FILE = path.join(__dirname, "lid-map.json");
+try {
+  const j = JSON.parse(fs.readFileSync(LID_FILE, "utf8"));
+  for (const [k, v] of Object.entries(j.lid || {})) lidToPhoneJid.set(k, v);
+  for (const [k, v] of Object.entries(j.names || {})) nameByPhone.set(k, v);
+} catch {}
+let lidDirty = false;
+setInterval(() => {
+  if (!lidDirty) return;
+  lidDirty = false;
+  try { fs.writeFileSync(LID_FILE, JSON.stringify({ lid: Object.fromEntries(lidToPhoneJid), names: Object.fromEntries(nameByPhone) })); } catch {}
+}, 30 * 1000).unref?.();
+
 // Забираем маппинг lid→номер и имена из массива контактов (history.set / contacts.upsert)
 function absorbContacts(contacts) {
   if (!Array.isArray(contacts)) return;
@@ -334,9 +349,9 @@ function absorbContacts(contacts) {
     if (!c) continue;
     const phoneJid = isPhoneJid(c.jid) ? c.jid : (isPhoneJid(c.id) ? c.id : null);
     const lid = isLidJid(c.lid) ? c.lid : (isLidJid(c.id) ? c.id : null);
-    if (lid && phoneJid) lidToPhoneJid.set(lid, phoneJid);
+    if (lid && phoneJid) { lidToPhoneJid.set(lid, phoneJid); lidDirty = true; }
     const nm = String(c.name || c.notify || c.verifiedName || "").trim();
-    if (nm && phoneJid) nameByPhone.set(jidDigits(phoneJid), nm);
+    if (nm && phoneJid) { nameByPhone.set(jidDigits(phoneJid), nm); lidDirty = true; }
   }
 }
 
@@ -344,7 +359,7 @@ function absorbContacts(contacts) {
 function learnFromKey(key) {
   if (!key || key.fromMe) return;
   const rj = key.remoteJid;
-  if (isLidJid(rj) && isPhoneJid(key.senderPn)) lidToPhoneJid.set(rj, key.senderPn);
+  if (isLidJid(rj) && isPhoneJid(key.senderPn)) { lidToPhoneJid.set(rj, key.senderPn); lidDirty = true; }
 }
 
 // Настоящий {jid, phone, name} чата по сообщению. resolved=false → номер не удалось раскрыть.
