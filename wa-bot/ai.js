@@ -4,6 +4,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { SHOP, PRODUCTS, fmt } from "./shop.js";
+import { fetchProducts } from "./notify.js";
 
 const KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "";
 const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
@@ -12,14 +13,34 @@ export const AI_ENABLED = Boolean(KEY);
 
 const client = AI_ENABLED ? new Anthropic({ apiKey: KEY }) : null;
 
-const SYSTEM = `Ты — консультант бренда ${SHOP.brand} в WhatsApp. ${SHOP.brand} — локальный streetwear-БРЕНД из Казахстана (${SHOP.city}), а НЕ обычный магазин мерча. Держи планку бренда: спокойно, стильно, с достоинством.
+// Живой список товаров с сайта (цены из CRM-каталога), кэш 10 мин.
+// Если сервер недоступен — фолбэк на статичный список из shop.js.
+const prodCache = { ts: 0, items: null };
+async function productLines() {
+  if (Date.now() - prodCache.ts > 10 * 60 * 1000 || !prodCache.items) {
+    try {
+      const items = await fetchProducts();
+      if (items && items.length) { prodCache.ts = Date.now(); prodCache.items = items; }
+    } catch {}
+  }
+  if (prodCache.items && prodCache.items.length) {
+    const seen = new Set();
+    return prodCache.items
+      .filter((p) => !seen.has(p.name) && seen.add(p.name))
+      .map((p) => `- ${p.name} — ${fmt(Number(p.price) || 0)}`)
+      .join("\n");
+  }
+  return PRODUCTS.map((p) => `- ${p.name} — ${fmt(p.price)}${p.sized ? " (размеры S–XXL)" : " (one size)"}`).join("\n");
+}
+
+const buildSystem = (products) => `Ты — консультант бренда ${SHOP.brand} в WhatsApp. ${SHOP.brand} — локальный streetwear-БРЕНД из Казахстана (${SHOP.city}), а НЕ обычный магазин мерча. Держи планку бренда: спокойно, стильно, с достоинством.
 
 Стиль: живой, доброжелательный, уверенный, СТРОГО на «вы» — обращайся к клиенту только на «вы» («вам», «ваш»), никогда не переходи на «ты», даже если клиент сам пишет на «ты». Без «купи-купи» и без душниловки. Коротко (1–3 предложения). Фирменный знак — 🚩 (наш red flag — комплимент, его хочется оставить); вставляй иногда, не в каждом сообщении. Только современные минималистичные эмодзи.
 
 ГЛАВНОЕ: твоя задача — помочь и **направить клиента на менеджера** (живого человека), который подберёт, подтвердит и оформит. Ты не продавливаешь продажу сам — консультируешь и передаёшь менеджеру. Как только человек хочет купить / спрашивает про оформление, наличие, оплату конкретно — предложи: «соединю с менеджером» (система сама уведомит менеджера). Если просят ассортимент/каталог/цены — скажи, что скинешь каталог (система пришлёт товары и ссылку на сайт ${SHOP.site}).
 
 Товары и цены (НЕ придумывай другие, не выдумывай скидки):
-${PRODUCTS.map((p) => `- ${p.name} — ${fmt(p.price)}${p.sized ? " (размеры S–XXL)" : " (one size)"}`).join("\n")}
+${products}
 
 Факты:
 - Оплата: Kaspi после подтверждения заказа. Ссылка: ${SHOP.kaspiLink}
@@ -41,7 +62,7 @@ export async function aiReply(history) {
       {
         model: MODEL,
         max_tokens: 400,
-        system: SYSTEM,
+        system: buildSystem(await productLines()),
         messages: msgs,
       },
       { timeout: 15000 }

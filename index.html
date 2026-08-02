@@ -425,6 +425,11 @@ footer{background:var(--ink);color:#fff;margin-top:clamp(60px,8vw,110px);positio
 .wa-attach{width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#888;flex:0 0 auto;transition:.15s}
 .wa-attach:hover{color:var(--ink);border-color:#ccc}
 .act.bot-off{color:#e11236;border-color:#e1123644;background:#e1123608}
+.wa-help{border:1px solid #eee;border-radius:14px;background:#fff;padding:14px 18px;margin:0 0 14px;font-size:12.5px;color:#555;line-height:1.6}
+.wa-help>b{color:var(--ink);font-size:13px}
+.wa-help ul{margin:8px 0 0;padding-left:18px}
+.wa-help li{margin-bottom:6px}
+.wa-help li b{color:var(--ink)}
 .wa-funnel{border:1px solid #eee;border-radius:14px;padding:14px 16px;margin:0 0 14px;background:#fafafa}
 .wa-fun-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .wa-conv{font-size:12px;color:#666}.wa-conv b{color:#1a7d35;font-size:13px}
@@ -2334,7 +2339,17 @@ function renderWaBlock(){
  var chats={};
  msgs.forEach(function(m){ if(!chats[m.jid])chats[m.jid]={jid:m.jid,phone:m.phone,name:null,last:null,items:[]}; var c=chats[m.jid]; c.items.push(m); if(m.name&&m.sender==="customer")c.name=m.name; if(!c.last||new Date(m.created_at)>new Date(c.last.created_at))c.last=m; });
  var list=Object.keys(chats).map(function(k){return chats[k];}).sort(function(a,b){return new Date(b.last.created_at)-new Date(a.last.created_at);});
- var refresh='<div class="wa-head"><span class="ai-lbl">Диалоги · '+list.length+'</span><button class="act" onclick="rfc.waLoad()" style="padding:6px 12px;font-size:11px">Обновить</button></div>';
+ var refresh='<div class="wa-head"><span class="ai-lbl">Диалоги · '+list.length+'</span><span style="display:flex;gap:8px"><button class="act" onclick="rfc.waHelpToggle()" style="padding:6px 12px;font-size:11px">'+(state.waHelp?"Скрыть справку":"Как это работает?")+'</button><button class="act" onclick="rfc.waLoad()" style="padding:6px 12px;font-size:11px">Обновить</button></span></div>';
+ var help=state.waHelp?('<div class="wa-help">'+
+  '<b>Шпаргалка для менеджера</b>'+
+  '<ul>'+
+  '<li><b>Красная точка и «ОТВЕТИТЬ»</b> — последнее слово за клиентом, никто не ответил. Такие чаты всегда сверху, их число — красным на вкладке WhatsApp.</li>'+
+  '<li><b>Прогресс-бар и %</b> — этап воронки клиента: от «ждёт ответа» (10%) до «доставлен» (100%). Считается автоматически по переписке и заказам (по номеру телефона).</li>'+
+  '<li><b>Сводка сверху</b> — картина по всем клиентам + конверсия в оплату. Чипы под ней фильтруют список по этапу.</li>'+
+  '<li><b>В открытом чате:</b> серые кнопки над полем — готовые фразы (тап — подставится, можно править). Скрепка — отправить клиенту фото (до 3 МБ). Кнопка «Бот вкл/выкл» — пауза бота в этом чате на 24 часа.</li>'+
+  '<li><b>Бот сам замолкает на 30 минут</b> после любого твоего ответа (из CRM или с телефона) — не влезет в диалог.</li>'+
+  '<li><b>Ночь (00:00–08:00)</b> — бот отвечает клиентам сам и обещает менеджера утром. В 8:00 в Telegram придёт список ночных клиентов, в 21:00 — итоги дня. Если клиент ждёт живого ответа 15+ минут — Telegram напомнит.</li>'+
+  '</ul></div>'):"";
  // Открытый чат
  if(state.waActive&&chats[state.waActive]){
   var c=chats[state.waActive];
@@ -2395,7 +2410,7 @@ function renderWaBlock(){
   return '<button class="wa-item" onclick="rfc.waOpen(\''+waJid(c.jid)+'\')"><div class="wa-av">'+waIcon(18)+dot+'</div><div class="wa-item-mid"><b>'+waEsc(title)+'</b><span>'+preview+'</span>'+waFunnelBar(c._f)+'</div>'+right+'</button>';
  }).join("");
  if(!rows)rows='<div style="text-align:center;color:#999;font-size:13px;padding:30px 0">'+(q?"Ничего не найдено":"На этом этапе диалогов нет")+'</div>';
- return refresh+summary+search+chips+'<div class="wa-list">'+rows+'</div>';
+ return refresh+help+summary+search+chips+'<div class="wa-list">'+rows+'</div>';
 }
 function renderAiBlock(){
  var els=[{name:"rfc-navy-cap",label:"Navy кепка"},{name:"rfc-flag-tee",label:"Чёрная футболка"},{name:"rfc-camo-cap",label:"Камо-кепка"}];
@@ -2462,6 +2477,7 @@ rfc.waLoad=function(){
 };
 rfc.waOpen=function(jid){state.waActive=jid;renderCrm();var e=document.querySelector('.wa-thread');if(e)e.scrollTop=e.scrollHeight;};
 rfc.waFilter=function(k){state.waFilter=k;renderCrm();};
+rfc.waHelpToggle=function(){state.waHelp=!state.waHelp;renderCrm();};
 rfc.waSetSearch=function(v){state.waSearch=v;renderCrm();setTimeout(function(){var e=document.getElementById('waSearch');if(e){e.focus();try{e.setSelectionRange(v.length,v.length);}catch(_){}}},10);};
 // Пауза/включение бота в конкретном чате (команда уходит боту через очередь)
 rfc.waBotToggle=function(jid){
