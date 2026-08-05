@@ -609,6 +609,18 @@ button.btn-block:disabled,.ai-prompt:disabled,.crm-sel:disabled,.ai-el:disabled{
 .pdp-title{font-weight:900;font-size:clamp(28px,4vw,46px);color:var(--ink);text-transform:uppercase;line-height:1;margin:10px 0 14px;letter-spacing:-.015em}
 .pdp-price{font-family:var(--serif);font-size:clamp(26px,3vw,36px);font-weight:600;color:var(--red);letter-spacing:-.01em}
 .pdp-desc{color:#555;font-size:15px;line-height:1.78;max-width:48ch;margin-top:22px;font-weight:400}
+.pdp-trust{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:20px}
+.pdp-trust span{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#666;font-weight:600}
+.pdp-trust svg{color:var(--red);flex:none}
+.pdp-det{margin-top:24px;border-top:1px solid var(--line)}
+.pdp-det details{border-bottom:1px solid var(--line)}
+.pdp-det summary{display:flex;justify-content:space-between;align-items:center;padding:16px 2px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);list-style:none}
+.pdp-det summary::-webkit-details-marker{display:none}
+.pdp-det-x{font-size:17px;font-weight:400;color:#999;transition:transform .2s}
+.pdp-det details[open] .pdp-det-x{transform:rotate(45deg)}
+.pdp-det-b{padding:0 2px 16px;color:#555;font-size:13.5px;line-height:1.7;max-width:52ch}
+.pdp-det-b p{margin:0 0 8px}
+.pdp-det-link{background:none;border:none;border-bottom:1px solid var(--ink);color:var(--ink);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:0 0 1px}
 .care{display:flex;gap:14px;margin:24px 0}
 .lbl{font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin:30px 0 12px;color:var(--ink)}
 .lbl .gd{float:right;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
@@ -1360,6 +1372,26 @@ var TYPES=[
  {t:"cap",name:'Кепка "RFC Logo"',price:15000,desc:'Классическая кепка с регулируемой застёжкой и фирменным флагом RFC. Универсальный размер.'},
  {t:"boxers",name:'Трусы "Red Flag Community"',price:29000,desc:'Боксеры с эластичной резинкой и фирменной надписью Red Flag Community. Хлопок, мягкая посадка, базовый стиль на каждый день.'}
 ];
+// Детали для PDP (мировой стандарт карточки: состав/посадка/доставка).
+// Только подтверждённые факты — ничего не выдумываем.
+var PDP_DETAILS={
+ hoodie:{fabric:'Плотный хлопковый футер. Аккуратная вышивка и плотный принт «Red Flag Community» — никаких тонких промо-тканей.',fit:'Свободный крой на каждый день. Ориентир по росту — в таблице размеров.'},
+ sweat:{fabric:'Футер с мягким начёсом внутри, вышивка флага. Держит форму после стирок.',fit:'Классическая посадка. Ориентир по росту — в таблице размеров.'},
+ tee:{fabric:'100% хлопок приятной плотности, фирменный принт RFC.',fit:'Прямой крой. Ориентир по росту — в таблице размеров.'},
+ cap:{fabric:'Плотный хлопок, вышитый флаг RFC (не принт). Регулируемая застёжка сзади.',fit:'Универсальный размер — сядет на любой обхват благодаря застёжке.'},
+ boxers:{fabric:'Хлопок, эластичная фирменная резинка «Red Flag Community».',fit:'Классическая посадка — берите свой обычный размер.'}
+};
+function pdpTrust(){
+ return '<div class="pdp-trust"><span>'+ic("check",13)+'Сделано в Казахстане</span><span>'+ic("box",13)+'Доставка по КЗ 1–2 дня</span><span>'+ic("orders",13)+'Возврат 14 дней</span></div>';
+}
+function pdpDetails(p){
+ var d=PDP_DETAILS[p.t]||{};
+ var rows=[];
+ if(d.fabric)rows.push(['Состав и качество','<p>'+d.fabric+'</p>']);
+ rows.push(['Посадка и размер','<p>'+(d.fit||'Ориентир по росту — в таблице размеров.')+'</p><button class="pdp-det-link" onclick="rfc.guide()">Открыть таблицу размеров</button>']);
+ rows.push(['Доставка и возврат','<p>По Казахстану — курьер, 1–2 дня. По миру — от 7 дней. Самовывоз — Астана, бесплатно.</p><p>Возврат и обмен — 14 дней при сохранении товарного вида, ярлыков и упаковки (не подлежат возврату носки и нижнее бельё).</p>']);
+ return '<div class="pdp-det">'+rows.map(function(r){return '<details><summary>'+r[0]+'<span class="pdp-det-x">+</span></summary><div class="pdp-det-b">'+r[1]+'</div></details>';}).join("")+'</div>';
+}
 var COLLECTIONS=[
  {key:"white",title:"WHITE COLLECTION",theme:"light",fl:"Чистая база"},
  {key:"red",title:"RED COLLECTION",theme:"red",fl:"Фирменный red"},
@@ -1649,7 +1681,7 @@ rfc.openProduct=function(id){
  $("#pdp").innerHTML=
  '<div class="scr-bar"><div class="wrap in"><button class="round" onclick="rfc.closeAll()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo" style="font-size:26px">RFC</div><button class="round" onclick="rfc.openCart()" style="border-radius:50%"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></button></div></div>'+
  '<div class="wrap pdp"><div class="pdp-info">'+(function(){var c=COLLECTIONS.find(function(x){return x.key===p.col;});return c?'<span class="pdp-coll col-'+c.key+'">'+c.title+'</span>':'';})()+'<h1 class="pdp-title">'+p.name+'</h1><div class="pdp-price">'+fmt(p.price)+'</div><p class="pdp-desc">'+p.desc+'</p>'+care+
- buyBlock+'</div>'+media+'</div>'+
+ buyBlock+pdpTrust()+pdpDetails(p)+'</div>'+media+'</div>'+
  relatedSection(p);
  if(!soon&&ap){state.pSize="M";$$("#sizeWrap button").forEach(function(b){b.onclick=function(){state.pSize=b.getAttribute("data-size");$$("#sizeWrap button").forEach(function(x){x.classList.remove("on");});b.classList.add("on");};});}
  else{state.pSize="ONE SIZE";}
